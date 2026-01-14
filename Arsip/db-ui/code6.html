@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ER Diagram Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#298fa3",
+                        "background-light": "#f9fafb",
+                        "background-dark": "#1c1e22",
+                        "surface-dark": "#2a2d33",
+                        "surface-dark-highlight": "#353840",
+                        "line-color": "#525252",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for table lists */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #525252;
+            border-radius: 20px;
+        }
+        
+        /* Grid background pattern */
+        .grid-bg {
+            background-size: 20px 20px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        }
+
+        /* Connecting lines simulation */
+        .connection-line {
+            position: absolute;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white overflow-hidden h-screen w-full select-none">
+<!-- Top App Bar -->
+<header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-gray-200 dark:border-white/5">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 active:scale-95 transition-all text-slate-700 dark:text-white">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col items-center flex-1 mx-2">
+<h1 class="text-sm font-medium text-slate-500 dark:text-slate-400 leading-tight">PostgreSQL</h1>
+<h2 class="text-base font-bold text-slate-900 dark:text-white leading-tight">production_db</h2>
+</div>
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 active:scale-95 transition-all text-slate-700 dark:text-white">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</header>
+<!-- Main Canvas Area -->
+<main class="relative w-full h-full pt-[72px] overflow-hidden bg-background-light dark:bg-background-dark grid-bg cursor-grab active:cursor-grabbing">
+<!-- Connection Lines (SVG Overlay) -->
+<svg class="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-visible">
+<!-- Connection: Users -> Orders -->
+<path class="opacity-60" d="M 230 250 C 230 300, 180 300, 180 340" fill="none" stroke="#525252" stroke-width="2"></path>
+<!-- Crow's foot ending at Orders -->
+<path class="opacity-60" d="M 175 330 L 180 340 L 185 330 M 180 330 L 180 340" fill="none" stroke="#525252" stroke-width="2"></path>
+<!-- Connection: Orders -> Order Items -->
+<path class="opacity-60" d="M 330 420 C 380 420, 380 420, 420 380" fill="none" stroke="#525252" stroke-width="2"></path>
+<!-- Connection: Products -> Order Items -->
+<path class="opacity-60" d="M 520 250 C 520 300, 520 300, 520 320" fill="none" stroke="#525252" stroke-width="2"></path>
+</svg>
+<!-- Container to simulate pannable area -->
+<div class="relative w-[200%] h-[200%] transform -translate-x-10 -translate-y-10 origin-top-left scale-90">
+<!-- Entity Card: Users -->
+<div class="absolute left-10 top-20 w-56 bg-white dark:bg-surface-dark rounded-lg shadow-xl border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col z-10 group">
+<div class="bg-gradient-to-r from-primary/90 to-primary p-3 flex justify-between items-center cursor-move">
+<span class="text-white font-bold text-sm tracking-wide">public.users</span>
+<span class="material-symbols-outlined text-white/80 text-[16px]">more_horiz</span>
+</div>
+<div class="flex flex-col text-xs divide-y divide-gray-100 dark:divide-white/5 max-h-[200px] overflow-y-auto custom-scrollbar">
+<div class="flex justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-400 text-[14px]">vpn_key</span>
+<span class="font-medium text-slate-700 dark:text-slate-200">id</span>
+</div>
+<span class="text-slate-400 font-mono">uuid</span>
+</div>
+<div class="flex justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5">
+<div class="flex items-center gap-2 pl-[22px]">
+<span class="font-medium text-slate-700 dark:text-slate-200">email</span>
+</div>
+<span class="text-slate-400 font-mono">varchar</span>
+</div>
+<div class="flex justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5">
+<div class="flex items-center gap-2 pl-[22px]">
+<span class="font-medium text-slate-700 dark:text-slate-200">password</span>
+</div>
+<span class="text-slate-400 font-mono">text</span>
+</div>
+<div class="flex justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5">
+<div class="flex items-center gap-2 pl-[22px]">
+<span class="font-medium text-slate-700 dark:text-slate-200">created_at</span>
+</div>
+<span class="text-slate-400 font-mono">ts</span>
+</div>
+</div>
+</div>
+<!-- Entity Card: Orders -->
+<div class="absolute left-20 top-[340px] w-60 bg-white dark:bg-surface-dark rounded-lg shadow-xl shadow-primary/5 border border-primary/50 overflow-hidden flex flex-col z-20 ring-2 ring-primary/20">
+<div class="bg-surface-dark-highlight p-3 flex justify-between items-center border-b border-white/5 cursor-move">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]">table_chart</span>
+<span class="text-white font-bold text-sm tracking-wide">public.orders</span>
+</div>
+<span class="material-symbols-outlined text-white/40 text-[16px]">expand_less</span>
+</div>
+<div class="flex flex-col text-xs divide-y divide-gray-100 dark:divide-white/5 bg-slate-50 dark:bg-surface-dark">
+<div class="flex justify-between p-2 bg-primary/10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-400 text-[14px]">vpn_key</span>
+<span class="font-medium text-slate-900 dark:text-white">id</span>
+</div>
+<span class="text-slate-500 dark:text-slate-400 font-mono">uuid</span>
+</div>
+<div class="flex justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5 relative">
+<!-- Connecting dot -->
+<div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(41,143,163,0.8)]"></div>
+<div class="flex items-center gap-2 pl-[22px]">
+<span class="material-symbols-outlined text-slate-400 text-[14px]">link</span>
+<span class="font-medium text-slate-700 dark:text-slate-200">user_id</span>
+</div>
+<span class="text-slate-400 font-mono">uuid</span>
+</div>
+<div class="flex justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5">
+<div class="flex items-center gap-2 pl-[22px]">
+<span class="font-medium text-slate-700 dark:text-slate-200">total</span>
+</div>
+<span class="text-slate-400 font-mono">int4</span>
+</div>
+<div class="flex justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5">
+<div class="flex items-center gap-2 pl-[22px]">
+<span class="font-medium text-slate-700 dark:text-slate-200">status</span>
+</div>
+<span class="text-slate-400 font-mono">enum</span>
+</div>
+</div>
+</div>
+<!-- Entity Card: Products -->
+<div class="absolute left-[450px] top-20 w-56 bg-white dark:bg-surface-dark rounded-lg shadow-xl border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col z-10 opacity-90 hover:opacity-100 transition-opacity">
+<div class="bg-surface-dark-highlight p-3 flex justify-between items-center border-b border-white/5 cursor-move">
+<span class="text-white font-bold text-sm tracking-wide">public.products</span>
+<span class="material-symbols-outlined text-white/40 text-[16px]">more_horiz</span>
+</div>
+<div class="flex flex-col text-xs divide-y divide-gray-100 dark:divide-white/5">
+<div class="flex justify-between p-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-400 text-[14px]">vpn_key</span>
+<span class="font-medium text-slate-700 dark:text-slate-200">id</span>
+</div>
+<span class="text-slate-400 font-mono">uuid</span>
+</div>
+<div class="flex justify-between p-2">
+<div class="flex items-center gap-2 pl-[22px]">
+<span class="font-medium text-slate-700 dark:text-slate-200">name</span>
+</div>
+<span class="text-slate-400 font-mono">text</span>
+</div>
+</div>
+</div>
+<!-- Entity Card: Order_Items -->
+<div class="absolute left-[420px] top-[320px] w-64 bg-white dark:bg-surface-dark rounded-lg shadow-xl border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col z-10">
+<div class="bg-surface-dark-highlight p-3 flex justify-between items-center border-b border-white/5 cursor-move">
+<span class="text-white font-bold text-sm tracking-wide">public.order_items</span>
+<span class="material-symbols-outlined text-white/40 text-[16px]">more_horiz</span>
+</div>
+<div class="flex flex-col text-xs divide-y divide-gray-100 dark:divide-white/5">
+<div class="flex justify-between p-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-400 text-[14px]">vpn_key</span>
+<span class="font-medium text-slate-700 dark:text-slate-200">id</span>
+</div>
+<span class="text-slate-400 font-mono">uuid</span>
+</div>
+<div class="flex justify-between p-2">
+<div class="flex items-center gap-2 pl-[22px]">
+<span class="material-symbols-outlined text-slate-400 text-[14px]">link</span>
+<span class="font-medium text-slate-700 dark:text-slate-200">order_id</span>
+</div>
+<span class="text-slate-400 font-mono">uuid</span>
+</div>
+<div class="flex justify-between p-2">
+<div class="flex items-center gap-2 pl-[22px]">
+<span class="material-symbols-outlined text-slate-400 text-[14px]">link</span>
+<span class="font-medium text-slate-700 dark:text-slate-200">product_id</span>
+</div>
+<span class="text-slate-400 font-mono">uuid</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mini-Map Overlay -->
+<div class="fixed top-[88px] right-4 z-40 w-24 h-32 bg-surface-dark/90 backdrop-blur border border-white/10 rounded-lg shadow-lg overflow-hidden hidden sm:block">
+<div class="w-full h-full relative opacity-50">
+<!-- Simulated Mini content -->
+<div class="absolute top-2 left-2 w-6 h-8 bg-white/20 rounded-sm"></div>
+<div class="absolute top-10 left-5 w-8 h-8 bg-primary/40 rounded-sm border border-primary"></div>
+<div class="absolute top-2 left-12 w-6 h-8 bg-white/20 rounded-sm"></div>
+<!-- Viewport indicator -->
+<div class="absolute top-8 left-4 w-12 h-16 border-2 border-primary rounded-sm shadow-[0_0_10px_rgba(41,143,163,0.5)] bg-primary/10"></div>
+</div>
+</div>
+<!-- Floating Action Toolbar (Bottom Right) -->
+<div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
+<!-- Edit Mode Toggle Pill -->
+<div class="pointer-events-auto bg-surface-dark/95 dark:bg-black/80 backdrop-blur-md rounded-full p-1 border border-white/10 flex items-center shadow-2xl mb-2">
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white text-sm font-bold shadow-md">
+<span class="material-symbols-outlined text-[18px]">pan_tool</span>
+<span>Move</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full text-slate-400 hover:text-white transition-colors text-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+<span>Edit</span>
+</button>
+</div>
+<!-- Tool Stack -->
+<div class="pointer-events-auto flex flex-col gap-3">
+<button class="size-12 bg-white dark:bg-surface-dark rounded-xl shadow-lg border border-gray-100 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 active:scale-95 transition-all group relative">
+<span class="material-symbols-outlined">add</span>
+<span class="absolute right-full mr-3 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Zoom In</span>
+</button>
+<button class="size-12 bg-white dark:bg-surface-dark rounded-xl shadow-lg border border-gray-100 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 active:scale-95 transition-all group relative">
+<span class="material-symbols-outlined">remove</span>
+<span class="absolute right-full mr-3 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Zoom Out</span>
+</button>
+<button class="size-12 bg-white dark:bg-surface-dark rounded-xl shadow-lg border border-gray-100 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 active:scale-95 transition-all group relative">
+<span class="material-symbols-outlined">auto_fix_high</span>
+<span class="absolute right-full mr-3 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Auto Layout</span>
+</button>
+<button class="size-14 bg-primary rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center text-white hover:bg-primary/90 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[28px]">ios_share</span>
+</button>
+</div>
+</div>
+<!-- Bottom Info Strip (Contextual info) -->
+<div class="fixed bottom-0 left-0 w-full bg-white dark:bg-surface-dark border-t border-gray-200 dark:border-white/5 py-1 px-4 flex justify-between items-center z-40 text-[10px] text-slate-500 font-mono">
+<div class="flex gap-4">
+<span>x: 234</span>
+<span>y: 890</span>
+<span>z: 90%</span>
+</div>
+<div class="flex gap-2 items-center">
+<span class="size-2 rounded-full bg-green-500"></span>
+<span>Connected</span>
+</div>
+</div>
+</body></html>

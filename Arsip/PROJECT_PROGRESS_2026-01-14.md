@@ -1,55 +1,50 @@
 # 📈 PROJECT PROGRESS UPDATE
 
 **Date:** 14 Januari 2026
-**Topic:** Auth Flow, Email System & Landing Page Integation
+**Topic:** Deployment to Production (VPS), Landing Page Rebuild, & SSL
 **Developer:** Antigravity
 
 ---
 
-## 🚀 KEY ACHIEVEMENTS
+## 🚀 KEY ACHIEVEMENTS (DEPLOYMENT SUCCESS)
 
-### 1. Robust Authentication & Recovery Flow (COMPLETE)
-We implemented a complete, secure password recovery system and enhanced the registration onboarding experience.
+### 1. Rebuild & Deployment Landing Page (COMPLETE)
+Karena kendala kompatibilitas Next.js 16 di server lama, kita melakukan rebuild total Landing Page menggunakan **Next.js 14**.
+- **Content Porting:** Porting 100% konten dan logic dari arsip (Features, Pricing, FAQ, Testimonials).
+- **Integration Restore:** Mengembalikan fungsi PixelTracker, Voucher Validation, dan Referral Tracking.
+- **Optimization:** Upload menggunakan metode `tar.gz` (compress) hanya butuh 5 detik (vs 3 jam scp manual).
+- **Status:** **🟢 ONLINE** di port 3002.
 
-#### ✅ Forgot Password System
-- **Flow:** User requests reset -> Email with Token -> User resets password -> Database updated.
-- **Security:** Tokens are hashed, time-limited, and invalidated after use.
-- **UI:** Created dedicated pages for `Forgot Password` and `Reset Password` in User Portal.
-- **API:** Login and Reset APIs are fully operational.
+### 2. Full Production Deployment (100% LIVE)
+Semua portal berhasil dideploy ke VPS `154.19.37.198` dan berjalan stabil.
 
-#### ✅ Email Notification System
-- **Integration:** Implemented `Nodemailer` with reliable SMTP configuration.
-- **Templates:** Created professional HTML templates for:
-  - **Welcome Email:** Sent immediately after registration.
-  - **Reset Password:** Contains secure token link.
-  - **Payment Success:** Invoice details (ready for use).
-- **Verification:** Verified email delivery with debug logs.
+| Portal | Domain | Status | Engine | Port |
+|--------|--------|--------|--------|------|
+| **User App** | `app.adspilot.id` | 🟢 **ONLINE** | Next.js 14 | 3000 |
+| **Admin** | `adm.adspilot.id` | 🟢 **ONLINE** | Next.js 14 | 3001 |
+| **Landing** | `adspilot.id` | 🟢 **ONLINE** | Next.js 14 | 3002 |
+| **Affiliate** | `aff.adspilot.id` | 🟢 **ONLINE** | Next.js 14 | 3003 |
 
-### 2. Landing Page Integration (FIXED)
-Fixed critical navigation and redirect issues between the Landing Page and User Portal.
-
-- **Checkout Link Corrected:** Fixed `404 Not Found` error by pointing the "Available Plans" buttons to the absolute User Portal URL (`http://localhost:3000/auth/checkout`).
-- **Registration Redirect Fixed:** Fixed the "Register" link in the Login page which was incorrectly redirecting to `shopadexpert.com`. It now correctly points to the local landing page (`http://localhost:3002/#harga`).
-- **Environment Stability:** Created `.env` for Landing Page to ensure `APP_URL` consistency.
-
-### 3. System Administration (COMPLETE)
-- **Maintenance Mode:** Implemented full maintenance mode logic. When enabled in Admin, User Portal automatically shows a polished maintenance screen.
-- **System Settings:** Fixed database schema issue (`updated_by` type mismatch) allowing admins to save system configurations successfully.
+### 3. Server Configuration & Security
+- **Nginx Config:** Mengatur Reverse Proxy untuk keempat domain di atas.
+- **SSL Certificates:** Install Let's Encrypt SSL untuk semua domain (Root + Subdomains). **Grade A Security**.
+- **DNS Recovery:** Fixing IP records dari server lama ke server baru dan setup `A Records` yang benar.
+- **DB Configuration:** Memeriksa dan memastikan semua portal connect ke Custom DB Port **3306** (bukan default 5432).
 
 ---
 
-## 📊 SYSTEM HEALTH
+## 🔒 INFRASTRUCTURE STRATEGY
 
-| Portal | Port | Status | Notes |
-|--------|------|--------|-------|
-| **User App** | 3000 | 🟢 Online | Auth & Email Active |
-| **Admin** | 3001 | 🟢 Online | CMS Active |
-| **Landing** | 3002 | 🟢 Online | Navigation Fixed |
+### Cloudflare Integration Plan (Result: Option A - Stabilize First)
+Kita mendiskusikan migrasi ke Cloudflare untuk DDoS Protection & CDN.
+*   **Keputusan:** **Tunda dulu (Option A).**
+*   **Alasan:** Membiarkan DNS propagasi berjalan alami dan sistem berjalan stabil di koneksi Direct terlebih dahulu. Mengurangi variabel error saat launching.
+*   **Future Plan:** Akan diaktifkan setelah 1-2 minggu operasi stabil untuk upgrade keamanan.
 
 ---
 
 ## ⏭️ NEXT STEPS
 
-1. **Payment Gateway Integration** (Midtrans/Xendit?).
-2. **Affiliate Portal Security**.
-3. **End-to-End Testing** of the complete Signup -> Pay -> Active flow.
+1. **Verify Global Propagation:** Memantau akses user dari berbagai provider internet.
+2. **Payment Gateway Integration:** Fokus berikutnya adalah testing flow pembayaran real.
+3. **End-to-End Testing:** Signup -> Pay -> Active automation.

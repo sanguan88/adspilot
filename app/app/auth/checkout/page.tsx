@@ -61,14 +61,14 @@ function CheckoutContent() {
   const searchParams = useSearchParams()
   const { isAuthenticated, user, isLoading: authLoading } = useAuth()
   const planId = searchParams.get('plan') || '3-month'
-  
+
   const [plans, setPlans] = useState<Plan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Voucher states
   const [voucherCode, setVoucherCode] = useState("")
   const [voucherInfo, setVoucherInfo] = useState<any>(null)
@@ -195,7 +195,7 @@ function CheckoutContent() {
 
       if (response.ok && data.success) {
         // Redirect ke halaman konfirmasi pembayaran dengan user_id, planId, dan transactionId
-          // Gunakan replace() untuk menghindari back navigation
+        // Gunakan replace() untuk menghindari back navigation
         const transactionId = data.data.transaction?.transactionId || '';
         router.replace(`/auth/payment-confirmation?userId=${data.data.userId}&planId=${selectedPlan?.planId || planId}${transactionId ? `&transactionId=${transactionId}` : ''}`)
       } else {
@@ -301,12 +301,12 @@ function CheckoutContent() {
   // Calculate total with voucher
   const calculateTotalWithVoucher = () => {
     if (!selectedPlan) return 0
-    
+
     // Use originalPrice for voucher calculation if available, otherwise use price
     const basePriceForVoucher = selectedPlan.originalPrice && selectedPlan.originalPrice > selectedPlan.price
       ? selectedPlan.originalPrice
       : selectedPlan.price
-    
+
     if (voucherInfo && voucherInfo.discountAmount > 0) {
       // Discount is already calculated from base amount (Indonesia standard)
       // Total = base - discount + PPN + unique_code
@@ -325,7 +325,7 @@ function CheckoutContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
-      <div className="container mx-auto max-w-6xl py-8">
+      <div className="container mx-auto w-full max-w-6xl py-8 px-2 sm:px-4">
         {/* Back Button */}
         <Button variant="ghost" asChild className="mb-6">
           <Link href="/#harga">
@@ -334,7 +334,7 @@ function CheckoutContent() {
           </Link>
         </Button>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 w-full max-w-full">
           {/* Left: Registration Form */}
           <div>
             <Card>
@@ -523,14 +523,14 @@ function CheckoutContent() {
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-lg font-bold">{selectedPlan.name}</h3>
                         <Badge variant="secondary">
-                          {selectedPlan.durationMonths === 1 ? '1 bulan' : 
-                           selectedPlan.durationMonths === 3 ? '3 bulan' : 
-                           selectedPlan.durationMonths === 6 ? '6 bulan' : 
-                           `${selectedPlan.durationMonths} bulan`}
+                          {selectedPlan.durationMonths === 1 ? '1 bulan' :
+                            selectedPlan.durationMonths === 3 ? '3 bulan' :
+                              selectedPlan.durationMonths === 6 ? '6 bulan' :
+                                `${selectedPlan.durationMonths} bulan`}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">{selectedPlan.description}</p>
-                      
+
                       {/* Price - Only show base price, breakdown will be in Total section */}
                       <div className="space-y-2">
                         <div className="text-3xl font-bold text-primary">
@@ -645,8 +645,8 @@ function CheckoutContent() {
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>Total Pembayaran</span>
                     <span className="text-primary">
-                      {selectedPlan ? formatPrice(voucherInfo && voucherInfo.discountAmount > 0 
-                        ? calculateTotalWithVoucher() 
+                      {selectedPlan ? formatPrice(voucherInfo && voucherInfo.discountAmount > 0
+                        ? calculateTotalWithVoucher()
                         : selectedPlan.price
                       ) : '-'}
                     </span>
@@ -657,7 +657,7 @@ function CheckoutContent() {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="text-xs">
-                    Setelah registrasi, Anda akan diarahkan ke halaman konfirmasi pembayaran 
+                    Setelah registrasi, Anda akan diarahkan ke halaman konfirmasi pembayaran
                     untuk melihat informasi rekening bank.
                   </AlertDescription>
                 </Alert>
