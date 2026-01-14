@@ -37,7 +37,7 @@ db_config.env
 next-env.d.ts
 
 # logs
-logs/
+
 *.log
 
 # pm2
