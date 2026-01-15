@@ -92,11 +92,11 @@ export async function POST(
         );
       }
 
-      // Only allow upload if payment status is pending or waiting_verification (allow re-upload)
-      if (!['pending', 'waiting_verification'].includes(transaction.payment_status)) {
+      // Only allow upload if payment status is pending or waiting_confirmation (allow re-upload)
+      if (!['pending', 'waiting_confirmation'].includes(transaction.payment_status)) {
         connection.release();
         return NextResponse.json(
-          { success: false, error: 'Bukti pembayaran hanya bisa diupload untuk transaksi dengan status pending atau waiting_verification' },
+          { success: false, error: 'Bukti pembayaran hanya bisa diupload untuk transaksi dengan status pending atau waiting_confirmation' },
           { status: 400 }
         );
       }
@@ -122,11 +122,11 @@ export async function POST(
       // Generate public URL - use API route for better compatibility
       const publicUrl = `/api/uploads/payment-proofs/${filename}`;
 
-      // Update transaction with proof URL and change status to waiting_verification
+      // Update transaction with proof URL and change status to waiting_confirmation
       await connection.query(
         `UPDATE transactions 
          SET payment_proof_url = $1,
-             payment_status = 'waiting_verification',
+             payment_status = 'waiting_confirmation',
              updated_at = NOW()
          WHERE transaction_id = $2`,
         [publicUrl, transactionId]
