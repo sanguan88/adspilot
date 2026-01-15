@@ -243,6 +243,36 @@ export function SettingsPage() {
     }
   }
 
+  const handleDisconnectTelegram = async () => {
+    if (!confirm("Apakah Anda yakin ingin memutuskan koneksi Telegram? Anda tidak akan menerima notifikasi lagi.")) {
+      return
+    }
+
+    try {
+      setLoadingTelegram(true)
+      const response = await authenticatedFetch("/api/user/setup-telegram", {
+        method: "DELETE"
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        setTelegramData(prev => ({
+          ...prev,
+          hasTelegram: false,
+          chatid_tele: undefined
+        }))
+        toast.success("Koneksi Telegram berhasil diputuskan")
+      } else {
+        toast.error(data.error || "Gagal memutuskan koneksi Telegram")
+      }
+    } catch (error) {
+      console.error("Error disconnecting telegram:", error)
+      toast.error("Terjadi kesalahan saat memutuskan koneksi")
+    } finally {
+      setLoadingTelegram(false)
+    }
+  }
+
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -693,10 +723,34 @@ export function SettingsPage() {
               )}
 
               {telegramData.hasTelegram && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    ✓ Telegram Anda sudah terhubung. Anda akan menerima notifikasi melalui Telegram.
-                  </p>
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      ✓ Telegram Anda sudah terhubung. Anda akan menerima notifikasi melalui Telegram.
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-gray-500 mb-3">Ingin mengganti akun telegram atau berhenti menerima notifikasi?</p>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDisconnectTelegram}
+                      disabled={loadingTelegram}
+                      className="w-full sm:w-auto"
+                    >
+                      {loadingTelegram ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Memutuskan...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Putuskan Koneksi Telegram
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
