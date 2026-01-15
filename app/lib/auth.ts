@@ -108,9 +108,9 @@ export function requireRole(request: NextRequest, allowedRoles: string[]): UserP
 }
 
 /**
- * Middleware untuk require active status (status_user = 'aktif')
+ * Middleware untuk require active status (status_user = 'active')
  * Memeriksa status_user dari database secara real-time
- * Hanya user dengan status 'aktif' yang boleh akses fitur utama aplikasi
+ * Hanya user dengan status 'active' yang boleh akses fitur utama aplikasi
  * 
  * IMPORTANT: Gunakan ini untuk semua API endpoints yang mengakses fitur utama aplikasi
  * Jangan gunakan untuk:
@@ -146,8 +146,13 @@ export async function requireActiveStatus(request: NextRequest): Promise<UserPay
 
     const statusUser = result.rows[0].status_user;
 
-    // Hanya user dengan status 'aktif' yang boleh akses
-    if (statusUser !== 'aktif') {
+    // Logging status untuk debugging
+    if (process.env.NODE_ENV === 'production' && (!statusUser || statusUser.trim().toLowerCase() !== 'active')) {
+      console.error(`[Auth] Access denied - User: ${user.username} (${user.userId}), Status in DB: '${statusUser}'`);
+    }
+
+    // Hanya user dengan status 'active' yang boleh akses (case insensitive & trimmed)
+    if (!statusUser || statusUser.toString().trim().toLowerCase() !== 'active') {
       throw new Error('Access denied. Payment required. Please complete your payment to access this feature.');
     }
 
