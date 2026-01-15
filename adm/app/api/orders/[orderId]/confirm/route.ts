@@ -77,8 +77,8 @@ export async function POST(
         currentStatus: transaction.payment_status,
       })
 
-      // Check if already processed (allow confirm/reject from waiting_verification)
-      if (!['pending', 'waiting_verification'].includes(transaction.payment_status)) {
+      // Check if already processed (allow confirm/reject from waiting_confirmation)
+      if (!['pending', 'waiting_confirmation'].includes(transaction.payment_status)) {
         return { error: `Transaksi sudah diproses dengan status: ${transaction.payment_status}` }
       }
 
