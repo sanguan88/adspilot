@@ -867,10 +867,10 @@ export default function LandingPage() {
           </div>
 
           {/* Dynamic grid based on number of active plans */}
-          <div className={`grid gap-4 sm:gap-6 lg:gap-8 max-w-7xl mx-auto ${plans.length === 0 ? 'grid-cols-1' :
-            plans.length === 1 ? 'grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 max-w-2xl' :
-              plans.length === 2 ? 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 max-w-5xl' :
-                'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+          <div className={`grid gap-4 sm:gap-6 lg:gap-8 mx-auto ${plans.length === 0 ? 'grid-cols-1' :
+            plans.length === 1 ? 'grid-cols-1 max-w-md' :
+              plans.length === 2 ? 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 max-w-3xl' :
+                'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl'
             }`}>
             {loadingPlans ? (
               <div className="col-span-full text-center py-12">
@@ -1035,13 +1035,13 @@ export default function LandingPage() {
 
                     <Button
                       className="w-full mt-auto flex-shrink-0"
-                      variant={isPopular ? "default" : isPremium ? "default" : "outline"}
+                      variant="default"
                       size="lg"
                       asChild
                       onClick={handleCTAClick}
                     >
                       <Link href={`${APP_URL}/auth/checkout?plan=${plan.planId}`}>
-                        {isPopular ? "Pilih Paket Ini" : isPremium ? "Investasi Terbaik" : "Pilih Paket"}
+                        Langganan Sekarang
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>

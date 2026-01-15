@@ -12,6 +12,9 @@ if (!JWT_SECRET) {
   );
 }
 
+// Assert that JWT_SECRET is defined after the check above
+const SECRET_KEY: string = JWT_SECRET;
+
 export interface UserPayload {
   userId: string; // Changed from number to string (VARCHAR user_id)
   username: string;
@@ -24,7 +27,7 @@ export interface UserPayload {
  * Generate JWT token untuk user
  */
 export function generateToken(payload: UserPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, SECRET_KEY, {
     expiresIn: '7d', // Token berlaku 7 hari
   });
 }
@@ -34,9 +37,9 @@ export function generateToken(payload: UserPayload): string {
  */
 export function verifyToken(token: string): UserPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as UserPayload;
+    const decoded = jwt.verify(token, SECRET_KEY) as UserPayload;
     return decoded;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
