@@ -180,7 +180,7 @@ async function handleStartCommand(message: TelegramMessage): Promise<{
     if (!startParam) {
       await sendTelegramMessage({
         chatId,
-        message: `👋 *Selamat datang di SOROBOT Bot!*\n\n` +
+        message: `👋 *Selamat datang di AdsPilot Bot!*\n\n` +
           `Untuk menggunakan bot ini, Anda perlu setup melalui aplikasi web terlebih dahulu:\n\n` +
           `1. Login ke aplikasi: https://app.adspilot.id\n` +
           `2. Pergi ke halaman Settings/Telegram\n` +
