@@ -438,6 +438,9 @@ apt update && apt upgrade -y
 - ✅ Integrated Subscription Checks into `adbot-automation-worker`
 - ✅ Updated `ecosystem.config.js` with new process structure and hardcoded webhook URLs
 - ✅ Verified Clean Codebase (No references to old 'shopadexpert' brand)
+- ✅ **[CRITICAL FIX]** Resolved "Double Connection Release" DB Error causing blank pages.
+- ✅ **[CRITICAL FIX]** Fixed Admin Portal Usage Page (Error 500) & Broken Images (Refast.id).
+- ✅ **[CONFIG]** Updated `adbot-seller` to properly run on Port 3000 (aligned with Nginx).
 
 ### 2026-01-14 - Initial Deployment
 - ✅ Deployed User Portal (Port 3000)
