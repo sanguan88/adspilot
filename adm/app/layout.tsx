@@ -4,6 +4,8 @@ import { GeistMono } from 'geist/font/mono'
 import { RootProvider } from '@/components/providers/root-provider'
 import './globals.css'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'AdsBot Admin - SaaS Management',
   description: 'Admin dashboard untuk mengelola aplikasi AdsBot',
