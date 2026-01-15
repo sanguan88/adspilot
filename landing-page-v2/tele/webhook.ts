@@ -180,17 +180,17 @@ async function handleStartCommand(message: TelegramMessage): Promise<{
     if (!startParam) {
       await sendTelegramMessage({
         chatId,
-        message: `👋 *Selamat datang di AdsPilot Bot!*\n\n` +
+        message: `👋 Selamat datang di AdsPilot Bot!\n\n` +
           `Untuk menggunakan bot ini, Anda perlu setup melalui aplikasi web terlebih dahulu:\n\n` +
           `1. Login ke aplikasi: https://app.adspilot.id\n` +
           `2. Pergi ke halaman Settings/Telegram\n` +
           `3. Klik tombol "Setup Telegram"\n` +
           `4. Gunakan link yang diberikan untuk menghubungkan bot\n\n` +
-          `*Commands yang tersedia:*\n` +
+          `Commands yang tersedia:\n` +
           `• /status_adbot - Cek status akun\n` +
           `• /login_adbot - Login via Telegram\n` +
           `• /reset_adbot - Reset password via Telegram`,
-        parseMode: 'Markdown',
+        // parseMode: 'Markdown', // Disable markdown for safety
       })
 
       return {

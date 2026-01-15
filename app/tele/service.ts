@@ -50,12 +50,17 @@ export async function sendTelegramMessage(
 
     const data: TelegramSendMessageResponse = await response.json()
 
-    if (!data.ok && retryCount < TELEGRAM_RETRY_CONFIG.MAX_RETRIES) {
-      // Retry dengan exponential backoff
-      await new Promise(resolve =>
-        setTimeout(resolve, TELEGRAM_RETRY_CONFIG.RETRY_DELAY_MS * (retryCount + 1))
-      )
-      return sendTelegramMessage(payload, retryCount + 1)
+    if (!data.ok) {
+      console.error(`[Telegram Service] Error sending message to ${payload.chatId}:`, data)
+      if (retryCount < TELEGRAM_RETRY_CONFIG.MAX_RETRIES) {
+        // Retry dengan exponential backoff
+        await new Promise(resolve =>
+          setTimeout(resolve, TELEGRAM_RETRY_CONFIG.RETRY_DELAY_MS * (retryCount + 1))
+        )
+        return sendTelegramMessage(payload, retryCount + 1)
+      }
+    } else {
+      console.log(`[Telegram Service] Message sent to ${payload.chatId}, update_id: ${data.result?.message_id}`)
     }
 
     return data
