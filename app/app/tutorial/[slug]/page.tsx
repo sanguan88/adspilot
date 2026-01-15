@@ -295,37 +295,41 @@ export default function TutorialArticlePage() {
             <DashboardLayout>
                 <div className="min-h-screen bg-gray-50">
                     {/* Hero Section */}
-                    <div className="relative">
+                    {/* Hero Section */}
+                    <div className="relative bg-slate-900 overflow-hidden">
                         {tutorial.coverImage && (
-                            <div className="absolute inset-0 h-64 overflow-hidden">
+                            <div className="absolute inset-0">
                                 <img
                                     src={tutorial.coverImage}
                                     alt={tutorial.title}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover opacity-60"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-gray-50" />
+                                {/* Strong gradient overlay to ensure text readability */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/80 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-gray-50/10 to-transparent" />
                             </div>
                         )}
-                        <div className="relative pt-8 pb-6 px-6">
+
+                        <div className="relative z-10 pt-10 pb-12 px-6 max-w-7xl mx-auto">
                             {/* Breadcrumb */}
-                            <nav className="flex items-center gap-2 text-sm mb-6">
-                                <Link href="/tutorial" className="text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                            <nav className="flex items-center gap-2 text-sm mb-6 flex-wrap">
+                                <Link href="/tutorial" className="text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 font-medium">
                                     <ArrowLeft className="w-4 h-4" />
                                     Tutorial
                                 </Link>
-                                <ChevronRight className="w-4 h-4 text-gray-400" />
-                                <span className="text-gray-600">{tutorial.category}</span>
-                                <ChevronRight className="w-4 h-4 text-gray-400" />
-                                <span className="text-gray-900 font-medium truncate max-w-[200px]">{tutorial.title}</span>
+                                <ChevronRight className="w-4 h-4 text-gray-500" />
+                                <span className="text-gray-300">{tutorial.category}</span>
+                                <ChevronRight className="w-4 h-4 text-gray-500" />
+                                <span className="text-white font-medium truncate max-w-[200px] lg:max-w-md">{tutorial.title}</span>
                             </nav>
 
                             {/* Title & Meta */}
                             <div className="max-w-4xl">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                                        <Icon className="w-6 h-6 text-primary" />
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10 shadow-inner">
+                                        <Icon className="w-6 h-6 text-white" />
                                     </div>
-                                    <Badge variant={tutorial.type === "video" ? "default" : "secondary"} className="gap-1">
+                                    <Badge variant="outline" className={`gap-1 border-white/20 text-white ${tutorial.type === "video" ? "bg-red-500/20 text-red-100 border-red-500/30" : "bg-emerald-500/20 text-emerald-100 border-emerald-500/30"}`}>
                                         {tutorial.type === "video" ? (
                                             <>
                                                 <Video className="w-3 h-3" />
@@ -334,26 +338,33 @@ export default function TutorialArticlePage() {
                                         ) : (
                                             <>
                                                 <FileText className="w-3 h-3" />
-                                                Artikel
+                                                Artikel Panduan
                                             </>
                                         )}
                                     </Badge>
                                 </div>
-                                <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">{tutorial.title}</h1>
-                                <p className="text-lg text-gray-600 mb-4">{tutorial.description}</p>
-                                <div className="flex items-center gap-4 text-gray-600">
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4" />
-                                        <span>{tutorial.duration} baca</span>
+
+                                <h1 className="text-3xl lg:text-5xl font-bold text-white mb-4 leading-tight tracking-tight drop-shadow-sm">
+                                    {tutorial.title}
+                                </h1>
+
+                                <p className="text-lg text-gray-300 mb-6 leading-relaxed max-w-2xl border-l-4 border-emerald-500/50 pl-4">
+                                    {tutorial.description}
+                                </p>
+
+                                <div className="flex flex-wrap items-center gap-6 text-gray-400 font-medium text-sm">
+                                    <div className="flex items-center gap-2 bg-slate-800/50 rounded-full px-3 py-1 border border-white/5">
+                                        <Clock className="w-4 h-4 text-emerald-400" />
+                                        <span>Estimasi baca: <span className="text-gray-200">{tutorial.duration}</span></span>
                                     </div>
+
                                     {tutorial.type === "video" && tutorial.videoUrl && (
                                         <Button
                                             size="sm"
-                                            variant="outline"
-                                            className="gap-2 text-primary border-primary/20 hover:bg-primary/5"
+                                            className="gap-2 bg-white text-slate-900 hover:bg-gray-100 border-0 font-semibold"
                                             onClick={() => window.open(tutorial.videoUrl, "_blank")}
                                         >
-                                            <Play className="w-4 h-4" />
+                                            <Play className="w-4 h-4 fill-current" />
                                             Tonton Video
                                         </Button>
                                     )}
