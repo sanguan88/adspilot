@@ -19,6 +19,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Rate limiting
+    const { checkRateLimit, getClientIP, resetRateLimit } = await import('@/lib/rate-limit')
+
+    const clientIP = getClientIP(request)
+    const ipRateLimit = checkRateLimit(`ip:${clientIP}`)
+    const emailRateLimit = checkRateLimit(`aff:${email.toLowerCase().trim()}`)
+
+    if (!ipRateLimit.allowed || !emailRateLimit.allowed) {
+      const resetTime = Math.max(ipRateLimit.resetTime, emailRateLimit.resetTime)
+      const minutesRemaining = Math.ceil((resetTime - Date.now()) / (60 * 1000))
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Terlalu banyak percobaan login. Silakan coba lagi dalam ${minutesRemaining} menit.`
+        },
+        { status: 429 }
+      )
+    }
+
     // Real authentication
     const connection = await getDatabaseConnection()
 
@@ -52,11 +72,16 @@ export async function POST(request: NextRequest) {
       const isValidPassword = await bcrypt.compare(password, affiliate.password_hash)
 
       if (!isValidPassword) {
+        // Increment rate limit handled by checkRateLimit at start
         return NextResponse.json(
           { success: false, error: 'Email atau password salah' },
           { status: 401 }
         )
       }
+
+      // Reset rate limit on success
+      resetRateLimit(`ip:${clientIP}`)
+      resetRateLimit(`aff:${email.toLowerCase().trim()}`)
 
       // Generate JWT token
       const token = jwt.sign(
