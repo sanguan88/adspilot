@@ -121,7 +121,7 @@ export function AffiliatesManagementPage() {
           localStorage.setItem('affiliate_impersonation_id', affiliateId)
 
           // Open affiliate portal in new window/tab
-          const affiliatePortalUrl = process.env.NEXT_PUBLIC_AFFILIATE_PORTAL_URL || 'https://aff.shopadexpert.com'
+          const affiliatePortalUrl = process.env.NEXT_PUBLIC_AFFILIATE_PORTAL_URL || 'https://aff.adspilot.id'
           window.open(`${affiliatePortalUrl}?impersonate=${data.token}`, '_blank')
 
           toast.success('Opening affiliate portal as this affiliate...')

@@ -73,9 +73,8 @@
 
 ## 🎯 NEXT STEPS (Post-Deployment)
 
-1.  **Payment Gateway Integration:** Menghubungkan Midtrans/Xendit (Saat ini Manual Transfer).
-2.  **End-to-End Testing:** Simulasi user journey lengkap.
-3.  **Analytics & Monitoring:** Memasang Google Analytics / Pixels yang valid.
+1.  **End-to-End Testing:** Simulasi user journey lengkap.
+2.  **Analytics & Monitoring:** Memasang Google Analytics / Pixels yang valid.
 
 ---
 

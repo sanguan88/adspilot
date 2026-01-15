@@ -18,7 +18,7 @@ const COMPANY_INFO = {
   name: 'AdsPilot',
   address: 'Indonesia',
   phone: '',
-  email: 'support@shopadexpert.com',
+  email: 'support@adspilot.id',
 };
 
 /**

@@ -24,7 +24,7 @@ export async function sendTelegramMessage(
   }
 
   const url = getTelegramApiUrl('sendMessage')
-  
+
   const requestBody = {
     chat_id: payload.chatId,
     text: payload.message,
@@ -52,7 +52,7 @@ export async function sendTelegramMessage(
 
     if (!data.ok && retryCount < TELEGRAM_RETRY_CONFIG.MAX_RETRIES) {
       // Retry dengan exponential backoff
-      await new Promise(resolve => 
+      await new Promise(resolve =>
         setTimeout(resolve, TELEGRAM_RETRY_CONFIG.RETRY_DELAY_MS * (retryCount + 1))
       )
       return sendTelegramMessage(payload, retryCount + 1)
@@ -61,7 +61,7 @@ export async function sendTelegramMessage(
     return data
   } catch (error) {
     if (retryCount < TELEGRAM_RETRY_CONFIG.MAX_RETRIES) {
-      await new Promise(resolve => 
+      await new Promise(resolve =>
         setTimeout(resolve, TELEGRAM_RETRY_CONFIG.RETRY_DELAY_MS * (retryCount + 1))
       )
       return sendTelegramMessage(payload, retryCount + 1)
@@ -84,7 +84,7 @@ export async function sendRuleNotification(
 ): Promise<TelegramSendMessageResponse> {
   // Jika ada custom message dari action telegram_notification, gunakan itu
   let message: string
-  
+
   if (data.message) {
     // Replace template variables dalam custom message
     message = replaceTemplateVariables(data.message, {
@@ -120,7 +120,7 @@ export async function sendRuleNotification(
  */
 export async function sendSetupConfirmation(chatId: string | number): Promise<TelegramSendMessageResponse> {
   const { TELEGRAM_MESSAGES } = await import('./config')
-  
+
   return sendTelegramMessage({
     chatId,
     message: TELEGRAM_MESSAGES.SETUP_SUCCESS,
@@ -151,15 +151,15 @@ export async function sendBatchMessages(
 
   return results.map((result, index) => {
     const chatId = chatIds[index]
-    
+
     if (result.status === 'fulfilled' && result.value.ok) {
       return { chatId, success: true }
     }
-    
+
     return {
       chatId,
       success: false,
-      error: result.status === 'rejected' 
+      error: result.status === 'rejected'
         ? result.reason?.message || 'Unknown error'
         : result.value.description || 'Telegram API error',
     }
@@ -173,7 +173,7 @@ export async function sendBatchMessages(
  */
 export async function getBotInfo(): Promise<any> {
   const url = getTelegramApiUrl('getMe')
-  
+
   const response = await fetch(url, {
     method: 'GET',
   })
@@ -190,7 +190,7 @@ export async function getBotInfo(): Promise<any> {
  */
 export async function setWebhook(webhookUrl: string): Promise<any> {
   const url = getTelegramApiUrl('setWebhook')
-  
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -211,7 +211,7 @@ export async function setWebhook(webhookUrl: string): Promise<any> {
  */
 export async function deleteWebhook(): Promise<any> {
   const url = getTelegramApiUrl('deleteWebhook')
-  
+
   const response = await fetch(url, {
     method: 'POST',
   })
@@ -226,7 +226,7 @@ export async function deleteWebhook(): Promise<any> {
  */
 export async function getWebhookInfo(): Promise<any> {
   const url = getTelegramApiUrl('getWebhookInfo')
-  
+
   const response = await fetch(url, {
     method: 'GET',
   })
@@ -254,21 +254,21 @@ export async function sendTelegramPhoto(
   }
 
   const url = getTelegramApiUrl('sendPhoto')
-  
+
   // Check if photoPath is a URL or file path
   const isUrl = photoPath.startsWith('http://') || photoPath.startsWith('https://')
-  
+
   if (isUrl) {
     // If it's a URL, send as JSON
     const requestBody: any = {
       chat_id: chatId,
       photo: photoPath,
     }
-    
+
     if (caption) {
       requestBody.caption = caption
     }
-    
+
     if (parseMode) {
       requestBody.parse_mode = parseMode
     }
@@ -286,7 +286,7 @@ export async function sendTelegramPhoto(
     // If it's a file path, convert to URL first
     // Since files are saved to public folder, we can construct the URL
     let photoUrl: string
-    
+
     if (photoPath.startsWith('/')) {
       // It's already a public URL path like /uploads/payment-proofs/file.jpg or /api/uploads/payment-proofs/file.jpg
       // Convert /uploads/... to /api/uploads/... for better compatibility
@@ -295,31 +295,31 @@ export async function sendTelegramPhoto(
         // Convert to API route
         apiPath = photoPath.replace('/uploads/payment-proofs/', '/api/uploads/payment-proofs/')
       }
-      
+
       // Get base URL from environment or construct it
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://shopadexpert.com')
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://app.adspilot.id')
       photoUrl = `${baseUrl}${apiPath}`
     } else {
       // It's an absolute file path, try to convert to public URL
       const { join, relative, basename } = await import('path')
       const filename = basename(photoPath)
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://shopadexpert.com')
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://app.adspilot.id')
       // Use API route for payment proofs
       photoUrl = `${baseUrl}/api/uploads/payment-proofs/${filename}`
     }
-    
+
     // Use URL to send photo
     const requestBody: any = {
       chat_id: chatId,
       photo: photoUrl,
     }
-    
+
     if (caption) {
       requestBody.caption = caption
     }
-    
+
     if (parseMode) {
       requestBody.parse_mode = parseMode
     }

@@ -15,7 +15,7 @@ if (!TELEGRAM_BOT_TOKEN) {
 }
 
 // Bot Username
-export const TELEGRAM_BOT_USERNAME = 'shopadexpertbot'
+export const TELEGRAM_BOT_USERNAME = 'adspilot_bot'
 
 // Telegram API Base URL
 export const TELEGRAM_API_BASE_URL = 'https://api.telegram.org'

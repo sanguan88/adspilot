@@ -91,15 +91,15 @@ async function handleMessage(message: TelegramMessage): Promise<{
 
   // Handle other commands
   const text = message.text || ''
-  
+
   if (text.startsWith('/login_adbot')) {
     return await handleLoginCommand(message)
   }
-  
+
   if (text.startsWith('/reset_adbot')) {
     return await handleResetCommand(message)
   }
-  
+
   if (text.startsWith('/status_adbot')) {
     return await handleStatusCommand(message)
   }
@@ -175,14 +175,14 @@ async function handleStartCommand(message: TelegramMessage): Promise<{
 
     // Parse start parameter
     const startParam = parseStartParameter(message.text || '')
-    
+
     // Jika tidak ada start parameter, kirim pesan help
     if (!startParam) {
       await sendTelegramMessage({
         chatId,
         message: `👋 *Selamat datang di SOROBOT Bot!*\n\n` +
           `Untuk menggunakan bot ini, Anda perlu setup melalui aplikasi web terlebih dahulu:\n\n` +
-          `1. Login ke aplikasi: https://ads.sorobot.id\n` +
+          `1. Login ke aplikasi: https://app.adspilot.id\n` +
           `2. Pergi ke halaman Settings/Telegram\n` +
           `3. Klik tombol "Setup Telegram"\n` +
           `4. Gunakan link yang diberikan untuk menghubungkan bot\n\n` +
@@ -192,7 +192,7 @@ async function handleStartCommand(message: TelegramMessage): Promise<{
           `• /reset_adbot - Reset password via Telegram`,
         parseMode: 'Markdown',
       })
-      
+
       return {
         success: true,
         message: 'Help message sent',
@@ -594,7 +594,7 @@ async function handleResetFlow(message: TelegramMessage, session: ChatSession): 
     }
 
     // Dapatkan base URL (gunakan environment variable atau default)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'https://ads.sorobot.id'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'https://app.adspilot.id'
     const resetLink = `${baseUrl}/auth/reset-password?token=${resetToken}`
 
     // Kirim link reset password ke Telegram user

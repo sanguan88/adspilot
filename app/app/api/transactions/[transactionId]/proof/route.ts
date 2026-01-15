@@ -168,7 +168,7 @@ export async function POST(
 
         if (superadminResult.rows.length > 0 && userInfo) {
           const { escapeMarkdown } = await import('@/tele/utils');
-          
+
           const formatPrice = (price: number) => {
             return new Intl.NumberFormat('id-ID', {
               style: 'currency',
@@ -205,7 +205,7 @@ export async function POST(
           if (publicUrl.startsWith('/uploads/payment-proofs/')) {
             apiUrl = publicUrl.replace('/uploads/payment-proofs/', '/api/uploads/payment-proofs/');
           }
-          
+
           let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
           if (!baseUrl) {
             // Try to get from VERCEL_URL or construct from request
@@ -213,13 +213,13 @@ export async function POST(
               baseUrl = `https://${process.env.VERCEL_URL}`;
             } else {
               // Use default production URL
-              baseUrl = 'https://shopadexpert.com';
+              baseUrl = 'https://app.adspilot.id';
             }
           }
-          
+
           // Construct photo URL using API route
           const photoUrl = `${baseUrl}${apiUrl}`;
-          
+
           console.log(`[Payment Proof] Photo URL: ${photoUrl}`);
 
           // Send notification with photo to all superadmin users
@@ -234,7 +234,7 @@ export async function POST(
 
               // Convert to string and clean
               let chatIdStr = String(chatIdRaw).trim();
-              
+
               // Remove any non-digit characters except minus sign at start
               if (chatIdStr.startsWith('-')) {
                 chatIdStr = '-' + chatIdStr.substring(1).replace(/\D/g, '');
@@ -260,7 +260,7 @@ export async function POST(
 
               let result;
               let photoSent = false;
-              
+
               // Try to send photo first
               try {
                 result = await sendTelegramPhoto(
@@ -269,7 +269,7 @@ export async function POST(
                   caption,
                   'Markdown'
                 );
-                
+
                 if (result.ok) {
                   photoSent = true;
                   console.log(`[Payment Proof] ✅ Photo sent successfully`);
@@ -278,10 +278,10 @@ export async function POST(
                 }
               } catch (photoError: any) {
                 console.warn(`[Payment Proof] Failed to send photo (${photoError.message}), sending text with image link instead`);
-                
+
                 // Add image link to caption if photo fails
                 const captionWithLink = caption + `\n\n📎 *Link Bukti Pembayaran:*\n${photoUrl}`;
-                
+
                 // Fallback to text message with image link
                 const { sendTelegramMessage } = await import('@/tele/service');
                 result = await sendTelegramMessage({
@@ -307,11 +307,11 @@ export async function POST(
 
           // Wait for all notifications and log results
           const results = await Promise.allSettled(notificationPromises);
-          const successCount = results.filter(r => 
+          const successCount = results.filter(r =>
             r.status === 'fulfilled' && r.value && r.value.success === true
           ).length;
           const failCount = results.length - successCount;
-          
+
           if (successCount > 0) {
             console.log(`[Payment Proof] ✅ Sent Telegram notifications with photo to ${successCount} superadmin(s)`);
           }
@@ -339,7 +339,7 @@ export async function POST(
     }
   } catch (error: any) {
     console.error('Upload payment proof error:', error);
-    
+
     // Handle authentication error specifically
     if (error.message === 'Authentication required') {
       return NextResponse.json(
@@ -347,7 +347,7 @@ export async function POST(
         { status: 401 }
       );
     }
-    
+
     return NextResponse.json(
       { success: false, error: error.message || 'Terjadi kesalahan saat upload bukti pembayaran' },
       { status: 500 }

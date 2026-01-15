@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Generate URL based on type
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://aff.shopadexpert.com'
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://aff.adspilot.id'
       const url = type === 'landing'
         ? `${baseUrl}/landing?ref=${finalRef}`
         : `${baseUrl}/checkout?ref=${finalRef}`

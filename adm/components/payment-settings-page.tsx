@@ -120,7 +120,7 @@ export function PaymentSettingsPage() {
           activeMethod: data.data.activeMethod,
           bankAccounts: data.data.bankAccounts || [],
           gatewayConfig: data.data.gatewayConfig,
-          confirmationEmail: data.data.confirmationEmail || 'support@shopadexpert.com',
+          confirmationEmail: data.data.confirmationEmail || 'support@adspilot.id',
           defaultVoucherEnabled: data.data.defaultVoucherEnabled || false,
           defaultVoucherId: data.data.defaultVoucherId || null,
           defaultVoucher: data.data.defaultVoucher || null,
@@ -497,7 +497,7 @@ export function PaymentSettingsPage() {
                     confirmationEmail: e.target.value,
                   })
                 }
-                placeholder="support@shopadexpert.com"
+                placeholder="support@adspilot.id"
                 className="mt-2"
               />
               <p className="text-xs text-muted-foreground mt-1">

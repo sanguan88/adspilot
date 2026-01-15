@@ -8,12 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { 
-  CheckCircle2, 
-  Copy, 
-  Building2, 
-  CreditCard, 
-  Clock, 
+import {
+  CheckCircle2,
+  Copy,
+  Building2,
+  CreditCard,
+  Clock,
   AlertCircle,
   Package,
   ArrowRight,
@@ -85,7 +85,7 @@ function PaymentConfirmationContent() {
   const userId = searchParams.get('userId')
   const planId = searchParams.get('planId') || '3-month'
   const transactionId = searchParams.get('transactionId')
-  
+
   const [copiedAccount, setCopiedAccount] = useState<string | null>(null)
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings | null>(null)
   const [loadingSettings, setLoadingSettings] = useState(true)
@@ -161,13 +161,13 @@ function PaymentConfirmationContent() {
 
       try {
         setLoadingTransaction(true)
-        const url = transactionId 
+        const url = transactionId
           ? `/api/transactions/${transactionId}`
           : `/api/transactions/undefined?userId=${userId}`
-        
+
         const response = await fetch(url)
         const data = await response.json()
-        
+
         if (data.success && data.data) {
           setTransaction(data.data)
         }
@@ -187,7 +187,7 @@ function PaymentConfirmationContent() {
       try {
         const response = await fetch('/api/payment-settings/public')
         const data = await response.json()
-        
+
         if (data.success) {
           setPaymentSettings(data.data)
         }
@@ -262,17 +262,17 @@ function PaymentConfirmationContent() {
                     <div>
                       <h3 className="font-semibold text-lg">{selectedPlan.name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {selectedPlan.durationMonths === 1 ? '1 bulan' : 
-                         selectedPlan.durationMonths === 3 ? '3 bulan' : 
-                         selectedPlan.durationMonths === 6 ? '6 bulan' : 
-                         `${selectedPlan.durationMonths} bulan`}
+                        {selectedPlan.durationMonths === 1 ? '1 bulan' :
+                          selectedPlan.durationMonths === 3 ? '3 bulan' :
+                            selectedPlan.durationMonths === 6 ? '6 bulan' :
+                              `${selectedPlan.durationMonths} bulan`}
                       </p>
                     </div>
                     <Badge variant="secondary">
-                      {selectedPlan.durationMonths === 1 ? '1 bulan' : 
-                       selectedPlan.durationMonths === 3 ? '3 bulan' : 
-                       selectedPlan.durationMonths === 6 ? '6 bulan' : 
-                       `${selectedPlan.durationMonths} bulan`}
+                      {selectedPlan.durationMonths === 1 ? '1 bulan' :
+                        selectedPlan.durationMonths === 3 ? '3 bulan' :
+                          selectedPlan.durationMonths === 6 ? '6 bulan' :
+                            `${selectedPlan.durationMonths} bulan`}
                     </Badge>
                   </div>
                 ) : loadingPlans ? (
@@ -287,7 +287,7 @@ function PaymentConfirmationContent() {
                   </div>
                 )}
                 <Separator className="my-4" />
-                
+
                 {/* Price Breakdown */}
                 {loadingTransaction ? (
                   <div className="text-center py-4">
@@ -487,7 +487,7 @@ function PaymentConfirmationContent() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Penting:</strong> Pastikan nominal transfer sesuai dengan total pembayaran. 
+                <strong>Penting:</strong> Pastikan nominal transfer sesuai dengan total pembayaran.
                 Jika ada perbedaan nominal, mohon hubungi admin sebelum melakukan transfer.
               </AlertDescription>
             </Alert>
@@ -510,10 +510,10 @@ function PaymentConfirmationContent() {
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Durasi</span>
                         <span className="font-medium">
-                          {selectedPlan.durationMonths === 1 ? '1 bulan' : 
-                           selectedPlan.durationMonths === 3 ? '3 bulan' : 
-                           selectedPlan.durationMonths === 6 ? '6 bulan' : 
-                           `${selectedPlan.durationMonths} bulan`}
+                          {selectedPlan.durationMonths === 1 ? '1 bulan' :
+                            selectedPlan.durationMonths === 3 ? '3 bulan' :
+                              selectedPlan.durationMonths === 6 ? '6 bulan' :
+                                `${selectedPlan.durationMonths} bulan`}
                         </span>
                       </div>
                     </>
@@ -580,8 +580,8 @@ function PaymentConfirmationContent() {
                     </Link>
                   </Button>
                   <Button variant="outline" className="w-full" asChild>
-                    <a 
-                      href={`mailto:${paymentSettings?.confirmationEmail || 'payment@shopadexpert.com'}`}
+                    <a
+                      href={`mailto:${paymentSettings?.confirmationEmail || 'payment@adspilot.id'}`}
                       onClick={handleContactAdmin}
                     >
                       <Mail className="mr-2 h-4 w-4" />
@@ -593,7 +593,7 @@ function PaymentConfirmationContent() {
                 <Alert>
                   <Clock className="h-4 w-4" />
                   <AlertDescription className="text-xs">
-                    <strong>Catatan:</strong> Setelah login, Anda akan diarahkan ke halaman status pembayaran. 
+                    <strong>Catatan:</strong> Setelah login, Anda akan diarahkan ke halaman status pembayaran.
                     Akun akan aktif setelah pembayaran dikonfirmasi oleh admin (maksimal 1x24 jam).
                   </AlertDescription>
                 </Alert>
@@ -606,8 +606,8 @@ function PaymentConfirmationContent() {
         <div className="text-center mt-8 text-sm text-muted-foreground">
           <p>
             Butuh bantuan? Hubungi kami di{" "}
-            <a href="mailto:support@shopadexpert.com" className="text-primary hover:underline">
-              support@shopadexpert.com
+            <a href="mailto:support@adspilot.id" className="text-primary hover:underline">
+              support@adspilot.id
             </a>
             {" "}atau via Telegram
           </p>

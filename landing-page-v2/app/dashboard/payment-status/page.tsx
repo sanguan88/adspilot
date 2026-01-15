@@ -602,7 +602,7 @@ export default function PaymentStatusPage() {
                   <div className="space-y-2">
                     <Button asChild className="w-full" size="sm">
                       <a
-                        href={`mailto:${paymentSettings?.confirmationEmail || 'payment@shopadexpert.com'}`}
+                        href={`mailto:${paymentSettings?.confirmationEmail || 'payment@adspilot.id'}`}
                         onClick={handleContactAdmin}
                       >
                         <Mail className="mr-2 h-3 w-3" />

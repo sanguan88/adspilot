@@ -25,7 +25,7 @@
   - [x] Global configuration form
   - [x] Affiliate settings (Move to Affiliate Management)
   - [ ] Email settings (SMTP config)
-  - [ ] Payment settings (Midtrans config)
+  - [x] Payment settings (Manual Bank Instructions)
 
 - [x] **Audit Logs**
   - [x] Create `audit_logs` table
@@ -124,7 +124,7 @@
   - [x] Add email triggers in API routes (Register API connected)
   - [ ] **Critical Missing Integrations:**
     - [ ] `api/auth/forgot-password` (Currently Telegram only)
-    - [ ] `api/webhooks/midtrans` (Payment Success)
+    - [x] `api/auth/payment-confirmation` (Manual Proof Upload)
     - [ ] Admin Manual Actions (Approval & Subscription Update)
   - [ ] Test all email types
 
@@ -162,7 +162,7 @@
 - [ ] Referral attribution saved in database
 - [ ] Login to user portal
 - [ ] Subscribe to plan
-- [ ] Payment successful (Midtrans)
+- [ ] Payment proof uploaded (Manual Transfer)
 - [ ] Subscription activated
 - [ ] Commission created for affiliate
 - [ ] Email notifications sent
@@ -395,10 +395,10 @@
 
 ## 🚨 RISK MITIGATION
 
-### Risk 1: Payment Gateway Issues
-- **Mitigation:** Test all payment flows thoroughly
-- **Backup:** Manual payment verification process
-- **Monitoring:** Real-time payment status tracking
+### Risk 1: Manual Verification Delay
+- **Mitigation:** Admin notification on new payment proof
+- **Backup:** Daily manual check
+- **Monitoring:** Dashboard 'Pending' status tracker
 
 ### Risk 2: Server Downtime
 - **Mitigation:** PM2 auto-restart, load balancing

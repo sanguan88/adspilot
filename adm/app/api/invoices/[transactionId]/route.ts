@@ -17,7 +17,7 @@ const COMPANY_INFO = {
   name: 'Shopee Ads Expert',
   address: 'Indonesia',
   phone: '',
-  email: 'support@shopadexpert.com',
+  email: 'support@adspilot.id',
 };
 
 /**
@@ -72,24 +72,24 @@ export async function GET(
         invoiceNumber: `INV-${transaction.transaction_id}`,
         invoiceDate: transaction.created_at,
         transactionId: transaction.transaction_id,
-        
+
         companyName: COMPANY_INFO.name,
         companyAddress: COMPANY_INFO.address,
         companyPhone: COMPANY_INFO.phone,
         companyEmail: COMPANY_INFO.email,
-        
+
         customerName: transaction.nama_lengkap || transaction.username || 'Customer',
         customerEmail: transaction.email,
-        
+
         planName: planNameMap[transaction.plan_id] || transaction.plan_id,
         planId: transaction.plan_id,
-        
+
         baseAmount: parseFloat(transaction.base_amount),
         ppnPercentage: parseFloat(transaction.ppn_percentage),
         ppnAmount: parseFloat(transaction.ppn_amount),
         uniqueCode: transaction.unique_code || 0,
         totalAmount: parseFloat(transaction.total_amount),
-        
+
         paymentStatus: transaction.payment_status,
         paymentMethod: transaction.payment_method,
         paymentDate: transaction.payment_confirmed_at || undefined,
@@ -122,7 +122,7 @@ export async function GET(
 
   } catch (error: any) {
     console.error('Generate invoice error:', error);
-    
+
     return NextResponse.json(
       { success: false, error: error.message || 'Terjadi kesalahan saat generate invoice' },
       { status: 500 }
