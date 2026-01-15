@@ -360,10 +360,19 @@ export default function PaymentStatusPage() {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Durasi</span>
                     <span className="font-medium">
-                      {selectedPlan.durationMonths === 1 ? '1 bulan' :
-                        selectedPlan.durationMonths === 3 ? '3 bulan' :
-                          selectedPlan.durationMonths === 6 ? '6 bulan' :
-                            `${selectedPlan.durationMonths} bulan`}
+                      {(() => {
+                        // Get duration from plan, or fallback based on planId
+                        let duration = selectedPlan.durationMonths
+                        if (!duration || duration === 0) {
+                          // Fallback based on planId
+                          const planId = transaction?.planId || selectedPlan.planId
+                          if (planId?.includes('1-month') || planId === '1-month') duration = 1
+                          else if (planId?.includes('3-month') || planId === '3-month') duration = 3
+                          else if (planId?.includes('6-month') || planId === '6-month') duration = 6
+                          else duration = 1 // Default to 1 month
+                        }
+                        return `${duration} bulan`
+                      })()}
                     </span>
                   </div>
                   <Separator className="my-3" />
