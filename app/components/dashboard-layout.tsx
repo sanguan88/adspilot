@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { BarChart3, Zap, RotateCcw, ChevronLeft, ChevronRight, User, Target, Store, LogOut, Activity, Settings, CreditCard, AlertTriangle, X, ArrowRight, BookOpen, Crown } from "lucide-react"
+import { BarChart3, Zap, RotateCcw, ChevronLeft, ChevronRight, User, Target, Store, LogOut, Activity, Settings, CreditCard, AlertTriangle, X, ArrowRight, BookOpen, Crown, Share2 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { TopLoadingBar } from "@/components/top-loading-bar"
@@ -28,6 +28,7 @@ const sidebarItems = [
   { icon: Activity, label: "Rekam Medic", href: "/rekam-medic", description: "Analisis funneling dan BCG Matrix iklan" },
   { icon: RotateCcw, label: "Logs", href: "/logs", description: "View system logs and activities" },
   { icon: CreditCard, label: "Subscription", href: "/subscription", description: "Kelola langganan dan invoice" },
+  { icon: Share2, label: "Affiliate", href: "/affiliate", description: "Program Partner AdsPilot" },
   { icon: BookOpen, label: "Tutorial", href: "/tutorial", description: "Panduan dan tutorial penggunaan aplikasi" },
   { icon: Settings, label: "Settings", href: "/settings", description: "Pengaturan akun dan preferensi" },
 ]
