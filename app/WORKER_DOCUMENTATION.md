@@ -51,4 +51,17 @@ Karena eksekusi bisa memakan waktu lama (misal 10 menit untuk 20 iklan), berikut
 3. **Memory**: Untuk 100-500 user aktif bersamaan, RAM minimal 2GB sudah sangat mencukupi.
 
 ---
-*Terakhir diperbarui: 10 Januari 2026*
+## 6. Subscription Monitoring (Daily Check)
+
+Sistem kini dilengkapi dengan **worker otomatis** untuk memantau masa aktif langganan user.
+
+- **Jadwal**: Berjalan setiap hari sekali, dimulai setelah jam **09:00 WIB**.
+- **Fungsi**: 
+  1. Mengecek subscription yang akan kedaluwarsa (H-3, H-1, H-0).
+  2. Mengirimkan **Notifikasi Reminder** via Telegram Personal ke user.
+  3. Mengupdate status subscription menjadi `expired` jika sudah melewati tanggal berakhir.
+- **Integrasi**: Diintegrasikan langsung ke dalam `automation-worker` loop, sehingga tidak memerlukan setup Cron Job terpisah di server.
+
+---
+
+*Terakhir diperbarui: 15 Januari 2026*

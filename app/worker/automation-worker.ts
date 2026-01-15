@@ -9,8 +9,11 @@ import { logger } from './logger'
 import { getScheduledRules } from './scheduler'
 import { executeRule } from './rule-executor'
 
+import { checkExpiringSubscriptions } from './subscription-monitor'
+
 let isRunning = false
 let workerInterval: NodeJS.Timeout | null = null
+let lastDailyCheck: Date | null = null
 
 /**
  * Execute all scheduled rules
@@ -26,6 +29,23 @@ async function executeScheduledRules(): Promise<void> {
 
   try {
     logger.info('Starting rule execution cycle')
+
+    // Daily Subscription Check (runs once a day after 09:00)
+    const now = new Date()
+    if (now.getHours() >= 9) {
+      const todayStr = now.toDateString()
+      const lastCheckStr = lastDailyCheck?.toDateString()
+
+      if (todayStr !== lastCheckStr) {
+        logger.info('Running daily subscription check...')
+        try {
+          await checkExpiringSubscriptions()
+          lastDailyCheck = now
+        } catch (error) {
+          logger.error('Error running daily subscription check', error)
+        }
+      }
+    }
 
     // Get scheduled rules
     const rules = await getScheduledRules()

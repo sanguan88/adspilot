@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
-import { Plus, X, ChevronRight, Clock, AlertTriangle, Calendar, ChevronDown, ChevronRight as ChevronRightIcon, HelpCircle, GripVertical, Trash2, Search, Check, Zap, DollarSign, Play, Pause as PauseIcon, Copy, TrendingDown, FileSearch, Target, Eye, Edit2, RefreshCw, Bell } from "lucide-react"
+import { Plus, X, ChevronRight, Clock, AlertTriangle, Calendar, ChevronDown, ChevronRight as ChevronRightIcon, HelpCircle, GripVertical, Trash2, Search, Check, Zap, DollarSign, Play, Pause as PauseIcon, Copy, TrendingDown, FileSearch, Target, Eye, Edit2, RefreshCw, Bell, Info, Sparkles, GitMerge } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -211,7 +211,8 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
         "set_budget": "Set Budget",
         "start_campaign": "Mulai Iklan",
         "pause_campaign": "Pause Iklan",
-        "telegram_notification": "Notifikasi Telegram"
+        "pause_campaign": "Pause Iklan",
+        "telegram_notification": "Hanya Notif Telegram"
       }
       const normalizedActions = (initialData.actions || []).map((action: any, index: number) => {
         return {
@@ -1626,7 +1627,7 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
     },
     {
       value: "telegram_notification",
-      label: "Notifikasi Telegram",
+      label: "Hanya Notif Telegram",
       icon: Bell,
       description: "Kirim notifikasi ke Telegram dengan pesan custom"
     }
@@ -1751,6 +1752,93 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
             </div>
           ))}
         </div>
+      </div>
+    )
+  }
+
+  const renderNaturalLanguageSummary = () => {
+    const group = ruleGroups[0]
+    const logicalOperator = group?.logicalOperator || 'AND'
+    const connectorText = logicalOperator === 'OR' ? 'ATAU' : 'DAN'
+    const connectorColor = logicalOperator === 'OR' ? 'text-amber-600' : 'text-teal-600'
+
+    // Logic Sentence Construction
+    return (
+      <div className="text-sm leading-relaxed text-gray-800">
+        <span className="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded mr-1">JIKA</span>
+        {(!group || group.conditions.length === 0) ? (
+          <span className="text-gray-400 italic">belum ada kondisi yang diatur...</span>
+        ) : (
+          group.conditions.map((condition: any, index: number) => {
+            const metricInfo = metrics.find(m => m.value === condition.metric)
+            const metricLabel = metricInfo?.label || condition.metric
+            const operatorInfo = operators.find(op => op.value === condition.operator)
+            const operatorLabel = operatorInfo?.label.replace(/\(.*\)/, '').trim().toLowerCase() || condition.operator
+
+            let valueFormatted = condition.value
+            // Format based on metric
+            const isCurrency = ['broad_gmv', 'cost', 'cpc', 'cpm', 'saldo'].includes(condition.metric)
+            const isPercent = ['acos', 'ctr'].includes(condition.metric)
+
+            if (isCurrency && !isNaN(Number(condition.value))) {
+              valueFormatted = `Rp ${Number(condition.value).toLocaleString('id-ID')}`
+            } else if (isPercent && !isNaN(Number(condition.value))) {
+              valueFormatted = `${condition.value}%`
+            }
+
+            return (
+              <span key={condition.id}>
+                {index > 0 && <span className={`font-bold mx-1 ${connectorColor}`}>{connectorText}</span>}
+                <span className="font-semibold text-gray-700">{metricLabel}</span>
+                {' '}
+                <span className="text-gray-600">{operatorLabel}</span>
+                {' '}
+                <span className="font-bold text-gray-900">{valueFormatted}</span>
+              </span>
+            )
+          })
+        )}
+
+        <div className="my-2"></div>
+
+        <span className="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded mr-1">MAKA</span>
+        {actions.length === 0 ? (
+          <span className="text-gray-400 italic">... (belum ada aksi)</span>
+        ) : (
+          actions.map((action, index) => {
+            let actionText = ""
+            switch (action.type) {
+              case "add_budget":
+                actionText = `Tambah Budget ${action.adjustmentType === 'percentage' ? `${action.percentage}%` : `Rp ${Number(action.amount).toLocaleString('id-ID')}`}`
+                break
+              case "reduce_budget":
+                actionText = `Kurangi Budget ${action.adjustmentType === 'percentage' ? `${action.percentage}%` : `Rp ${Number(action.amount).toLocaleString('id-ID')}`}`
+                break
+              case "set_budget":
+                actionText = `Set Budget menjadi Rp ${Number(action.amount.replace(/\./g, '')).toLocaleString('id-ID')}`
+                break
+              case "start_campaign":
+                actionText = `Mulai Iklan`
+                break
+              case "pause_campaign":
+                actionText = `Pause Iklan`
+                break
+              case "telegram_notification":
+                actionText = `Kirim Notifikasi Telegram`
+                break
+              default:
+                actionText = action.label || action.type
+            }
+
+            return (
+              <span key={index}>
+                {index > 0 && <span className="font-bold text-gray-500 mx-1">DAN</span>}
+                <span className="font-medium text-gray-900 border-b border-teal-200 pb-0.5">{actionText}</span>
+              </span>
+            )
+          })
+        )}
+        .
       </div>
     )
   }
@@ -2393,7 +2481,16 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
                               key={interval}
                               variant={selectedInterval === interval ? "default" : "outline"}
                               size="sm"
-                              onClick={() => setSelectedInterval(interval)}
+                              onClick={() => {
+                                setSelectedInterval(interval)
+                                // Convert interval string to seconds for custom input
+                                const timeValue = parseInt(interval.split(' ')[0])
+                                const unit = interval.split(' ')[1]
+                                let seconds = 0
+                                if (unit === 'menit') seconds = timeValue * 60
+                                if (unit === 'jam') seconds = timeValue * 3600
+                                setCustomInterval(seconds.toString())
+                              }}
                               className={
                                 selectedInterval === interval
                                   ? ""
@@ -2413,7 +2510,12 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
                           <Input
                             type="number"
                             value={customInterval}
-                            onChange={(e) => setCustomInterval(e.target.value)}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              setCustomInterval(val)
+                              // If user types manually, deselect any template button unless the value matches exactly (optional, simpler to just deselect)
+                              setSelectedInterval("")
+                            }}
                             placeholder="Masukkan detik"
                             className="w-32 bg-white"
                             min="300"
@@ -2421,7 +2523,10 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
                           <Button
                             type="button"
                             size="sm"
-                            onClick={handleSetCustomInterval}
+                            onClick={() => {
+                              handleSetCustomInterval()
+                              // Note: handleSetCustomInterval sets selectedInterval to formatted string, which might not match exact template string (e.g. "15 menit" vs "15 menit 0 detik"), but that is fine.
+                            }}
                             disabled={!customInterval || isNaN(Number(customInterval)) || parseInt(customInterval) < 300}
                             className="bg-gray-500 hover:bg-gray-600 text-white"
                           >
@@ -2429,7 +2534,11 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
                           </Button>
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
-                          Saat ini: {selectedInterval}
+                          {customInterval ? (
+                            <span className="text-amber-600 font-medium animate-pulse">Tekan tombol Set untuk simpan</span>
+                          ) : (
+                            <span>Saat ini: <span className="font-semibold text-gray-900">{selectedInterval}</span></span>
+                          )}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
                           Minimal: 600 detik (10 menit)
@@ -2530,295 +2639,218 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
         )
 
       case 3:
+        // Assume single group for simplified UI (Step 3)
+        const group = ruleGroups[0] || { id: 'default', conditions: [] }
+
         return (
-          <div className="space-y-4 h-full overflow-y-auto">
+          <div className="space-y-6 h-full overflow-y-auto pb-4">
             <div className="space-y-4">
-              {/* Rule Groups */}
-              {ruleGroups.map((group, groupIndex) => (
-                <Fragment key={group.id}>
-                  {/* Connector between groups */}
-                  {groupIndex > 0 && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-px bg-gray-300"></div>
-                      <Select value={group.type} onValueChange={(value) => handleSetGroupType(group.id, value)}>
-                        <SelectTrigger className="w-20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="AND">AND</SelectItem>
-                          <SelectItem value="OR">OR</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="flex-1 h-px bg-gray-300"></div>
-                    </div>
-                  )}
+              {/* Header Info */}
+              {/* Header Info - Logic Selector */}
+              <div className={`border rounded-2xl p-3 text-sm flex items-start gap-3 transition-colors ${group.logicalOperator === 'OR' ? 'bg-amber-50 border-amber-100 text-amber-800' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
+                <Info className={`w-5 h-5 shrink-0 mt-0.5 ${group.logicalOperator === 'OR' ? 'text-amber-600' : 'text-blue-600'}`} />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold">Logika Rule:</span>
+                    <Select
+                      value={group.logicalOperator || "AND"}
+                      onValueChange={(val) => handleSetGroupLogicalOperator(group.id, val)}
+                    >
+                      <SelectTrigger className="h-7 w-[180px] bg-white/80 border-0 shadow-sm text-xs font-medium">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AND">Semua Terpenuhi (AND)</SelectItem>
+                        <SelectItem value="OR">Salah Satu (OR)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="text-xs opacity-90 leading-tight">
+                    {group.logicalOperator === 'OR'
+                      ? "Rule akan dijalankan jika SALAH SATU dari kondisi di bawah ini benar."
+                      : "Rule akan dijalankan HANYA jika SEMUA kondisi di bawah ini benar."}
+                  </div>
+                </div>
+              </div>
 
-                  {/* Condition Group Box */}
-                  <div className="border border-gray-200 rounded-sm bg-white">
-                    <div className="p-3 border-l-4 border-primary">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Select value={group.logicalOperator} onValueChange={(value) => handleSetGroupLogicalOperator(group.id, value)}>
-                            <SelectTrigger className="w-20">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="AND">AND</SelectItem>
-                              <SelectItem value="OR">OR</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <span className="text-sm text-gray-600">{group.conditions.length} kondisi</span>
-                        </div>
-                        {ruleGroups.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveGroup(group.id)}
-                            className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-6 w-6 p-0"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        )}
+              {/* Conditions List */}
+              <div className="space-y-3">
+                {group.conditions.length === 0 && !showConditionForm ? (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                        <GitMerge className="w-6 h-6" />
                       </div>
-
-                      {group.conditions.length === 0 && !showConditionForm ? (
-                        <div className="text-center py-6">
-                          <p className="text-gray-500 mb-3">Belum ada kondisi dalam grup ini</p>
-                          <Button
-                            variant="tertiary"
-                            size="sm"
-                            onClick={() => {
-                              setActiveGroupId(group.id)
-                              setShowConditionForm(true)
-                            }}
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Tambah Kondisi
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {/* Existing Conditions */}
-                          {group.conditions.map((condition: any, index: number) => {
-                            // Hide condition if it's being edited
-                            if (condition.id === editingConditionId) return null
-
-                            return (
-                              <div key={condition.id} className="p-3 bg-white rounded-sm border border-gray-200">
-                                <div className="flex items-center gap-2">
-                                  {/* Drag Handle */}
-                                  <div className="cursor-move">
-                                    <GripVertical className="w-4 h-4 text-gray-400" />
-                                  </div>
-
-                                  {/* Metric Pill */}
-                                  <div className="px-3 py-1 bg-success/10 text-success rounded-full text-sm font-medium">
-                                    {metrics.find(m => m.value === condition.metric)?.label || condition.metric}
-                                  </div>
-
-                                  {/* Operator Pill */}
-                                  <div className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
-                                    {operators.find(op => op.value === condition.operator)?.label || condition.operator}
-                                  </div>
-
-                                  {/* Value Pill */}
-                                  <div className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
-                                    {condition.value}
-                                  </div>
-
-                                  <div className="flex items-center gap-1 ml-auto">
-                                    {/* Edit Button */}
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleEditCondition(condition.id, group.id)}
-                                      disabled={showConditionForm}
-                                      className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 h-6 w-6 p-0"
-                                    >
-                                      <Edit2 className="w-3 h-3" />
-                                    </Button>
-
-                                    {/* Delete Button */}
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        setRuleGroups(ruleGroups.map(g =>
-                                          g.id === group.id
-                                            ? { ...g, conditions: g.conditions.filter((_: any, i: number) => i !== index) }
-                                            : g
-                                        ))
-                                      }}
-                                      disabled={showConditionForm}
-                                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 w-6 p-0"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          })}
-
-                          {/* Add Condition Form */}
-                          {showConditionForm && activeGroupId === group.id && (
-                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-sm">
-                              <div className="grid grid-cols-3 gap-3 mb-3">
-                                <div>
-                                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Metrik</Label>
-                                  <Select value={newCondition.metric} onValueChange={(value) => setNewCondition({ ...newCondition, metric: value })}>
-                                    <SelectTrigger className="h-10 bg-white">
-                                      {newCondition.metric ? (
-                                        <span className="font-medium">{metrics.find(m => m.value === newCondition.metric)?.label}</span>
-                                      ) : (
-                                        <SelectValue placeholder="Pilih metrik" />
-                                      )}
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {metrics.map((metric) => (
-                                        <SelectItem key={metric.value} value={metric.value}>
-                                          <div className="flex flex-col">
-                                            <div className="flex items-center gap-2">
-                                              <span className="font-medium">{metric.label}</span>
-                                              <span className="text-xs text-gray-500">({metric.unit})</span>
-                                            </div>
-                                            <span className="text-xs text-gray-500">{metric.description}</span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div>
-                                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Operator</Label>
-                                  <Select value={newCondition.operator} onValueChange={(value) => setNewCondition({ ...newCondition, operator: value })}>
-                                    <SelectTrigger className="h-10 bg-white">
-                                      {newCondition.operator ? (
-                                        <span className="font-medium">{operators.find(op => op.value === newCondition.operator)?.label}</span>
-                                      ) : (
-                                        <SelectValue placeholder="Pilih operator" />
-                                      )}
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {operators.map((operator) => (
-                                        <SelectItem key={operator.value} value={operator.value}>
-                                          <div className="flex flex-col">
-                                            <span className="font-medium">{operator.label}</span>
-                                            <span className="text-xs text-gray-500">{operator.description}</span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div>
-                                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Nilai</Label>
-                                  <Input
-                                    value={newCondition.value}
-                                    onChange={(e) => setNewCondition({ ...newCondition, value: e.target.value })}
-                                    placeholder="Masukkan nilai"
-                                    className="h-10 bg-white"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={handleAddCondition}
-                                  disabled={!newCondition.metric || !newCondition.operator || !newCondition.value}
-                                >
-                                  <Plus className="w-3 h-3 mr-1" />
-                                  {editingConditionId ? "Update Kondisi" : "Simpan Kondisi"}
-                                </Button>
-                                <Button
-                                  variant="tertiary"
-                                  size="sm"
-                                  onClick={handleCancelCondition}
-                                >
-                                  Batal
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Add Condition Button (when conditions exist) */}
-                          {group.conditions.length > 0 && !showConditionForm && (
-                            <Button
-                              variant="tertiary"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => {
-                                setActiveGroupId(group.id)
-                                setShowConditionForm(true)
-                              }}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Tambah Kondisi
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                      <p className="text-gray-900 font-medium">Belum ada kondisi</p>
+                      <p className="text-gray-500 text-sm max-w-xs mx-auto mb-2">Tambahkan filter metrik (contoh: ROAS &lt; 5) untuk memicu rule otomatis.</p>
+                      <Button
+                        variant="default"
+                        onClick={() => {
+                          setActiveGroupId(group.id)
+                          setShowConditionForm(true)
+                        }}
+                        className="bg-teal-600 hover:bg-teal-700 shadow-sm"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Tambah Kondisi
+                      </Button>
                     </div>
                   </div>
-                </Fragment>
-              ))}
+                ) : (
+                  <div className="space-y-2">
+                    {group.conditions.map((condition: any, index: number) => {
+                      if (condition.id === editingConditionId) return null
 
-              {/* Group Action Button */}
-              <div className="flex justify-center">
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  className="rounded-sm px-4 py-2"
-                  onClick={handleAddGroup}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Tambah Grup
-                </Button>
-              </div>
+                      const metricInfo = metrics.find(m => m.value === condition.metric)
+                      const operatorInfo = operators.find(op => op.value === condition.operator)
 
-              {/* Condition Summary */}
-              <div className="bg-orange-50 border border-orange-200 rounded-sm p-3">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="font-medium text-orange-800">Ringkasan Kondisi:</span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <HelpCircle className="w-4 h-4 text-orange-600 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-800 text-white border-gray-700 max-w-xs">
-                        <div className="space-y-2">
-                          <div className="font-medium text-white">Cara Kerjanya:</div>
-                          <ul className="text-sm space-y-1">
-                            <li>• Grup AND: SEMUA kondisi dalam grup harus terpenuhi</li>
-                            <li>• Grup OR: SALAH SATU kondisi dalam grup harus terpenuhi</li>
-                            <li>• Antar grup: SEMUA grup harus terpenuhi (THEN logic)</li>
-                            <li>• Kondisi diperiksa setiap 15 menit</li>
-                          </ul>
+                      // Format Value & Operator
+                      let formattedValue = condition.value
+                      const isCurrency = ['broad_gmv', 'cost', 'cpc', 'cpm', 'saldo'].includes(condition.metric)
+                      const isPercent = ['acos', 'ctr'].includes(condition.metric)
+
+                      if (isCurrency && !isNaN(Number(condition.value))) {
+                        formattedValue = `Rp ${Number(condition.value).toLocaleString('id-ID')}`
+                      } else if (isPercent && !isNaN(Number(condition.value))) {
+                        formattedValue = `${condition.value}%`
+                      }
+
+                      const operatorLabel = operatorInfo?.label.replace(/\(.*\)/, '').trim() || condition.operator
+
+                      return (
+                        <div key={condition.id} className="p-3 bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3 group relative overflow-hidden">
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500"></div>
+                          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-[10px] shrink-0 ml-2">
+                            {index + 1}
+                          </div>
+
+                          <div className="flex-1 flex flex-wrap items-center gap-2 text-sm">
+                            <span className="font-semibold text-gray-800">{metricInfo?.label || condition.metric}</span>
+                            <span className="text-gray-500 text-xs uppercase font-medium tracking-wide">{operatorLabel}</span>
+                            <span className="font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-100">
+                              {formattedValue}
+                            </span>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditCondition(condition.id, group.id)}
+                              className="h-8 w-8 p-0 text-gray-400 hover:text-teal-600 hover:bg-teal-50"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setRuleGroups(ruleGroups.map(g =>
+                                  g.id === group.id
+                                    ? { ...g, conditions: g.conditions.filter((_: any, i: number) => i !== index) }
+                                    : g
+                                ))
+                              }}
+                              className="h-8 w-8 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
                         </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+                      )
+                    })}
 
-                {/* Rule Summary in Programmatic Format */}
-                <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-3">
-                  <code className="text-orange-800 font-mono text-sm">
-                    {generateRuleSummary()}
-                  </code>
-                </div>
+                    {/* Show + Tambah button if list is not empty and form is hidden */}
+                    {!showConditionForm && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setActiveGroupId(group.id)
+                          setShowConditionForm(true)
+                        }}
+                        className="w-full text-teal-700 border-teal-200 hover:bg-teal-50 border-dashed"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Tambah Kondisi
+                      </Button>
+                    )}
+                  </div>
+                )}
 
-                {/* Indonesian Explanation */}
-                <div className="space-y-1">
-                  {generateIndonesianExplanation().map((explanation, index) => (
-                    <p key={index} className="text-orange-700 text-sm">
-                      {explanation}
-                    </p>
-                  ))}
-                </div>
+                {/* Add Condition Form */}
+                {showConditionForm && (
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2 shadow-inner">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+                        <Plus className="w-4 h-4 text-teal-600" />
+                        {editingConditionId ? "Edit Kondisi" : "Kondisi Baru"}
+                      </h5>
+                      <Button variant="ghost" size="sm" onClick={handleCancelCondition} className="h-6 w-6 p-0 hover:bg-gray-200">
+                        <X className="w-4 h-4 text-gray-500" />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-gray-600 block">Metrik</Label>
+                        <Select value={newCondition.metric} onValueChange={(value) => setNewCondition({ ...newCondition, metric: value })}>
+                          <SelectTrigger className="bg-white h-9 border-gray-300">
+                            <SelectValue placeholder="Pilih metrik" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {metrics.map((metric) => (
+                              <SelectItem key={metric.value} value={metric.value}>{metric.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-gray-600 block">Operator</Label>
+                        <Select value={newCondition.operator} onValueChange={(value) => setNewCondition({ ...newCondition, operator: value })}>
+                          <SelectTrigger className="bg-white h-9 border-gray-300">
+                            <SelectValue placeholder="Pilih operator" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {operators.map((op) => (
+                              <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-gray-600 block">Nilai</Label>
+                        <Input
+                          value={newCondition.value}
+                          onChange={(e) => setNewCondition({ ...newCondition, value: e.target.value })}
+                          placeholder="Contoh: 10000"
+                          className="bg-white h-9 border-gray-300"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button variant="ghost" size="sm" onClick={handleCancelCondition} className="hover:bg-gray-200 text-gray-600">Batal</Button>
+                      <Button size="sm" onClick={handleAddCondition} disabled={!newCondition.metric || !newCondition.operator || !newCondition.value} className="bg-teal-600 hover:bg-teal-700">
+                        {editingConditionId ? "Simpan Perubahan" : "Simpan Kondisi"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Natural Language Summary - Always Visible if items exist */}
+              {(group.conditions.length > 0 || actions.length > 0) && (
+                <div className="mt-8 bg-gradient-to-r from-teal-50 to-white border border-teal-100 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3 text-teal-800 font-bold text-sm tracking-wide uppercase">
+                    <Sparkles className="w-4 h-4 text-teal-600" />
+                    Ringkasan Aturan
+                  </div>
+                  <div className="pl-4 border-l-4 border-teal-400">
+                    {renderNaturalLanguageSummary()}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )
@@ -3476,8 +3508,8 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <h4 className="font-semibold text-gray-900 mb-4">Logika Rule</h4>
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
-                <div className="text-sm font-mono text-gray-900 leading-relaxed">
-                  {generateLogicComponents()}
+                <div className="text-gray-900">
+                  {renderNaturalLanguageSummary()}
                 </div>
               </div>
             </div>
