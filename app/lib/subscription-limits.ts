@@ -162,11 +162,13 @@ export async function getUserSubscriptionLimits(
 
     if (subscriptionResult.rows.length > 0) {
       planId = subscriptionResult.rows[0].plan_id
-      planFeatures = getPlanFeatures(planId)
-      const plan = SUBSCRIPTION_PLANS.find((p: Plan) => p.id === planId)
-      
-      if (plan) {
-        planName = plan.name
+      if (planId) {
+        planFeatures = getPlanFeatures(planId)
+        const plan = SUBSCRIPTION_PLANS.find((p: Plan) => p.id === planId)
+
+        if (plan) {
+          planName = plan.name
+        }
       }
     }
 
@@ -178,7 +180,7 @@ export async function getUserSubscriptionLimits(
     // Apply override if exists
     if (overrideResult.rows.length > 0) {
       const override = overrideResult.rows[0]
-      
+
       // Override logic: NULL in override = use plan default, non-NULL = use override value
       return {
         planId: planId || null,
@@ -208,6 +210,70 @@ export async function getUserSubscriptionLimits(
       limits: getDefaultLimits(),
       hasActiveSubscription: false,
     }
+  }
+}
+
+/**
+ * Get user effective limits (plan + addons + override)
+ * This is the main function to use for checking user limits
+ * It combines:
+ * 1. Plan limits from subscription
+ * 2. Active addons (extra accounts)
+ * 3. Admin override (if exists)
+ */
+export async function getUserEffectiveLimits(
+  connection: PoolClient,
+  userId: string
+): Promise<SubscriptionInfo & { activeAddons?: any[] }> {
+  try {
+    // 1. Get base limits from plan (already includes override)
+    const planLimits = await getUserSubscriptionLimits(connection, userId)
+
+    // 2. Get active addons
+    const addonsResult = await connection.query(
+      `SELECT id, addon_type, quantity, start_date, end_date, total_price
+       FROM account_addons 
+       WHERE user_id = $1 
+       AND status = 'active' 
+       AND end_date >= CURRENT_DATE
+       ORDER BY created_at DESC`,
+      [userId]
+    )
+
+    // 3. Calculate total addon accounts
+    let addonAccounts = 0
+    const activeAddons = addonsResult.rows.map((row: any) => {
+      if (row.addon_type === 'extra_accounts') {
+        addonAccounts += row.quantity
+      }
+      return {
+        id: row.id,
+        type: row.addon_type,
+        quantity: row.quantity,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        totalPrice: parseFloat(row.total_price),
+      }
+    })
+
+    // 4. Calculate effective limits
+    const effectiveLimits: SubscriptionLimits = {
+      maxAccounts: planLimits.limits.maxAccounts === -1
+        ? -1  // If plan is unlimited, keep unlimited
+        : planLimits.limits.maxAccounts + addonAccounts,
+      maxAutomationRules: planLimits.limits.maxAutomationRules,
+      maxCampaigns: planLimits.limits.maxCampaigns,
+    }
+
+    return {
+      ...planLimits,
+      limits: effectiveLimits,
+      activeAddons,
+    }
+  } catch (error) {
+    console.error('Error getting user effective limits:', error)
+    // Fallback to plan limits without addons
+    return getUserSubscriptionLimits(connection, userId)
   }
 }
 
@@ -351,8 +417,8 @@ export async function validateCampaignsLimitForSync(
 ): Promise<{ allowed: boolean; allowedCampaignIds: string[]; skippedCount: number; error?: string; usage?: number; limit?: number }> {
   // Skip validation for admin/superadmin - allow all campaigns
   if (userRole === 'admin' || userRole === 'superadmin') {
-    return { 
-      allowed: true, 
+    return {
+      allowed: true,
       allowedCampaignIds: campaignIds,
       skippedCount: 0
     }
@@ -381,7 +447,7 @@ export async function validateCampaignsLimitForSync(
     [userId, campaignIds]
   )
   const existingCampaignIds = existingCampaignsResult.rows.map((row: any) => row.campaign_id.toString())
-  
+
   // Filter out existing campaigns (these are updates, not new campaigns)
   const newCampaignIds = campaignIds.filter(id => !existingCampaignIds.includes(id.toString()))
   const newCampaignsCount = newCampaignIds.length
@@ -400,7 +466,7 @@ export async function validateCampaignsLimitForSync(
       allowed: allowedCampaignIds.length > 0, // At least some campaigns are allowed
       allowedCampaignIds,
       skippedCount,
-      error: skippedCount > 0 
+      error: skippedCount > 0
         ? `Sync akan melewati ${skippedCount} campaign baru karena melebihi batas limit. Limit: ${limit}, Usage: ${currentUsage}, New: ${newCampaignsCount}. Upgrade plan untuk sync semua campaign.`
         : undefined,
       usage: currentUsage,

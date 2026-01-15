@@ -81,6 +81,7 @@ export async function GET(request: NextRequest) {
       createdBy: row.created_by,
       updatedBy: row.updated_by,
       notes: row.notes,
+      applicableType: row.applicable_type || 'all',
     }))
 
     return NextResponse.json({
@@ -137,6 +138,7 @@ export async function POST(request: NextRequest) {
       minimumPurchase,
       maximumDiscount,
       notes,
+      applicableType = 'all',
     } = body
 
     // Validate required fields
@@ -190,6 +192,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check applicableType validity
+    if (!['all', 'subscription', 'addon'].includes(applicableType)) {
+      return NextResponse.json({ success: false, error: 'Invalid applicable type' }, { status: 400 });
+    }
+
     connection = await getDatabaseConnection()
 
     // Check if code already exists (case-insensitive)
@@ -214,8 +221,8 @@ export async function POST(request: NextRequest) {
         is_active,
         max_usage_per_user, max_total_usage,
         applicable_plans, minimum_purchase, maximum_discount,
-        created_by, updated_by, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $14, $15)
+        created_by, updated_by, notes, applicable_type
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $14, $15, $16)
       RETURNING *
     `
 
@@ -235,6 +242,7 @@ export async function POST(request: NextRequest) {
       maximumDiscount ? parseFloat(maximumDiscount) : null,
       adminUser.userId,
       notes?.trim() || null,
+      applicableType
     ])
 
     const voucher = result.rows[0]
@@ -256,6 +264,7 @@ export async function POST(request: NextRequest) {
         discountValue: parseFloat(voucher.discount_value),
         expiryDate: voucher.expiry_date,
         isActive: voucher.is_active,
+        applicableType: voucher.applicable_type
       },
       ipAddress: getIpAddress(request),
       userAgent: getUserAgent(request),
@@ -284,6 +293,7 @@ export async function POST(request: NextRequest) {
         createdBy: voucher.created_by,
         updatedBy: voucher.updated_by,
         notes: voucher.notes,
+        applicableType: voucher.applicable_type
       },
     })
   } catch (error: any) {

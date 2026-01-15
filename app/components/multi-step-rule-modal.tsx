@@ -211,7 +211,6 @@ export function MultiStepRuleModal({ isOpen, onClose, onSave, initialData, isEdi
         "set_budget": "Set Budget",
         "start_campaign": "Mulai Iklan",
         "pause_campaign": "Pause Iklan",
-        "pause_campaign": "Pause Iklan",
         "telegram_notification": "Hanya Notif Telegram"
       }
       const normalizedActions = (initialData.actions || []).map((action: any, index: number) => {

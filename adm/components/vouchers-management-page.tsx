@@ -74,7 +74,9 @@ interface Voucher {
   updatedAt: string
   createdBy?: string | null
   updatedBy?: string | null
+
   notes?: string | null
+  applicableType: 'all' | 'subscription' | 'addon'
 }
 
 export function VouchersManagementPage() {
@@ -106,7 +108,9 @@ export function VouchersManagementPage() {
     applicablePlans: [] as string[],
     minimumPurchase: "",
     maximumDiscount: "",
+
     notes: "",
+    applicableType: 'all' as 'all' | 'subscription' | 'addon',
   })
 
   useEffect(() => {
@@ -176,7 +180,9 @@ export function VouchersManagementPage() {
         applicablePlans: formData.applicablePlans.length > 0 ? formData.applicablePlans : null,
         minimumPurchase: formData.minimumPurchase ? parseFloat(formData.minimumPurchase) : null,
         maximumDiscount: formData.maximumDiscount ? parseFloat(formData.maximumDiscount) : null,
+
         notes: formData.notes || null,
+        applicableType: formData.applicableType,
       }
 
       const response = await authenticatedFetch('/api/vouchers', {
@@ -205,7 +211,7 @@ export function VouchersManagementPage() {
     if (!editingVoucher) return
 
     try {
-      const payload: any = {
+      const payload = {
         name: formData.name,
         description: formData.description || null,
         discountType: formData.discountType,
@@ -219,11 +225,12 @@ export function VouchersManagementPage() {
         minimumPurchase: formData.minimumPurchase ? parseFloat(formData.minimumPurchase) : null,
         maximumDiscount: formData.maximumDiscount ? parseFloat(formData.maximumDiscount) : null,
         notes: formData.notes || null,
+        applicableType: formData.applicableType,
       }
 
       // Only update code if changed
       if (formData.code !== editingVoucher.code) {
-        payload.code = formData.code
+        (payload as any).code = formData.code
       }
 
       const response = await authenticatedFetch(`/api/vouchers/${editingVoucher.id}`, {
@@ -319,7 +326,9 @@ export function VouchersManagementPage() {
       applicablePlans: voucher.applicablePlans || [],
       minimumPurchase: voucher.minimumPurchase?.toString() || "",
       maximumDiscount: voucher.maximumDiscount?.toString() || "",
+
       notes: voucher.notes || "",
+      applicableType: voucher.applicableType || 'all',
     })
     setIsEditDialogOpen(true)
   }
@@ -344,7 +353,9 @@ export function VouchersManagementPage() {
       applicablePlans: [],
       minimumPurchase: "",
       maximumDiscount: "",
+
       notes: "",
+      applicableType: 'all',
     })
   }
 
@@ -657,6 +668,27 @@ export function VouchersManagementPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="applicableType">Applicable Context</Label>
+                <Select
+                  value={formData.applicableType}
+                  onValueChange={(value: 'all' | 'subscription' | 'addon') =>
+                    setFormData({ ...formData, applicableType: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="subscription">Subscription Only</SelectItem>
+                    <SelectItem value="addon">Addon Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label htmlFor="minimumPurchase">Minimum Purchase (Rp) - Optional</Label>
                 <Input
                   id="minimumPurchase"
@@ -666,29 +698,31 @@ export function VouchersManagementPage() {
                   placeholder="500000"
                 />
               </div>
-              <div>
-                <Label htmlFor="applicablePlans">Applicable Plans</Label>
-                <Select
-                  value={formData.applicablePlans.length > 0 ? formData.applicablePlans.join(',') : 'all'}
-                  onValueChange={(value) => {
-                    if (value === 'all') {
-                      setFormData({ ...formData, applicablePlans: [] })
-                    } else {
-                      setFormData({ ...formData, applicablePlans: value.split(',') })
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select plans..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Plans</SelectItem>
-                    <SelectItem value="1-month">1-month only</SelectItem>
-                    <SelectItem value="3-month">3-month only</SelectItem>
-                    <SelectItem value="6-month">6-month only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {formData.applicableType !== 'addon' && (
+                <div>
+                  <Label htmlFor="applicablePlans">Applicable Plans</Label>
+                  <Select
+                    value={formData.applicablePlans.length > 0 ? formData.applicablePlans.join(',') : 'all'}
+                    onValueChange={(value) => {
+                      if (value === 'all') {
+                        setFormData({ ...formData, applicablePlans: [] })
+                      } else {
+                        setFormData({ ...formData, applicablePlans: value.split(',') })
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select plans..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Plans</SelectItem>
+                      <SelectItem value="1-month">1-month only</SelectItem>
+                      <SelectItem value="3-month">3-month only</SelectItem>
+                      <SelectItem value="6-month">6-month only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -857,6 +891,27 @@ export function VouchersManagementPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="edit-applicableType">Applicable Context</Label>
+                <Select
+                  value={formData.applicableType}
+                  onValueChange={(value: 'all' | 'subscription' | 'addon') =>
+                    setFormData({ ...formData, applicableType: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="subscription">Subscription Only</SelectItem>
+                    <SelectItem value="addon">Addon Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label htmlFor="edit-minimumPurchase">Minimum Purchase (Rp) - Optional</Label>
                 <Input
                   id="edit-minimumPurchase"
@@ -866,29 +921,31 @@ export function VouchersManagementPage() {
                   placeholder="500000"
                 />
               </div>
-              <div>
-                <Label htmlFor="edit-applicablePlans">Applicable Plans</Label>
-                <Select
-                  value={formData.applicablePlans.length > 0 ? formData.applicablePlans.join(',') : 'all'}
-                  onValueChange={(value) => {
-                    if (value === 'all') {
-                      setFormData({ ...formData, applicablePlans: [] })
-                    } else {
-                      setFormData({ ...formData, applicablePlans: value.split(',') })
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select plans..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Plans</SelectItem>
-                    <SelectItem value="1-month">1-month only</SelectItem>
-                    <SelectItem value="3-month">3-month only</SelectItem>
-                    <SelectItem value="6-month">6-month only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {formData.applicableType !== 'addon' && (
+                <div>
+                  <Label htmlFor="edit-applicablePlans">Applicable Plans</Label>
+                  <Select
+                    value={formData.applicablePlans.length > 0 ? formData.applicablePlans.join(',') : 'all'}
+                    onValueChange={(value) => {
+                      if (value === 'all') {
+                        setFormData({ ...formData, applicablePlans: [] })
+                      } else {
+                        setFormData({ ...formData, applicablePlans: value.split(',') })
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select plans..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Plans</SelectItem>
+                      <SelectItem value="1-month">1-month only</SelectItem>
+                      <SelectItem value="3-month">3-month only</SelectItem>
+                      <SelectItem value="6-month">6-month only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -459,7 +459,7 @@ export function OrdersManagementPage() {
                 <SelectContent>
                   <SelectItem value="all">Semua Status</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="waiting_verification">Menunggu Verifikasi</SelectItem>
+                  <SelectItem value="waiting_confirmation">Menunggu Verifikasi</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
                   <SelectItem value="expired">Expired</SelectItem>
@@ -562,7 +562,7 @@ export function OrdersManagementPage() {
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {(order.paymentStatus === 'pending' || order.paymentStatus === 'waiting_verification') && (
+                            {(order.paymentStatus === 'pending' || order.paymentStatus === 'waiting_confirmation') && (
                               <Button
                                 variant="default"
                                 size="sm"

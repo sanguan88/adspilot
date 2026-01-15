@@ -22,8 +22,9 @@ export default function HomePage() {
     return null
   }
 
-  // CRITICAL: Redirect pending_payment users immediately
-  // This prevents any rendering of protected content
+  // CRITICAL: Only redirect for pending SUBSCRIPTION payments
+  // Addon pending payments should NOT block access
+  // Status 'pending_payment' means user has pending subscription, not addon
   if (user?.status_user === 'pending_payment') {
     // Use window.location for immediate redirect (can't use router in render)
     if (typeof window !== 'undefined') {

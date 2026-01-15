@@ -271,7 +271,7 @@ export default function PaymentStatusPage() {
 
   // Auto-refresh every 30 seconds if payment is pending or waiting verification
   useEffect(() => {
-    if (transaction?.paymentStatus === 'pending' || transaction?.paymentStatus === 'waiting_verification') {
+    if (transaction?.paymentStatus === 'pending' || transaction?.paymentStatus === 'waiting_confirmation') {
       const interval = setInterval(async () => {
         if (!user?.userId) return
 
@@ -302,7 +302,7 @@ export default function PaymentStatusPage() {
 
   const selectedPlan = transaction ? plans.find(p => p.planId === transaction.planId) : null
   const isPending = transaction?.paymentStatus === 'pending'
-  const isWaitingVerification = transaction?.paymentStatus === 'waiting_verification'
+  const isWaitingConfirmation = transaction?.paymentStatus === 'waiting_confirmation'
   const isPaid = transaction?.paymentStatus === 'paid'
 
   return (
@@ -313,7 +313,7 @@ export default function PaymentStatusPage() {
           <h1 className="text-2xl font-bold mb-1">Status Pembayaran</h1>
           <p className="text-sm text-muted-foreground">
             {isPending && "Menunggu upload bukti pembayaran"}
-            {isWaitingVerification && "Menunggu verifikasi pembayaran dari admin"}
+            {isWaitingConfirmation && "Menunggu verifikasi pembayaran dari admin"}
             {isPaid && "Pembayaran sudah dikonfirmasi"}
             {!transaction && "Tidak ada transaksi ditemukan"}
           </p>
@@ -329,15 +329,15 @@ export default function PaymentStatusPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">Detail Pembayaran</CardTitle>
                     <Badge
-                      variant={isPending || isWaitingVerification ? "secondary" : "default"}
-                      className={isPaid ? "bg-green-500" : isWaitingVerification ? "bg-blue-500" : ""}
+                      variant={isPending || isWaitingConfirmation ? "secondary" : "default"}
+                      className={isPaid ? "bg-green-500" : isWaitingConfirmation ? "bg-blue-500" : ""}
                     >
                       {isPending ? (
                         <>
                           <Clock className="h-3 w-3 mr-1" />
                           Menunggu
                         </>
-                      ) : isWaitingVerification ? (
+                      ) : isWaitingConfirmation ? (
                         <>
                           <Clock className="h-3 w-3 mr-1" />
                           Verifikasi
@@ -405,7 +405,7 @@ export default function PaymentStatusPage() {
               </Card>
 
               {/* Bank Accounts & Upload (if pending or waiting verification) */}
-              {(isPending || isWaitingVerification) && paymentSettings?.activeMethod === 'manual' && (
+              {(isPending || isWaitingConfirmation) && paymentSettings?.activeMethod === 'manual' && (
                 <>
                   <Card>
                     <CardHeader className="pb-3">
@@ -584,10 +584,10 @@ export default function PaymentStatusPage() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Status</span>
                       <Badge
-                        variant={isPending || isWaitingVerification ? "secondary" : "default"}
-                        className={isPaid ? "bg-green-500 text-xs" : isWaitingVerification ? "bg-blue-500 text-xs" : "text-xs"}
+                        variant={isPending || isWaitingConfirmation ? "secondary" : "default"}
+                        className={isPaid ? "bg-green-500 text-xs" : isWaitingConfirmation ? "bg-blue-500 text-xs" : "text-xs"}
                       >
-                        {isPending ? "Menunggu" : isWaitingVerification ? "Verifikasi" : "Dikonfirmasi"}
+                        {isPending ? "Menunggu" : isWaitingConfirmation ? "Verifikasi" : "Dikonfirmasi"}
                       </Badge>
                     </div>
                     <div className="flex justify-between">

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { voucherCode, planId, baseAmount } = body
+    const { voucherCode, planId, baseAmount, context = 'subscription' } = body
 
     // Validate input
     if (!voucherCode || typeof voucherCode !== 'string') {
@@ -22,35 +22,48 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!planId || typeof planId !== 'string') {
+    // For subscription, planId is required
+    if (context === 'subscription' && (!planId || typeof planId !== 'string')) {
       return NextResponse.json(
-        { success: false, error: 'Plan ID diperlukan' },
+        { success: false, error: 'Plan ID diperlukan untuk subscription' },
         { status: 400 }
       )
     }
 
     connection = await getDatabaseConnection()
 
-    // Get base amount (use provided or fetch from database)
+    // Get base amount
     let finalBaseAmount = baseAmount
-    if (!finalBaseAmount || finalBaseAmount <= 0) {
-      // Fetch plan price from database
-      const planResult = await connection.query(
-        'SELECT price FROM subscription_plans WHERE plan_id = $1 AND is_active = true',
-        [planId]
-      )
-      
-      if (planResult.rows.length === 0) {
+
+    if (context === 'subscription') {
+      // For subscription, fetch from DB if not provided
+      if (!finalBaseAmount || finalBaseAmount <= 0) {
+        const planResult = await connection.query(
+          'SELECT price FROM subscription_plans WHERE plan_id = $1 AND is_active = true',
+          [planId]
+        )
+
+        if (planResult.rows.length === 0) {
+          connection.release()
+          return NextResponse.json(
+            { success: false, error: 'Plan tidak ditemukan atau tidak aktif' },
+            { status: 400 }
+          )
+        }
+
+        finalBaseAmount = parseFloat(planResult.rows[0].price)
+      }
+    } else if (context === 'addon') {
+      // For addon, baseAmount IS required from client (calculated dynamically)
+      if (!finalBaseAmount || finalBaseAmount <= 0) {
         connection.release()
         return NextResponse.json(
-          { success: false, error: 'Plan tidak ditemukan atau tidak aktif' },
+          { success: false, error: 'Base amount diperlukan untuk addon' },
           { status: 400 }
         )
       }
-      
-      finalBaseAmount = parseFloat(planResult.rows[0].price)
     }
-    
+
     if (!finalBaseAmount || finalBaseAmount <= 0) {
       connection.release()
       return NextResponse.json(
@@ -67,7 +80,8 @@ export async function POST(request: NextRequest) {
         start_date, expiry_date,
         is_active,
         max_usage_per_user, max_total_usage,
-        applicable_plans, minimum_purchase, maximum_discount
+        applicable_plans, minimum_purchase, maximum_discount,
+        applicable_type
       FROM vouchers
       WHERE UPPER(code) = UPPER($1)`,
       [voucherCode.trim()]
@@ -93,6 +107,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check applicable type (Addon vs Subscription)
+    const voucherContext = voucher.applicable_type || 'all' // Default to all if null (migration handled this but just in case)
+    if (voucherContext !== 'all' && voucherContext !== context) {
+      connection.release()
+      return NextResponse.json(
+        { success: false, error: `Voucher ini hanya berlaku untuk ${voucherContext === 'addon' ? 'Addon' : 'Subscription'}` },
+        { status: 400 }
+      )
+    }
+
     // Check expiry date
     if (voucher.expiry_date && new Date(voucher.expiry_date) < now) {
       connection.release()
@@ -111,8 +135,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check applicable plans
-    if (voucher.applicable_plans && voucher.applicable_plans.length > 0) {
+    // Check applicable plans (Only for subscription context)
+    if (context === 'subscription' && voucher.applicable_plans && voucher.applicable_plans.length > 0) {
       if (!voucher.applicable_plans.includes(planId)) {
         connection.release()
         return NextResponse.json(
@@ -126,15 +150,15 @@ export async function POST(request: NextRequest) {
     if (voucher.minimum_purchase && finalBaseAmount < parseFloat(voucher.minimum_purchase)) {
       connection.release()
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `Minimum purchase untuk voucher ini adalah Rp ${parseFloat(voucher.minimum_purchase).toLocaleString('id-ID')}` 
+        {
+          success: false,
+          error: `Minimum purchase untuk voucher ini adalah Rp ${parseFloat(voucher.minimum_purchase).toLocaleString('id-ID')}`
         },
         { status: 400 }
       )
     }
 
-    // Calculate discount (will be used for display, actual calculation will be done in transaction creation)
+    // Calculate discount
     const discountAmount = calculateDiscount(
       finalBaseAmount,
       voucher.discount_type,
@@ -155,6 +179,7 @@ export async function POST(request: NextRequest) {
           discountType: voucher.discount_type,
           discountValue: parseFloat(voucher.discount_value),
           maximumDiscount: voucher.maximum_discount ? parseFloat(voucher.maximum_discount) : null,
+          applicableType: voucherContext
         },
         discountAmount,
         baseAmount: finalBaseAmount,

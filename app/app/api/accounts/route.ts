@@ -902,6 +902,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Handle specific auth/payment errors without 500 log noise
+    if (error instanceof Error && (error.message.includes('Access denied') || error.message.includes('Payment required'))) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 402 })
+    }
+
     return NextResponse.json(
       {
         success: false,

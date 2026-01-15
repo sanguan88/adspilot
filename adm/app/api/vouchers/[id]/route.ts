@@ -83,6 +83,7 @@ export async function GET(
         createdBy: voucher.created_by,
         updatedBy: voucher.updated_by,
         notes: voucher.notes,
+        applicableType: voucher.applicable_type || 'all',
       },
     })
   } catch (error: any) {
@@ -145,13 +146,14 @@ export async function PUT(
       minimumPurchase,
       maximumDiscount,
       notes,
+      applicableType,
     } = body
 
     connection = await getDatabaseConnection()
 
     // Check if voucher exists
     const existingVoucher = await connection.query(
-      'SELECT id FROM vouchers WHERE id = $1',
+      'SELECT id, code, name, is_active, discount_value, applicable_type FROM vouchers WHERE id = $1',
       [voucherId]
     )
 
@@ -181,6 +183,12 @@ export async function PUT(
           { status: 400 }
         )
       }
+    }
+
+    // Validate applicableType if provided
+    if (applicableType !== undefined && !['all', 'subscription', 'addon'].includes(applicableType)) {
+      connection.release()
+      return NextResponse.json({ success: false, error: 'Invalid applicable type' }, { status: 400 });
     }
 
     // Check code uniqueness if code is being updated
@@ -260,6 +268,10 @@ export async function PUT(
       updateFields.push(`notes = $${paramIndex++}`)
       updateValues.push(notes?.trim() || null)
     }
+    if (applicableType !== undefined) {
+      updateFields.push(`applicable_type = $${paramIndex++}`)
+      updateValues.push(applicableType)
+    }
 
     if (updateFields.length === 0) {
       connection.release()
@@ -284,8 +296,8 @@ export async function PUT(
     `
 
     // Get current voucher for audit
-    const currentVoucherResult = await connection.query('SELECT * FROM vouchers WHERE id = $1', [voucherId])
-    const currentVoucher = currentVoucherResult.rows[0]
+    // (Already fetched above but need fields for accurate log)
+    const currentVoucher = existingVoucher.rows[0]
 
     const result = await connection.query(updateQuery, updateValues)
 
@@ -302,6 +314,10 @@ export async function PUT(
     if (discountValue !== undefined && discountValue !== parseFloat(currentVoucher.discount_value)) {
       oldValues.discountValue = parseFloat(currentVoucher.discount_value);
       newValues.discountValue = parseFloat(voucher.discount_value)
+    }
+    if (applicableType !== undefined && applicableType !== currentVoucher.applicable_type) {
+      oldValues.applicableType = currentVoucher.applicable_type;
+      newValues.applicableType = voucher.applicable_type;
     }
 
     await logAudit({
@@ -343,6 +359,7 @@ export async function PUT(
         createdBy: voucher.created_by,
         updatedBy: voucher.updated_by,
         notes: voucher.notes,
+        applicableType: voucher.applicable_type
       },
     })
   } catch (error: any) {

@@ -14,7 +14,7 @@ async function callShopeeGetAdsData(cookies: string) {
   try {
     // Clean cookies
     const cleanedCookies = cookies.replace(/\s+/g, ' ').replace(/[\r\n\t]/g, ' ').trim()
-    
+
     const apiUrl = 'https://seller.shopee.co.id/api/pas/v1/meta/get_ads_data/'
     const headers = {
       'Cookie': cleanedCookies,
@@ -23,7 +23,7 @@ async function callShopeeGetAdsData(cookies: string) {
     const requestPayload = {
       info_type_list: ["ads_expense", "ads_credit", "campaign_day", "has_ads", "incentive", "ads_toggle"]
     }
-    
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: headers,
@@ -36,7 +36,7 @@ async function callShopeeGetAdsData(cookies: string) {
     }
 
     const data = await response.json()
-    
+
     // Debug: log full response structure
     const timestamp = new Date().toISOString()
     console.log(`[${timestamp}] [Overview] callShopeeGetAdsData - Full API response:`, {
@@ -47,7 +47,7 @@ async function callShopeeGetAdsData(cookies: string) {
       adsCreditTotal: data?.data?.ads_credit?.total,
       responseKeys: Object.keys(data || {})
     })
-    
+
     // Response structure: { code: 0, data: { ads_credit: { total: ... } } }
     // Return the data object directly (which contains ads_credit)
     return {
@@ -74,15 +74,15 @@ async function getAccountsWithCookies(connection: PoolClient, user: any, tokoIds
       console.log(`[${timestamp}] [Overview] getAccountsWithCookies: No tokoIds provided`)
       return []
     }
-    
+
     let paramIndex = 1
-    
+
     // User isolation: Filter by user_id (unless admin/superadmin)
     let userFilter = ''
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       userFilter = ` AND dt.user_id = $${paramIndex++}`
     }
-    
+
     // First, check what data exists for these tokoIds (for debugging)
     // Use separate parameter index for debug query
     let debugParamIndex = 1
@@ -118,7 +118,7 @@ async function getAccountsWithCookies(connection: PoolClient, user: any, tokoIds
         matchesUser: user.role === 'superadmin' || user.role === 'admin' || r.user_id === user.userId
       }))
     })
-    
+
     // Now build the actual query with correct parameter index
     // IMPORTANT: user_id must be first ($1) if userFilter exists, then tokoIds
     const placeholders = tokoIds.map(() => `$${paramIndex++}`).join(',')
@@ -131,34 +131,34 @@ async function getAccountsWithCookies(connection: PoolClient, user: any, tokoIds
       AND dt.status_toko = 'active'
       ${userFilter}
     `
-    
+
     // Build params array in the correct order: user_id first (if needed), then tokoIds
     const params: any[] = []
     if (user.role !== 'superadmin' && user.role !== 'admin') {
       params.push(user.userId) // $1 = user_id
     }
     params.push(...tokoIds) // $2, $3, $4, etc. = tokoIds
-    
+
     console.log(`[${debugTimestamp}] [Overview] getAccountsWithCookies - Query:`, query)
     console.log(`[${debugTimestamp}] [Overview] getAccountsWithCookies - Params:`, params)
-    
+
     const result = await connection.query(query, params)
     const rows = result.rows
-    
+
     // Log untuk debugging
     const timestamp = new Date().toISOString()
     console.log(`[${timestamp}] [Overview] getAccountsWithCookies: Found ${rows.length} account(s)`, {
       tokoIdsCount: tokoIds.length,
       tokoIds: tokoIds.slice(0, 5), // Log first 5 only
-      accountsFound: rows.map(r => ({ 
-        id_toko: r.id_toko, 
-        nama_toko: r.nama_toko, 
+      accountsFound: rows.map(r => ({
+        id_toko: r.id_toko,
+        nama_toko: r.nama_toko,
         hasCookies: !!r.cookie_account && r.cookie_account.length > 0,
         cookiesLength: r.cookie_account ? r.cookie_account.length : 0,
-        status_cookies: r.status_cookies 
+        status_cookies: r.status_cookies
       }))
     })
-    
+
     return rows
   } catch (error) {
     const sanitized = sanitizeErrorForLogging(error)
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
       role: user.role,
       userIdType: typeof user.userId
     })
-    
+
     // Get database connection first (needed for user_id conversion if needed)
     console.log(`[${timestamp}] [Overview] Getting database connection...`)
     try {
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
       if (isDatabaseConnectionError(dbError)) {
         const sanitized = sanitizeErrorForLogging(dbError)
         console.error(`[${errorTimestamp}] [Overview] Database connection error: ${sanitized.type}${sanitized.code ? ` (${sanitized.code})` : ''}`)
-        
+
         // Log detailed error in development
         if (process.env.NODE_ENV === 'development') {
           console.error(`[${errorTimestamp}] [Overview] Database connection error details:`, {
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
             name: (dbError as any)?.name
           })
         }
-        
+
         return NextResponse.json(
           {
             success: false,
@@ -212,7 +212,7 @@ export async function GET(request: NextRequest) {
       }
       throw dbError
     }
-    
+
     // Get role-based filter (same as accounts API)
     const roleFilter = getRoleBasedFilter(user);
     console.log(`[${timestamp}] [Overview] Role filter:`, {
@@ -220,7 +220,7 @@ export async function GET(request: NextRequest) {
       whereClause: roleFilter.whereClause,
       paramsCount: roleFilter.params.length
     })
-    
+
     // Get allowed usernames based on role (for backward compatibility)
     let allowedUsernames: string[] = []
     try {
@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
       })
       // Don't throw, continue with role-based filter
     }
-    
+
     const { searchParams } = new URL(request.url)
     const selectedAccount = searchParams.get('account') || 'all'
     const startDateParam = searchParams.get('start_date')
@@ -243,14 +243,14 @@ export async function GET(request: NextRequest) {
     // Parse date range parameters
     let startDateStr: string | null = null
     let endDateStr: string | null = null
-    
+
     if (startDateParam) {
       startDateStr = startDateParam
     }
     if (endDateParam) {
       endDateStr = endDateParam
     }
-    
+
     // If no date range provided, use latest available date (backward compatibility)
     let useDateRange = false
     if (startDateStr && endDateStr) {
@@ -263,40 +263,40 @@ export async function GET(request: NextRequest) {
        FROM data_toko dt
        WHERE dt.id_toko IS NOT NULL AND dt.id_toko != '' 
        AND dt.status_toko = 'active'`
-    
+
     let usernameParams: any[] = []
     let paramIndex = 1
-    
+
     // Apply role-based filter (same as accounts API)
     if (roleFilter.whereClause) {
       // Remove 'AND' prefix if exists
-      let roleFilterClause = roleFilter.whereClause.startsWith('AND ') 
-        ? roleFilter.whereClause.substring(4) 
+      let roleFilterClause = roleFilter.whereClause.startsWith('AND ')
+        ? roleFilter.whereClause.substring(4)
         : roleFilter.whereClause;
-      
+
       // Replace ? with $1, $2, etc. for PostgreSQL
       roleFilter.params.forEach((param) => {
         roleFilterClause = roleFilterClause.replace('?', `$${paramIndex++}`)
       })
-      
+
       tokoQuery += ` AND ${roleFilterClause}`
       usernameParams.push(...roleFilter.params)
     }
-    
+
     // Also filter by allowedUsernames if available (for backward compatibility)
     if (user.role !== 'superadmin' && allowedUsernames.length > 0) {
       const placeholders = allowedUsernames.map(() => `$${paramIndex++}`).join(',')
       tokoQuery += ` AND dt.id_toko IN (${placeholders})`
       usernameParams.push(...allowedUsernames)
     }
-    
+
     tokoQuery += ` ORDER BY dt.nama_toko ASC`
-    
+
     console.log(`[${timestamp}] [Overview] Fetching toko list with query params:`, usernameParams)
     const tokoResult = await connection.query(tokoQuery, usernameParams)
     const tokoRows = tokoResult.rows
     console.log(`[${timestamp}] [Overview] Found ${tokoRows.length} toko(s)`)
-    
+
     // Get toko IDs from the toko list we just fetched
     const tokoIds = tokoRows.map((row: any) => row.id_toko).filter((id: string) => id)
     console.log(`[${timestamp}] [Overview] Extracted ${tokoIds.length} tokoIds:`, tokoIds.slice(0, 10)) // Log first 10 only
@@ -310,7 +310,7 @@ export async function GET(request: NextRequest) {
        AND dt.status_toko = 'active'`
     let latestDateParams: any[] = []
     let latestDateParamIndex = 1
-    
+
     // Filter berdasarkan toko IDs yang sudah difilter
     if (tokoIds.length > 0) {
       const placeholders = tokoIds.map(() => `$${latestDateParamIndex++}`).join(',')
@@ -319,22 +319,22 @@ export async function GET(request: NextRequest) {
     } else {
       // If no toko found, use role-based filter
       if (roleFilter.whereClause) {
-        let roleFilterClause = roleFilter.whereClause.startsWith('AND ') 
-          ? roleFilter.whereClause.substring(4) 
+        let roleFilterClause = roleFilter.whereClause.startsWith('AND ')
+          ? roleFilter.whereClause.substring(4)
           : roleFilter.whereClause;
-        
+
         roleFilter.params.forEach((param) => {
           roleFilterClause = roleFilterClause.replace('?', `$${latestDateParamIndex++}`)
         })
-        
+
         latestDateQuery += ` AND ${roleFilterClause}`
         latestDateParams.push(...roleFilter.params)
       }
     }
-    
+
     const latestDateResult = await connection.query(latestDateQuery, latestDateParams)
     let latestDateStr = latestDateResult.rows[0]?.latest_date
-    
+
     // Format date to YYYY-MM-DD if it's a Date object
     if (latestDateStr instanceof Date) {
       latestDateStr = latestDateStr.toISOString().split('T')[0]
@@ -345,12 +345,12 @@ export async function GET(request: NextRequest) {
       // Fallback to today if no data found
       latestDateStr = new Date().toISOString().split('T')[0]
     }
-    
+
     // Determine date range to use
     let reportDateStr: string
     let reportStartDateStr: string | null = null
     let reportEndDateStr: string | null = null
-    
+
     if (useDateRange && startDateStr && endDateStr) {
       // Use provided date range
       reportStartDateStr = startDateStr
@@ -362,17 +362,17 @@ export async function GET(request: NextRequest) {
       reportStartDateStr = latestDateStr
       reportEndDateStr = latestDateStr
     }
-    
+
     console.log(`[${timestamp}] [Overview] Using date range: ${reportStartDateStr} to ${reportEndDateStr}`)
     console.log(`[${timestamp}] [Overview] Allowed usernames count: ${allowedUsernames.length}`)
     console.log(`[${timestamp}] [Overview] User role: ${user.role}`)
-    
+
     // Yesterday for trend comparison (based on latest date)
     const reportDate = new Date(reportDateStr)
     const yesterday = new Date(reportDate)
     yesterday.setDate(yesterday.getDate() - 1)
     const yesterdayStr = yesterday.toISOString().split('T')[0]
-    
+
     // Today's date for comparison
     const today = new Date()
     const todayStr = today.toISOString().split('T')[0]
@@ -383,7 +383,7 @@ export async function GET(request: NextRequest) {
       id_toko: row.id_toko,
       nama_toko: row.nama_toko || row.id_toko
     }))
-    
+
     // Buat mapping id_toko -> nama_toko untuk digunakan nanti
     const tokoNameMap = new Map<string, string>()
     tokoRows.forEach((row: any) => {
@@ -407,10 +407,10 @@ export async function GET(request: NextRequest) {
        INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko
        WHERE dp.id_toko IS NOT NULL AND dp.id_toko != '' 
        AND dt.status_toko = 'active'`
-    
+
     const queryParams: any[] = []
     paramIndex = 1
-    
+
     // Add date filter (cast report_date to DATE if it's VARCHAR)
     // Note: report_date is VARCHAR, so we need to cast both sides
     if (useDateRange && reportStartDateStr && reportEndDateStr) {
@@ -420,7 +420,7 @@ export async function GET(request: NextRequest) {
       query += ` AND CAST(dp.report_date AS DATE) = CAST($${paramIndex++} AS DATE)`
       queryParams.push(reportDateStr)
     }
-    
+
     // Filter berdasarkan toko IDs yang sudah difilter (from data_toko)
     if (tokoIds.length > 0) {
       const placeholders = tokoIds.map(() => `$${paramIndex++}`).join(',')
@@ -429,10 +429,10 @@ export async function GET(request: NextRequest) {
     } else {
       // If no toko found, apply role-based filter directly
       if (roleFilter.whereClause) {
-        let roleFilterClause = roleFilter.whereClause.startsWith('AND ') 
-          ? roleFilter.whereClause.substring(4) 
+        let roleFilterClause = roleFilter.whereClause.startsWith('AND ')
+          ? roleFilter.whereClause.substring(4)
           : roleFilter.whereClause;
-        
+
         // Need to join with data_toko for role filter
         // Replace $1, $2, etc. in roleFilterClause with correct paramIndex
         // roleFilterClause already contains $1, so we need to replace it with the correct index
@@ -442,11 +442,11 @@ export async function GET(request: NextRequest) {
           const newParam = `$${paramIndex++}`
           roleFilterClause = roleFilterClause.replace(new RegExp(oldParam, 'g'), newParam)
         })
-        
+
         query += ` AND ${roleFilterClause.replace('dt.', 'dt2.')}`
         // Add another join for role filter
         query = query.replace('FROM data_produk dp', 'FROM data_produk dp')
-        query = query.replace('INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko', 
+        query = query.replace('INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko',
           'INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko INNER JOIN data_toko dt2 ON dp.id_toko = dt2.id_toko')
         queryParams.push(...roleFilter.params)
       } else {
@@ -464,29 +464,29 @@ export async function GET(request: NextRequest) {
         });
       }
     }
-    
+
     // Tambahkan filter id_toko jika account dipilih (bukan "all")
     if (selectedAccount && selectedAccount !== 'all') {
       query += ` AND dp.id_toko = $${paramIndex++}`
       queryParams.push(selectedAccount)
     }
-    
+
     query += ` GROUP BY dp.id_toko, dt.nama_toko ORDER BY COALESCE(SUM(dp.report_broad_gmv), 0) DESC`
-    
+
     console.log(`[${timestamp}] [Overview] Executing query with report_date: ${reportDateStr}`)
     console.log(`[${timestamp}] [Overview] Query:`, query)
     console.log(`[${timestamp}] [Overview] Params:`, queryParams)
     const campaignResult = await connection.query(query, queryParams)
     const campaignRows = campaignResult.rows
     console.log(`[${timestamp}] [Overview] Query returned ${campaignRows.length} rows`)
-    
+
     // If no data found for the latest date, try to get data from last 7 days (aggregate)
     if (campaignRows.length === 0) {
       console.log(`[${timestamp}] [Overview] No data found for ${reportDateStr}, trying to get data from last 7 days...`)
       const sevenDaysAgo = new Date(reportDate)
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
       const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0]
-      
+
       let fallbackQuery = `SELECT 
           dp.id_toko,
           dt.nama_toko,
@@ -502,10 +502,10 @@ export async function GET(request: NextRequest) {
          WHERE dp.id_toko IS NOT NULL AND dp.id_toko != '' 
          AND dt.status_toko = 'active'
          AND CAST(dp.report_date AS DATE) >= CAST($1 AS DATE) AND CAST(dp.report_date AS DATE) <= CAST($2 AS DATE)`
-      
+
       const fallbackParams: any[] = [sevenDaysAgoStr, reportDateStr]
       let fallbackParamIndex = 3
-      
+
       // Use tokoIds for fallback query
       if (tokoIds.length > 0) {
         const placeholders = tokoIds.map(() => `$${fallbackParamIndex++}`).join(',')
@@ -513,10 +513,10 @@ export async function GET(request: NextRequest) {
         fallbackParams.push(...tokoIds)
       } else if (roleFilter.whereClause) {
         // Apply role-based filter if no tokoIds
-        let roleFilterClause = roleFilter.whereClause.startsWith('AND ') 
-          ? roleFilter.whereClause.substring(4) 
+        let roleFilterClause = roleFilter.whereClause.startsWith('AND ')
+          ? roleFilter.whereClause.substring(4)
           : roleFilter.whereClause;
-        
+
         // Replace $1, $2, etc. in roleFilterClause with correct paramIndex
         // roleFilterClause already contains $1, so we need to replace it with the correct index
         roleFilter.params.forEach((param, idx) => {
@@ -525,24 +525,24 @@ export async function GET(request: NextRequest) {
           const newParam = `$${fallbackParamIndex++}`
           roleFilterClause = roleFilterClause.replace(new RegExp(oldParam, 'g'), newParam)
         })
-        
+
         fallbackQuery += ` AND ${roleFilterClause.replace('dt.', 'dt2.')}`
-        fallbackQuery = fallbackQuery.replace('INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko', 
+        fallbackQuery = fallbackQuery.replace('INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko',
           'INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko INNER JOIN data_toko dt2 ON dp.id_toko = dt2.id_toko')
         fallbackParams.push(...roleFilter.params)
       }
-      
+
       if (selectedAccount && selectedAccount !== 'all') {
         fallbackQuery += ` AND dp.id_toko = $${fallbackParamIndex++}`
         fallbackParams.push(selectedAccount)
       }
-      
+
       fallbackQuery += ` GROUP BY dp.id_toko, dt.nama_toko ORDER BY COALESCE(SUM(dp.report_broad_gmv), 0) DESC`
-      
+
       const fallbackResult = await connection.query(fallbackQuery, fallbackParams)
       const fallbackRows = fallbackResult.rows
       console.log(`[${timestamp}] [Overview] Fallback query returned ${fallbackRows.length} rows`)
-      
+
       if (fallbackRows.length > 0) {
         // Use fallback data
         campaignRows.push(...fallbackRows)
@@ -559,20 +559,20 @@ export async function GET(request: NextRequest) {
           error: 'Access denied to this account'
         }, { status: 403 });
       }
-      
+
       // Validate that selectedAccount has active status_toko
       const accountStatusCheck = await connection.query(
         `SELECT id_toko, status_toko, status_cookies FROM data_toko WHERE id_toko = $1`,
         [selectedAccount]
       )
-      
+
       if (accountStatusCheck.rows.length === 0) {
         return NextResponse.json({
           success: false,
           error: 'Account not found'
         }, { status: 404 });
       }
-      
+
       const accountStatus = accountStatusCheck.rows[0].status_cookies
       if (!accountStatus || accountStatus.toLowerCase() !== 'aktif') {
         return NextResponse.json({
@@ -580,7 +580,7 @@ export async function GET(request: NextRequest) {
           error: 'Account does not have active cookies status'
         }, { status: 403 });
       }
-      
+
       // Ambil data campaign dari data_produk untuk tanggal terbaru yang tersedia
       // Mengambil semua data tanpa filter status untuk mendapatkan data real
       let campaignDetailQuery = `SELECT 
@@ -597,10 +597,10 @@ export async function GET(request: NextRequest) {
          INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko
          WHERE dp.id_toko = $1 
          AND dt.status_cookies = 'aktif'`
-      
+
       const campaignDetailParams: any[] = [selectedAccount]
       let campaignDetailParamIndex = 2
-      
+
       // Add date filter (cast report_date to DATE if it's VARCHAR)
       // Note: report_date is VARCHAR, so we need to cast both sides
       if (useDateRange && reportStartDateStr && reportEndDateStr) {
@@ -610,9 +610,9 @@ export async function GET(request: NextRequest) {
         campaignDetailQuery += ` AND CAST(dp.report_date AS DATE) = CAST($${campaignDetailParamIndex++} AS DATE)`
         campaignDetailParams.push(reportDateStr)
       }
-      
+
       campaignDetailQuery += ` ORDER BY COALESCE(dp.report_broad_gmv, 0) DESC, dp.campaign_id DESC`
-      
+
       const campaignDetailResult = await connection.query(campaignDetailQuery, campaignDetailParams)
       const campaignDetailRows = campaignDetailResult.rows
 
@@ -638,7 +638,7 @@ export async function GET(request: NextRequest) {
           activeRules: 0
         }
       })
-      
+
       // Sort activeCampaigns by GMV descending
       activeCampaigns.sort((a, b) => (b.gmv || 0) - (a.gmv || 0))
     }
@@ -684,7 +684,7 @@ export async function GET(request: NextRequest) {
       console.log(`[${timestamp}] [Overview] Getting accounts with cookies for ${tokoIds.length} toko(s)`)
       const accountsWithCookies = await getAccountsWithCookies(connection, user, tokoIds)
       console.log(`[${timestamp}] [Overview] Found ${accountsWithCookies.length} account(s) with cookies`)
-      
+
       if (accountsWithCookies.length === 0) {
         console.log(`[${timestamp}] [Overview] No accounts with cookies found. Saldo iklan will be 0.`)
       } else {
@@ -692,9 +692,9 @@ export async function GET(request: NextRequest) {
           try {
             console.log(`[${timestamp}] [Overview] Fetching saldo for account: ${account.username} (${account.nama_toko || 'N/A'})`)
             console.log(`[${timestamp}] [Overview] ${account.username} - Cookie length: ${account.cookie_account?.length || 0} chars`)
-            
+
             const adsData = await callShopeeGetAdsData(account.cookie_account)
-            
+
             // Debug: log response structure
             console.log(`[${timestamp}] [Overview] ${account.username} - Processed Response structure:`, {
               hasData: !!adsData.data,
@@ -704,7 +704,7 @@ export async function GET(request: NextRequest) {
               adsCreditKeys: adsData.data?.ads_credit ? Object.keys(adsData.data.ads_credit) : [],
               fullAdsCredit: adsData.data?.ads_credit ? JSON.stringify(adsData.data.ads_credit).substring(0, 200) : 'null'
             })
-            
+
             // Get saldo iklan dari ads_credit.total (dibagi 100000)
             const totalValue = adsData.data?.ads_credit?.total
             if (totalValue !== null && totalValue !== undefined && totalValue !== 0) {
@@ -753,7 +753,7 @@ export async function GET(request: NextRequest) {
 
     // 5. Calculate trends - compare with yesterday
     let trends: { spend?: number; impressions?: number; clicks?: number; conversions?: number } = {}
-    
+
     try {
       // Get yesterday's totals for comparison (based on latest report date)
       // Mengambil semua data tanpa filter status untuk mendapatkan data real
@@ -767,10 +767,10 @@ export async function GET(request: NextRequest) {
        WHERE dp.id_toko IS NOT NULL AND dp.id_toko != '' 
        AND dt.status_toko = 'active'
        AND CAST(dp.report_date AS DATE) = CAST($1 AS DATE)`
-      
+
       const yesterdayParams: any[] = [yesterdayStr]
       let yesterdayParamIndex = 2
-      
+
       // Apply same filters as main query (use tokoIds)
       if (tokoIds.length > 0) {
         const placeholders = tokoIds.map(() => `$${yesterdayParamIndex++}`).join(',')
@@ -778,10 +778,10 @@ export async function GET(request: NextRequest) {
         yesterdayParams.push(...tokoIds)
       } else if (roleFilter.whereClause) {
         // Apply role-based filter if no tokoIds
-        let roleFilterClause = roleFilter.whereClause.startsWith('AND ') 
-          ? roleFilter.whereClause.substring(4) 
+        let roleFilterClause = roleFilter.whereClause.startsWith('AND ')
+          ? roleFilter.whereClause.substring(4)
           : roleFilter.whereClause;
-        
+
         // Replace $1, $2, etc. in roleFilterClause with correct paramIndex
         // roleFilterClause already contains $1, so we need to replace it with the correct index
         roleFilter.params.forEach((param, idx) => {
@@ -790,27 +790,27 @@ export async function GET(request: NextRequest) {
           const newParam = `$${yesterdayParamIndex++}`
           roleFilterClause = roleFilterClause.replace(new RegExp(oldParam, 'g'), newParam)
         })
-        
+
         yesterdayQuery += ` AND ${roleFilterClause.replace('dt.', 'dt2.')}`
-        yesterdayQuery = yesterdayQuery.replace('INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko', 
+        yesterdayQuery = yesterdayQuery.replace('INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko',
           'INNER JOIN data_toko dt ON dp.id_toko = dt.id_toko INNER JOIN data_toko dt2 ON dp.id_toko = dt2.id_toko')
         yesterdayParams.push(...roleFilter.params)
       }
-      
+
       if (selectedAccount && selectedAccount !== 'all') {
         yesterdayQuery += ` AND dp.id_toko = $${yesterdayParamIndex++}`
         yesterdayParams.push(selectedAccount)
       }
-      
+
       const yesterdayResult = await connection.query(yesterdayQuery, yesterdayParams)
       const yesterdayRow = yesterdayResult.rows[0]
-      
+
       if (yesterdayRow) {
         const yesterdaySpend = Number(yesterdayRow.total_spend) || 0
         const yesterdayImpressions = Number(yesterdayRow.total_impressions) || 0
         const yesterdayClicks = Number(yesterdayRow.total_clicks) || 0
         const yesterdayOrders = Number(yesterdayRow.total_orders) || 0
-        
+
         // Only include trends if yesterday data exists
         if (yesterdaySpend > 0) trends.spend = yesterdaySpend + (yesterdaySpend * 0.11) // With PPN
         if (yesterdayImpressions > 0) trends.impressions = yesterdayImpressions
@@ -846,19 +846,19 @@ export async function GET(request: NextRequest) {
         console.log(`[${timestamp}] [Overview] Converted user_id from no:`, { no: userNo, user_id: userId })
       }
     }
-    
+
     // Fetch automation rules count - filter by user_id if not admin/superadmin
     let ruleQuery = `SELECT COUNT(DISTINCT dr.rule_id) as rule_count
        FROM data_rules dr
        WHERE dr.status = 'active'`
     const ruleParams: any[] = []
     let ruleParamIndex = 1
-    
+
     if (user.role !== 'superadmin' && user.role !== 'admin' && userId) {
       ruleQuery += ` AND dr.user_id = $${ruleParamIndex++}`
       ruleParams.push(userId)
     }
-    
+
     const ruleResult = await connection.query(ruleQuery, ruleParams)
     const ruleRows = ruleResult.rows
     const totalActiveRules = Number(ruleRows[0]?.rule_count) || 0
@@ -880,14 +880,14 @@ export async function GET(request: NextRequest) {
        WHERE dr.status = 'active'`
     const activityParams: any[] = []
     let activityParamIndex = 1
-    
+
     if (user.role !== 'superadmin' && user.role !== 'admin' && userId) {
       activityQuery += ` AND dr.user_id = $${activityParamIndex++}`
       activityParams.push(userId)
     }
-    
+
     activityQuery += ` ORDER BY dr.update_at DESC LIMIT 3`
-    
+
     const activityResult = await connection.query(activityQuery, activityParams)
     const activityRows = activityResult.rows
 
@@ -895,14 +895,14 @@ export async function GET(request: NextRequest) {
     const recentActivities = (activityRows || []).map((row: any) => {
       const lastUpdate = row.update_at ? new Date(row.update_at) : null
       const now = new Date()
-      
+
       let timeAgo = ''
       if (lastUpdate) {
         const diffMs = now.getTime() - lastUpdate.getTime()
         const diffMins = Math.floor(diffMs / 60000)
         const diffHours = Math.floor(diffMins / 60)
         const diffDays = Math.floor(diffHours / 24)
-        
+
         if (diffMins < 60) {
           timeAgo = `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`
         } else if (diffHours < 24) {
@@ -914,7 +914,7 @@ export async function GET(request: NextRequest) {
 
       let actionText = 'Rule executed'
       let campaignText = row.rule_name || 'Automation Rule'
-      
+
       try {
         if (row.actions) {
           const actions = JSON.parse(row.actions)
@@ -994,7 +994,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const errorTimestamp = new Date().toISOString()
     const sanitized = sanitizeErrorForLogging(error)
-    
+
     // Log comprehensive error information
     const errorDetails = {
       type: sanitized.type,
@@ -1005,9 +1005,14 @@ export async function GET(request: NextRequest) {
       hint: (error as any)?.hint,
       stack: process.env.NODE_ENV === 'development' ? (error as any)?.stack : undefined
     }
-    
+
+    // Handle specific auth/payment errors without 500 log noise
+    if ((error as any)?.message && ((error as any).message.includes('Access denied') || (error as any).message.includes('Payment required'))) {
+      return NextResponse.json({ success: false, error: (error as any).message }, { status: 402 })
+    }
+
     console.error(`[${errorTimestamp}] [Overview] Error fetching overview:`, errorDetails)
-    
+
     // Check if database connection error
     if (isDatabaseConnectionError(error)) {
       return NextResponse.json(
@@ -1028,7 +1033,7 @@ export async function GET(request: NextRequest) {
 
     // Other errors
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Terjadi kesalahan saat memuat data overview. Silakan coba lagi.',
         ...(process.env.NODE_ENV === 'development' && {

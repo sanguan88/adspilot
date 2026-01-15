@@ -32,6 +32,7 @@ import { authenticatedFetch } from '@/lib/api-client'
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { AddonPurchaseModal } from "@/components/addon-purchase-modal"
 
 interface Account {
   id: string
@@ -195,6 +196,7 @@ export function AccountsPage() {
   } | null>(null)
   const [limitsLoading, setLimitsLoading] = useState(true)
   const [showLimitsBanner, setShowLimitsBanner] = useState(false)
+  const [showAddonModal, setShowAddonModal] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<"all" | "connected" | "expired">("all")
 
@@ -1164,7 +1166,7 @@ export function AccountsPage() {
   const fetchLimits = async () => {
     try {
       setLimitsLoading(true)
-      const response = await authenticatedFetch('/api/user/subscription/limits')
+      const response = await authenticatedFetch('/api/user/effective-limits')
 
       if (response.status === 401) {
         if (typeof window !== 'undefined') {
@@ -1176,8 +1178,8 @@ export function AccountsPage() {
       const data = await response.json()
 
       if (data.success && data.data) {
-        const { limits, usage } = data.data
-        const maxAccounts = limits.maxAccounts === -1 ? Infinity : limits.maxAccounts
+        const { effectiveLimits, usage, planName } = data.data
+        const maxAccounts = effectiveLimits.maxAccounts === -1 ? Infinity : effectiveLimits.maxAccounts
         const accountsUsage = usage.accounts || 0
         const limitReached = maxAccounts !== Infinity && accountsUsage >= maxAccounts
 
@@ -1185,9 +1187,10 @@ export function AccountsPage() {
           maxAccounts,
           usage: accountsUsage,
           limitReached,
-          planName: data.data.planName || null
+          planName: planName || null
         }
 
+        console.log('Processed Limits Info:', limitsInfo) // Debug log
         setLimitsData(limitsInfo)
         return limitsInfo
       }
@@ -1359,7 +1362,9 @@ export function AccountsPage() {
                 setAddTokoModalOpen(true)
               }
             }}
-            className="flex items-center gap-2"
+            // Disable button if limit is reached
+            disabled={limitsData?.limitReached}
+            className={`flex items-center gap-2 ${limitsData?.limitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Plus className="w-4 h-4" />
             ADD TOKO
@@ -1398,12 +1403,19 @@ export function AccountsPage() {
                     Anda telah mencapai batas maksimal toko. Upgrade plan untuk menambah lebih banyak toko.
                   </p>
                 </div>
-                <Link href="/dashboard/subscription">
-                  <Button className="w-full sm:w-auto" size="sm">
-                    Upgrade Plan
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+
+                {/* Replaced Upgrade Plan link with Addon Modal trigger */}
+                <Button
+                  className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white"
+                  size="sm"
+                  onClick={() => {
+                    setShowAddonModal(true)
+                    setShowLimitsBanner(false)
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Tambah Addon
+                </Button>
               </div>
             </AlertDescription>
           </Alert>
@@ -1435,7 +1447,37 @@ export function AccountsPage() {
                   <Users className="w-5 h-5 text-primary absolute top-4 right-4" />
                   <div className="flex flex-col items-start gap-2">
                     <p className="text-primary text-xs font-medium uppercase tracking-wider">Total Toko</p>
-                    <p className="text-3xl font-bold text-gray-900">{summary.total_accounts || 0}</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {summary.total_accounts || 0}
+                      {limitsData && limitsData.maxAccounts !== Infinity && (
+                        <span className="text-lg text-gray-500 ml-1">/ {limitsData.maxAccounts}</span>
+                      )}
+                    </p>
+                    {limitsData && (
+                      <>
+                        {limitsData.planName && (
+                          <p className="text-xs text-gray-500">
+                            Paket: {limitsData.planName}
+                          </p>
+                        )}
+                        {limitsData.limitReached ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShowAddonModal(true)
+                            }}
+                            className="absolute bottom-5 right-5 text-[10px] uppercase tracking-wide font-bold text-white bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-full shadow-sm transition-all flex items-center gap-1 z-10 hover:shadow-md active:scale-95"
+                          >
+                            <Plus className="w-3 h-3" />
+                            Tambah Addon
+                          </button>
+                        ) : (
+                          <p className="text-xs text-green-600 mt-1">
+                            ✓ Bisa tambah {limitsData.maxAccounts === Infinity ? '∞' : limitsData.maxAccounts - limitsData.usage} toko lagi
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -2188,7 +2230,17 @@ export function AccountsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+
+      {/* Addon Purchase Modal */}
+      <AddonPurchaseModal
+        open={showAddonModal}
+        onClose={() => setShowAddonModal(false)}
+        onSuccess={() => {
+          fetchLimits()
+          loadData()
+        }}
+      />
+    </div >
   )
 }
 

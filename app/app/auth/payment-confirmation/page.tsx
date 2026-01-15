@@ -69,6 +69,9 @@ interface PaymentSettings {
 
 interface Transaction {
   transactionId: string
+  planId: string
+  planName: string
+  durationMonths: number
   baseAmount: number
   ppnAmount: number
   uniqueCode: number
@@ -154,18 +157,18 @@ function PaymentConfirmationContent() {
     }
   }
 
-  // Fetch transaction data
+  // Fetch transaction data from PUBLIC endpoint (no auth required)
   useEffect(() => {
     const fetchTransaction = async () => {
-      if (!userId) return
+      if (!transactionId) {
+        setLoadingTransaction(false)
+        return
+      }
 
       try {
         setLoadingTransaction(true)
-        const url = transactionId
-          ? `/api/transactions/${transactionId}`
-          : `/api/transactions/undefined?userId=${userId}`
-
-        const response = await fetch(url)
+        // Use public endpoint - no auth required
+        const response = await fetch(`/api/transactions/public/${transactionId}`)
         const data = await response.json()
 
         if (data.success && data.data) {
@@ -179,7 +182,7 @@ function PaymentConfirmationContent() {
     }
 
     fetchTransaction()
-  }, [userId, transactionId])
+  }, [transactionId])
 
   // Fetch payment settings
   useEffect(() => {
@@ -257,7 +260,25 @@ function PaymentConfirmationContent() {
                 </div>
               </CardHeader>
               <CardContent>
-                {selectedPlan ? (
+                {transaction ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-lg">{transaction.planName}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {transaction.durationMonths === 1 ? '1 bulan' :
+                          transaction.durationMonths === 3 ? '3 bulan' :
+                            transaction.durationMonths === 6 ? '6 bulan' :
+                              `${transaction.durationMonths} bulan`}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">
+                      {transaction.durationMonths === 1 ? '1 bulan' :
+                        transaction.durationMonths === 3 ? '3 bulan' :
+                          transaction.durationMonths === 6 ? '6 bulan' :
+                            `${transaction.durationMonths} bulan`}
+                    </Badge>
+                  </div>
+                ) : selectedPlan ? (
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-lg">{selectedPlan.name}</h3>
@@ -275,7 +296,7 @@ function PaymentConfirmationContent() {
                             `${selectedPlan.durationMonths} bulan`}
                     </Badge>
                   </div>
-                ) : loadingPlans ? (
+                ) : loadingPlans || loadingTransaction ? (
                   <div className="text-center py-4">
                     <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">Memuat data plan...</p>
@@ -501,7 +522,23 @@ function PaymentConfirmationContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  {selectedPlan ? (
+                  {transaction ? (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Paket</span>
+                        <span className="font-medium">{transaction.planName}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Durasi</span>
+                        <span className="font-medium">
+                          {transaction.durationMonths === 1 ? '1 bulan' :
+                            transaction.durationMonths === 3 ? '3 bulan' :
+                              transaction.durationMonths === 6 ? '6 bulan' :
+                                `${transaction.durationMonths} bulan`}
+                        </span>
+                      </div>
+                    </>
+                  ) : selectedPlan ? (
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Paket</span>
@@ -519,7 +556,7 @@ function PaymentConfirmationContent() {
                     </>
                   ) : (
                     <div className="text-center py-2 text-sm text-muted-foreground">
-                      {loadingPlans ? 'Memuat data plan...' : 'Plan tidak ditemukan'}
+                      {loadingPlans || loadingTransaction ? 'Memuat data plan...' : 'Plan tidak ditemukan'}
                     </div>
                   )}
                   <Separator />

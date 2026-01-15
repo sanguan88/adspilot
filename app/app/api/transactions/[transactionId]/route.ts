@@ -17,7 +17,7 @@ export async function GET(
     await checkResourceAccess(user, 'view', 'subscriptions', false);
 
     const { transactionId } = params;
-    const userId = user.id as string;
+    const userId = user.userId as string; // Fix: user.id -> user.userId
     const connection = await getDatabaseConnection();
 
     try {
@@ -97,6 +97,11 @@ export async function GET(
       throw error;
     }
   } catch (error: any) {
+    // Handle specific auth/payment errors without 500 log noise
+    if (error.message && (error.message.includes('Access denied') || error.message.includes('Payment required'))) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 402 });
+    }
+
     console.error('Get transaction error:', error);
     return NextResponse.json(
       { success: false, error: 'Terjadi kesalahan saat mengambil data transaksi' },

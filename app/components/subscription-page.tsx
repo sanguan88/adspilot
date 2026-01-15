@@ -45,6 +45,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Skeleton } from "@/components/ui/skeleton"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+import { AddonPurchaseModal } from "@/components/addon-purchase-modal"
 
 interface Subscription {
   id: number
@@ -95,6 +96,7 @@ export function SubscriptionPage() {
     usage: { accounts: number; automationRules: number; campaigns: number }
   } | null>(null)
   const [limitsLoading, setLimitsLoading] = useState(false)
+  const [showAddonModal, setShowAddonModal] = useState(false)
 
   useEffect(() => {
     fetchSubscriptionData()
@@ -123,11 +125,16 @@ export function SubscriptionPage() {
   const fetchLimitsData = async () => {
     try {
       setLimitsLoading(true)
-      const response = await authenticatedFetch("/api/user/subscription/limits")
+      setLimitsLoading(true)
+      const response = await authenticatedFetch("/api/user/effective-limits")
       const data = await response.json()
 
       if (data.success && data.data) {
-        setLimitsData(data.data)
+        setLimitsData({
+          planName: data.data.planName,
+          limits: data.data.effectiveLimits,
+          usage: data.data.usage
+        })
       }
     } catch (error) {
       console.error("Error fetching limits data:", error)
@@ -598,9 +605,27 @@ export function SubscriptionPage() {
                                 className="h-2"
                               />
                               {limitsData.usage.accounts >= limitsData.limits.maxAccounts * 0.9 && (
-                                <p className="text-xs text-red-600">
-                                  Anda telah mencapai {((limitsData.usage.accounts / limitsData.limits.maxAccounts) * 100).toFixed(0)}% dari limit. Pertimbangkan untuk upgrade plan.
-                                </p>
+                                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                  <p className="text-xs text-blue-800">
+                                    {limitsData.usage.accounts >= limitsData.limits.maxAccounts ? (
+                                      <>
+                                        Limit toko tercapai ({limitsData.usage.accounts}/{limitsData.limits.maxAccounts}).
+                                      </>
+                                    ) : (
+                                      <>
+                                        Anda telah mencapai {((limitsData.usage.accounts / limitsData.limits.maxAccounts) * 100).toFixed(0)}% dari limit.
+                                      </>
+                                    )}
+                                    {' '}
+                                    <button
+                                      onClick={() => setShowAddonModal(true)}
+                                      className="text-blue-600 hover:text-blue-700 hover:underline font-semibold"
+                                    >
+                                      Beli Addon Toko
+                                    </button>
+                                    {' '}untuk menambah limit.
+                                  </p>
+                                </div>
                               )}
                             </>
                           ) : (
@@ -840,6 +865,16 @@ export function SubscriptionPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Addon Purchase Modal */}
+      <AddonPurchaseModal
+        open={showAddonModal}
+        onClose={() => setShowAddonModal(false)}
+        onSuccess={() => {
+          fetchLimitsData()
+          fetchSubscriptionData()
+        }}
+      />
     </div>
   )
 }

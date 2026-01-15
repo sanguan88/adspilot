@@ -171,15 +171,15 @@ export async function POST(
 
         // Update user status based on action
         if (action === 'confirm') {
-          // Set to 'aktif' when payment confirmed
+          // Set to 'active' when payment confirmed
           await connection.query(
             `UPDATE data_user 
-             SET status_user = 'aktif',
+             SET status_user = 'active',
                  update_at = NOW()
              WHERE user_id = $1`,
             [transaction.user_id]
           )
-          console.log('User status updated to aktif:', transaction.user_id)
+          console.log('User status updated to active:', transaction.user_id)
         } else if (action === 'reject') {
           // Set to 'pending_payment' when payment rejected (if not already)
           await connection.query(
