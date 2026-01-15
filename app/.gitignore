@@ -41,5 +41,5 @@ next-env.d.ts
 *.log
 
 # pm2
-ecosystem.config.js
+
 
