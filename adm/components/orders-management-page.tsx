@@ -770,7 +770,7 @@ export function OrdersManagementPage() {
               </div>
             )}
             <DialogFooter>
-              {selectedOrder && (selectedOrder.paymentStatus === 'pending' || selectedOrder.paymentStatus === 'waiting_verification') && (
+              {selectedOrder && (selectedOrder.paymentStatus === 'pending' || selectedOrder.paymentStatus === 'waiting_confirmation') && (
                 <Button
                   variant="default"
                   onClick={() => {
