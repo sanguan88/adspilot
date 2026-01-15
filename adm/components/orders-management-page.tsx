@@ -698,9 +698,14 @@ export function OrdersManagementPage() {
                         }}
                       >
                         {(() => {
-                          const imageUrl = selectedOrder.paymentProofUrl?.startsWith('/uploads')
-                            ? `/api/proxy-image?path=${encodeURIComponent(selectedOrder.paymentProofUrl)}`
-                            : selectedOrder.paymentProofUrl
+                          // Payment proofs are uploaded to User Portal (app.adspilot.id)
+                          // Need to use absolute URL since we're on Admin Portal (adm.adspilot.id)
+                          const userPortalUrl = process.env.NEXT_PUBLIC_USER_PORTAL_URL || 'https://app.adspilot.id'
+                          let imageUrl = selectedOrder.paymentProofUrl
+
+                          if (imageUrl?.startsWith('/api/uploads') || imageUrl?.startsWith('/uploads')) {
+                            imageUrl = `${userPortalUrl}${imageUrl}`
+                          }
 
                           return (
                             <img
@@ -708,7 +713,8 @@ export function OrdersManagementPage() {
                               alt="Bukti Pembayaran"
                               className="max-w-full h-auto max-h-32 rounded"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none'
+                                console.error('Image load error:', imageUrl, selectedOrder.paymentProofUrl)
+                                  ; (e.target as HTMLImageElement).style.display = 'none'
                               }}
                             />
                           )
@@ -1019,10 +1025,14 @@ export function OrdersManagementPage() {
                 <div className="border rounded-lg overflow-hidden bg-muted/50 flex items-center justify-center min-h-[400px]">
                   {/* Convert relative path to absolute URL if needed */}
                   {(() => {
-                    // Use API proxy to serve image from adbot app
-                    const imageUrl = previewImageUrl.startsWith('/uploads')
-                      ? `/api/proxy-image?path=${encodeURIComponent(previewImageUrl)}`
-                      : previewImageUrl
+                    // Payment proofs are uploaded to User Portal (app.adspilot.id)
+                    // Need to use absolute URL since we're on Admin Portal (adm.adspilot.id)
+                    const userPortalUrl = process.env.NEXT_PUBLIC_USER_PORTAL_URL || 'https://app.adspilot.id'
+                    let imageUrl = previewImageUrl
+
+                    if (imageUrl?.startsWith('/api/uploads') || imageUrl?.startsWith('/uploads')) {
+                      imageUrl = `${userPortalUrl}${imageUrl}`
+                    }
 
                     return (
                       <img
