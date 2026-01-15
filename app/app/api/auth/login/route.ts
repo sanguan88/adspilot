@@ -83,14 +83,14 @@ export async function POST(request: NextRequest) {
 
     try {
       // Cari user berdasarkan username atau email (case-insensitive)
-      // Allow login for both 'aktif' and 'pending_payment' status
+      // Allow login for both 'active' and 'pending_payment' status
       const result = await connection.query(
         `SELECT 
           no, user_id, username, password, email, nama_lengkap, 
           role, status_user, photo_profile
         FROM data_user 
         WHERE (LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)) 
-        AND status_user IN ('aktif', 'pending_payment')`,
+        AND status_user IN ('active', 'pending_payment')`,
         [username.trim()]
       );
 
@@ -98,6 +98,8 @@ export async function POST(request: NextRequest) {
 
       // Bedakan antara user tidak ditemukan vs password salah
       if (users.length === 0) {
+        console.log(`[Login Debug] User not found or status invalid for: ${username}`);
+
         // Release connection before returning
         if (connection) {
           try {
@@ -121,6 +123,8 @@ export async function POST(request: NextRequest) {
 
       // Verify password
       const isPasswordValid = await comparePassword(password, user.password);
+
+      console.log(`[Login Debug] Password check for user ${user.username} (ID: ${user.user_id}): ${isPasswordValid ? 'VALID' : 'INVALID'}`);
 
       if (!isPasswordValid) {
         // Release connection before returning
@@ -295,9 +299,9 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     // Release connection jika masih ada (hanya sekali)
-    if (connection !== null) {
+    if (connection) {
       try {
-        connection.release();
+        connection?.release();
         connection = null;
       } catch (releaseError: any) {
         // Check if it's already released error
