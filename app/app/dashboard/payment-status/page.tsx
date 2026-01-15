@@ -304,6 +304,20 @@ export default function PaymentStatusPage() {
   const isPending = transaction?.paymentStatus === 'pending'
   const isWaitingConfirmation = transaction?.paymentStatus === 'waiting_confirmation'
   const isPaid = transaction?.paymentStatus === 'paid'
+  const isRejected = transaction?.paymentStatus === 'rejected'
+  const isExpired = transaction?.paymentStatus === 'expired'
+
+  // Helper function to get status display info
+  const getStatusInfo = () => {
+    if (isPaid) return { label: 'Pembayaran Diterima', color: 'bg-green-500', icon: 'check' }
+    if (isRejected) return { label: 'Pembayaran Ditolak', color: 'bg-red-500', icon: 'x' }
+    if (isExpired) return { label: 'Kadaluarsa', color: 'bg-gray-500', icon: 'clock' }
+    if (isWaitingConfirmation) return { label: 'Menunggu Verifikasi', color: 'bg-blue-500', icon: 'clock' }
+    if (isPending) return { label: 'Menunggu Pembayaran', color: 'bg-yellow-500', icon: 'clock' }
+    return { label: transaction?.paymentStatus || 'Unknown', color: 'bg-gray-500', icon: 'clock' }
+  }
+
+  const statusInfo = getStatusInfo()
 
   return (
     <ProtectedRoute allowPendingPayment={true}>
@@ -312,9 +326,11 @@ export default function PaymentStatusPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-1">Status Pembayaran</h1>
           <p className="text-sm text-muted-foreground">
-            {isPending && "Menunggu upload bukti pembayaran"}
-            {isWaitingConfirmation && "Menunggu verifikasi pembayaran dari admin"}
-            {isPaid && "Pembayaran sudah dikonfirmasi"}
+            {isPending && "Silakan upload bukti transfer untuk melanjutkan"}
+            {isWaitingConfirmation && "Bukti pembayaran sedang diverifikasi oleh admin"}
+            {isPaid && "Pembayaran Anda sudah diterima"}
+            {isRejected && "Pembayaran Anda ditolak, silakan hubungi admin"}
+            {isExpired && "Transaksi sudah kadaluarsa"}
             {!transaction && "Tidak ada transaksi ditemukan"}
           </p>
         </div>
@@ -329,25 +345,17 @@ export default function PaymentStatusPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">Detail Pembayaran</CardTitle>
                     <Badge
-                      variant={isPending || isWaitingConfirmation ? "secondary" : "default"}
-                      className={isPaid ? "bg-green-500" : isWaitingConfirmation ? "bg-blue-500" : ""}
+                      variant="default"
+                      className={statusInfo.color}
                     >
-                      {isPending ? (
-                        <>
-                          <Clock className="h-3 w-3 mr-1" />
-                          Menunggu
-                        </>
-                      ) : isWaitingConfirmation ? (
-                        <>
-                          <Clock className="h-3 w-3 mr-1" />
-                          Verifikasi
-                        </>
+                      {statusInfo.icon === 'check' ? (
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                      ) : statusInfo.icon === 'x' ? (
+                        <AlertCircle className="h-3 w-3 mr-1" />
                       ) : (
-                        <>
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Dikonfirmasi
-                        </>
+                        <Clock className="h-3 w-3 mr-1" />
                       )}
+                      {statusInfo.label}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -593,10 +601,10 @@ export default function PaymentStatusPage() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Status</span>
                       <Badge
-                        variant={isPending || isWaitingConfirmation ? "secondary" : "default"}
-                        className={isPaid ? "bg-green-500 text-xs" : isWaitingConfirmation ? "bg-blue-500 text-xs" : "text-xs"}
+                        variant="default"
+                        className={`${statusInfo.color} text-xs`}
                       >
-                        {isPending ? "Menunggu" : isWaitingConfirmation ? "Verifikasi" : "Dikonfirmasi"}
+                        {statusInfo.label}
                       </Badge>
                     </div>
                     <div className="flex justify-between">
