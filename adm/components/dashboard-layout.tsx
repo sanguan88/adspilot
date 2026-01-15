@@ -243,13 +243,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <>
               <Avatar className="w-8 h-8 mx-auto">
                 {user?.photo_profile ? (
-                  src = {
-                    user.photo_profile?.startsWith('uploads/')
+                  <AvatarImage
+                    src={user.photo_profile?.startsWith('uploads/')
                       ? `https://app.adspilot.id/${user.photo_profile}`
-                      : `https://app.adspilot.id/uploads/profiles/${user.photo_profile}`
-                  }
-                      alt={user?.nama_lengkap || 'User'}
-                    />
+                      : `https://app.adspilot.id/uploads/profiles/${user.photo_profile}`}
+                    alt={user?.nama_lengkap || 'User'}
+                  />
+
                 ) : null}
                 <AvatarFallback>
                   <User className="w-4 h-4 text-foreground/60" />
