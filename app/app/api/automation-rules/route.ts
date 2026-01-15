@@ -222,7 +222,8 @@ export async function POST(request: NextRequest) {
 
         if (!campaignValidation.allowed) {
           await connection.query('ROLLBACK')
-          connection.release()
+          await connection.query('ROLLBACK')
+          // connection.release() handled in finally block to avoid double release
           return NextResponse.json(
             {
               error: campaignValidation.error || 'Campaign yang dipilih tidak valid',
@@ -584,13 +585,7 @@ export async function GET(request: NextRequest) {
 
         // Early return if no allowed usernames
         if (allowedUsernames.length === 0) {
-          if (connection) {
-            try {
-              connection.release()
-            } catch (releaseError) {
-              // Ignore release error
-            }
-          }
+          // connection.release() handled in finally block
           return NextResponse.json({
             success: true,
             data: [],
@@ -605,14 +600,7 @@ export async function GET(request: NextRequest) {
       } catch (queryError: any) {
         // Handle query errors (including connection terminated)
         if (queryError?.message?.includes('Connection terminated') || isDatabaseConnectionError(queryError)) {
-          if (connection) {
-            try {
-              connection.release()
-            } catch (releaseError) {
-              // Ignore release error
-            }
-            connection = null
-          }
+          // connection.release() handled in finally block
           const sanitized = sanitizeErrorForLogging(queryError);
           const timestamp = new Date().toISOString();
           console.error(`[${timestamp}] Database query error: ${sanitized.type}${sanitized.code ? ` (${sanitized.code})` : ''}`);
@@ -689,14 +677,7 @@ export async function GET(request: NextRequest) {
     } catch (queryError: any) {
       // Handle query errors (including connection terminated)
       if (queryError?.message?.includes('Connection terminated') || isDatabaseConnectionError(queryError)) {
-        if (connection) {
-          try {
-            connection.release()
-          } catch (releaseError) {
-            // Ignore release error
-          }
-          connection = null
-        }
+        // connection.release() handled in finally block
         const sanitized = sanitizeErrorForLogging(queryError);
         const timestamp = new Date().toISOString();
         console.error(`[${timestamp}] Database query error (count): ${sanitized.type}${sanitized.code ? ` (${sanitized.code})` : ''}`);
@@ -731,14 +712,7 @@ export async function GET(request: NextRequest) {
     } catch (queryError: any) {
       // Handle query errors (including connection terminated)
       if (queryError?.message?.includes('Connection terminated') || isDatabaseConnectionError(queryError)) {
-        if (connection) {
-          try {
-            connection.release()
-          } catch (releaseError) {
-            // Ignore release error
-          }
-          connection = null
-        }
+        // connection.release() handled in finally block
         const sanitized = sanitizeErrorForLogging(queryError);
         const timestamp = new Date().toISOString();
         console.error(`[${timestamp}] Database query error (fetch rules): ${sanitized.type}${sanitized.code ? ` (${sanitized.code})` : ''}`);
