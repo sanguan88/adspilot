@@ -34,6 +34,9 @@ interface SystemSettings {
     jwtSecret: string
     sessionTimeout: number
     maxLoginAttempts: number
+    loginWindowMinutes?: number
+    loginBlockDurationMinutes?: number
+    rateLimitEnabled?: boolean
   }
   notifications: {
     emailEnabled: boolean
@@ -393,6 +396,64 @@ export function SettingsPage() {
                       }
                     />
                   </div>
+                  <div>
+                    <Label>Login Window (minutes)</Label>
+                    <Input
+                      type="number"
+                      value={settings.security.loginWindowMinutes || 15}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          security: {
+                            ...settings.security,
+                            loginWindowMinutes: parseInt(e.target.value) || 15,
+                          },
+                        })
+                      }
+                    />
+                    <p className={`${typography.mutedSmall} mt-1`}>
+                      Time window to count login attempts
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Block Duration (minutes)</Label>
+                    <Input
+                      type="number"
+                      value={settings.security.loginBlockDurationMinutes || 30}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          security: {
+                            ...settings.security,
+                            loginBlockDurationMinutes: parseInt(e.target.value) || 30,
+                          },
+                        })
+                      }
+                    />
+                    <p className={`${typography.mutedSmall} mt-1`}>
+                      Duration to block after max attempts
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Rate Limiting</Label>
+                    <p className={typography.muted}>
+                      Enable rate limiting for login attempts
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.security.rateLimitEnabled !== false}
+                    onCheckedChange={(checked) =>
+                      setSettings({
+                        ...settings,
+                        security: {
+                          ...settings.security,
+                          rateLimitEnabled: checked,
+                        },
+                      })
+                    }
+                  />
                 </div>
               </CardContent>
             </Card>
