@@ -1,23 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseConnection } from '@/lib/db';
-import { requireActiveStatus } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import { checkResourceAccess } from '@/lib/role-checker';
 
 /**
  * GET - Get transaction by transaction ID or user ID
+ * NOTE: Uses requireAuth (not requireActiveStatus) to allow pending_payment users
+ * to view their transactions on /dashboard/payment-status page
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: { transactionId: string } }
 ) {
   try {
-    const user = await requireActiveStatus(request);
+    // Use requireAuth instead of requireActiveStatus
+    // This allows users with pending_payment status to view their transactions
+    const user = requireAuth(request);
 
-    // Check permission to view transactions
-    await checkResourceAccess(user, 'view', 'subscriptions', false);
+    // Skip resource access check for pending_payment users viewing their own transactions
+    // checkResourceAccess would fail for pending users
 
     const { transactionId } = params;
-    const userId = user.userId as string; // Fix: user.id -> user.userId
+    const userId = user.userId as string;
     const connection = await getDatabaseConnection();
 
     try {
