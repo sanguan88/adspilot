@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         SELECT 
           COUNT(*) as total_rules,
           COUNT(CASE WHEN status = 'active' THEN 1 END) as active_rules
-        FROM automation_rules
+        FROM data_rules
       `)
 
       // Get API calls (mock for now)
