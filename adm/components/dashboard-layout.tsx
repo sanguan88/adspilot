@@ -56,7 +56,7 @@ const sidebarGroups = [
     label: "System",
     items: [
       { icon: Shield, label: "Audit Logs", href: "/audit-logs", description: "Track all admin actions" },
-      { icon: Key, label: "Licenses", href: "/licenses", description: "License keys dan aktivasi" },
+      // { icon: Key, label: "Licenses", href: "/licenses", description: "License keys dan aktivasi" },
       { icon: Activity, label: "Usage & Monitoring", href: "/usage", description: "Usage analytics dan monitoring" },
       { icon: Monitor, label: "App Health", href: "/health", description: "Application health monitoring" },
     ],
@@ -207,41 +207,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
 
         {/* User Profile */}
-        <div className={cn("border-t border-border", isCollapsed ? "p-2 space-y-1.5" : "p-4 space-y-2")}>
+        {/* User Profile & Logout Area (Refined) */}
+        <div className={cn("mt-auto border-t border-border", isCollapsed ? "p-3" : "p-4")}>
           {!isCollapsed ? (
-            <>
-              <div className="flex items-center justify-center gap-2">
-                <Avatar className="w-8 h-8">
-                  {user?.photo_profile ? (
-                    <AvatarImage
-                      src={user.photo_profile?.startsWith('uploads/')
-                        ? `https://app.adspilot.id/${user.photo_profile}`
-                        : `https://app.adspilot.id/uploads/profiles/${user.photo_profile}`}
-                      alt={user?.nama_lengkap || 'User'}
-                    />
-                  ) : null}
-                  <AvatarFallback>
-                    <User className="w-4 h-4 text-foreground/60" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-left">
-                  <p className="text-sm font-medium text-foreground/80 truncate">{user?.nama_lengkap || 'Admin'}</p>
-                  <p className="text-xs text-foreground/60 truncate">{user?.role || 'Admin'}</p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-center gap-2 text-xs font-medium text-foreground/70 hover:bg-destructive/10 hover:text-destructive rounded-none h-8"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </Button>
-            </>
-          ) : (
-            <>
-              <Avatar className="w-8 h-8 mx-auto">
+            <div className="flex items-center gap-3 p-2 rounded hover:bg-slate-50 transition-all duration-300 group">
+              <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100">
                 {user?.photo_profile ? (
                   <AvatarImage
                     src={user.photo_profile?.startsWith('uploads/')
@@ -249,22 +219,69 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       : `https://app.adspilot.id/uploads/profiles/${user.photo_profile}`}
                     alt={user?.nama_lengkap || 'User'}
                   />
-
                 ) : null}
-                <AvatarFallback>
-                  <User className="w-4 h-4 text-foreground/60" />
+                <AvatarFallback className="bg-slate-100">
+                  <User className="w-5 h-5 text-slate-400" />
                 </AvatarFallback>
               </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-800 truncate leading-tight">{user?.nama_lengkap || 'Admin'}</p>
+                <p className="text-[10px] font-bold uppercase tracking-tighter text-slate-400 truncate mt-0.5">{user?.role || 'Admin'}</p>
+              </div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="w-full justify-center p-1.5 text-foreground/70 hover:bg-destructive/10 hover:text-destructive rounded-none h-8"
+                      size="icon"
+                      className="w-8 h-8 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
                       onClick={handleLogout}
                     >
                       <LogOut className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Logout</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100 cursor-pointer hover:scale-105 transition-transform">
+                      {user?.photo_profile ? (
+                        <AvatarImage
+                          src={user.photo_profile?.startsWith('uploads/')
+                            ? `https://app.adspilot.id/${user.photo_profile}`
+                            : `https://app.adspilot.id/uploads/profiles/${user.photo_profile}`}
+                          alt={user?.nama_lengkap || 'User'}
+                        />
+                      ) : null}
+                      <AvatarFallback className="bg-slate-100">
+                        <User className="w-5 h-5 text-slate-400" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p className="font-bold">{user?.nama_lengkap || 'User'}</p>
+                    <p className="text-xs capitalize text-slate-400">{user?.role || 'Admin'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-10 h-10 rounded text-slate-400 hover:text-red-500 hover:bg-red-50"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="w-5 h-5" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="right">
@@ -272,7 +289,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            </>
+            </div>
           )}
         </div>
       </div>
