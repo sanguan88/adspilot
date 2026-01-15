@@ -41,7 +41,7 @@ export async function DELETE(request: NextRequest) {
       const query = `
         UPDATE data_user 
         SET chatid_tele = NULL 
-        WHERE userid = $1
+        WHERE user_id = $1
       `
       await client.query(query, [user.userId])
     })
