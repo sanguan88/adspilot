@@ -10,6 +10,16 @@ import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   Settings,
   User,
   Bell,
@@ -98,6 +108,7 @@ export function SettingsPage() {
     emailNotifications: true,
     telegramNotifications: false
   })
+  const [disconnectDialogOpen, setDisconnectDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchUserData()
@@ -243,11 +254,11 @@ export function SettingsPage() {
     }
   }
 
-  const handleDisconnectTelegram = async () => {
-    if (!confirm("Apakah Anda yakin ingin memutuskan koneksi Telegram? Anda tidak akan menerima notifikasi lagi.")) {
-      return
-    }
+  const handleDisconnectTelegram = () => {
+    setDisconnectDialogOpen(true)
+  }
 
+  const executeDisconnect = async () => {
     try {
       setLoadingTelegram(true)
       const response = await authenticatedFetch("/api/user/setup-telegram", {
@@ -270,6 +281,7 @@ export function SettingsPage() {
       toast.error("Terjadi kesalahan saat memutuskan koneksi")
     } finally {
       setLoadingTelegram(false)
+      setDisconnectDialogOpen(false)
     }
   }
 
@@ -857,6 +869,38 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={disconnectDialogOpen} onOpenChange={setDisconnectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Putuskan Koneksi Telegram?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin memutuskan koneksi akun Telegram Anda?
+              Anda tidak akan lagi menerima notifikasi penting melalui Telegram.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loadingTelegram}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                executeDisconnect()
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={loadingTelegram}
+            >
+              {loadingTelegram ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Memutuskan...
+                </>
+              ) : (
+                "Ya, Putuskan"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
