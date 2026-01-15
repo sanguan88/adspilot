@@ -34,17 +34,17 @@ export async function DELETE(request: NextRequest) {
   try {
     const user = await requireActiveStatus(request)
 
-    // Import query dynamically or at top level if possible, but let's follow existing pattern
-    const { getPool } = await import('@/lib/db')
-    const pool = getPool()
+    // Import helper dynamically
+    const { withDatabaseConnection } = await import('@/lib/db')
 
-    const query = `
-      UPDATE data_user 
-      SET chatid_tele = NULL 
-      WHERE userid = $1
-    `
-
-    await pool.query(query, [user.userId])
+    await withDatabaseConnection(async (client) => {
+      const query = `
+        UPDATE data_user 
+        SET chatid_tele = NULL 
+        WHERE userid = $1
+      `
+      await client.query(query, [user.userId])
+    })
 
     return NextResponse.json({
       success: true,
