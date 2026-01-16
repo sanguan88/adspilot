@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDatabaseConnection } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/plans
  * Get all active subscription plans (Public endpoint)
