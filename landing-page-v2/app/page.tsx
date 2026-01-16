@@ -133,7 +133,7 @@ export default function LandingPage() {
       // This ensures the affiliate voucher is prioritized over default voucher
       const existingAffVoucher = getCookie('affiliate_voucher')
       if (!existingAffVoucher) {
-        fetch(`/api/tracking/voucher?ref=${refCode}`)
+        fetch(`${API_URL}/api/tracking/voucher?ref=${refCode}`)
           .then(res => res.json())
           .then(result => {
             if (result.success && result.data?.voucherCode) {
