@@ -99,7 +99,7 @@ function PaymentConfirmationContent() {
     const fetchPlans = async () => {
       try {
         setLoadingPlans(true)
-        const response = await fetch('/api/plans')
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/plans`)
         const result = await response.json()
         if (result.success) {
           setPlans(result.data)
@@ -138,7 +138,7 @@ function PaymentConfirmationContent() {
     // Allow default mailto behavior
     // But also send notification to superadmin
     try {
-      await fetch('/api/notifications/contact-admin', {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/contact-admin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,8 +162,8 @@ function PaymentConfirmationContent() {
       try {
         setLoadingTransaction(true)
         const url = transactionId
-          ? `/api/transactions/${transactionId}`
-          : `/api/transactions/undefined?userId=${userId}`
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/transactions/${transactionId}`
+          : `${process.env.NEXT_PUBLIC_API_URL}/api/transactions/undefined?userId=${userId}`
 
         const response = await fetch(url)
         const data = await response.json()
@@ -185,7 +185,7 @@ function PaymentConfirmationContent() {
   useEffect(() => {
     const fetchPaymentSettings = async () => {
       try {
-        const response = await fetch('/api/payment-settings/public')
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payment-settings/public`)
         const data = await response.json()
 
         if (data.success) {
