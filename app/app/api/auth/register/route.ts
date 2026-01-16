@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
         try {
           // Fetch plan price from database
           const planResult = await connection.query(
-            'SELECT price FROM subscription_plans WHERE plan_id = $1 AND is_active = true',
+            'SELECT price, original_price FROM subscription_plans WHERE plan_id = $1 AND is_active = true',
             [planId]
           );
 
@@ -187,6 +187,13 @@ export async function POST(request: NextRequest) {
           }
 
           const baseAmount = parseFloat(planResult.rows[0].price);
+          const originalPrice = planResult.rows[0].original_price ? parseFloat(planResult.rows[0].original_price) : 0;
+
+          // Use the higher of price or original_price for voucher validation (to match frontend logic)
+          // This ensures that if a voucher has a minimum purchase based on the original price, it still passes validation
+          const baseAmountForValidation = Math.max(baseAmount, originalPrice);
+
+          console.log(`[Register] Validation Base: Price=${baseAmount}, Orig=${originalPrice}, Used=${baseAmountForValidation}`);
 
           if (baseAmount > 0) {
             // Generate unique code
@@ -299,7 +306,8 @@ export async function POST(request: NextRequest) {
                     }
                   }
 
-                  if (voucher.minimum_purchase && baseAmount < parseFloat(voucher.minimum_purchase)) {
+                  if (voucher.minimum_purchase && baseAmountForValidation < parseFloat(voucher.minimum_purchase)) {
+                    console.log(`[Register] Voucher Min Purchase Fail: Min=${voucher.minimum_purchase}, ValBase=${baseAmountForValidation}`);
                     throw new Error(`Minimum purchase untuk voucher ini adalah Rp ${parseFloat(voucher.minimum_purchase).toLocaleString('id-ID')}`);
                   }
 
