@@ -2,8 +2,9 @@ module.exports = {
   apps: [
     {
       name: 'app-landing',
-      script: 'node_modules/next/dist/bin/next',
-      args: 'start -p 3002',
+      script: 'npm',
+      args: 'start',
+      cwd: '/root/adspilot/landing-page-v2',
       instances: 1,
       exec_mode: 'fork',
       env: {

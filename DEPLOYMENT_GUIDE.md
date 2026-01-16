@@ -47,7 +47,7 @@ ssh root@154.19.37.198
 
 ### Kredensial Database
 - **Host:** 154.19.37.198
-- **Port:** 3306 (MySQL) / 5432 (PostgreSQL)
+- **Port:** 3306 (MPostgreSQL)
 - **Database:** soroboti_ads
 - **User:** soroboti_db
 - **Password:** `123qweASD!@#!@#`
