@@ -331,7 +331,7 @@ export async function POST(request: NextRequest) {
             const expiresAt = new Date();
             expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
 
-            // Insert transaction
+            // Insert transaction (Ensure 14 parameters match VALUES list)
             const transactionResult = await connection.query(
               `INSERT INTO transactions (
                 transaction_id, user_id, plan_id,
