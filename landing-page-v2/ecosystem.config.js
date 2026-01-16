@@ -16,7 +16,7 @@ module.exports = {
         DB_NAME: 'soroboti_ads',
         DB_USER: 'soroboti_db',
         DB_PASSWORD: '123qweASD!@#!@#',
-        NEXT_PUBLIC_API_URL: 'http://adspilot.id',
+        NEXT_PUBLIC_API_URL: 'http://app.adspilot.id',
       },
       error_file: './logs/pm2-error.log',
       out_file: './logs/pm2-out.log',
