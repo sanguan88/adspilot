@@ -158,10 +158,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${tokenValue}`,
         },
+        credentials: 'include',
       })
 
       if (response.ok) {
@@ -196,11 +197,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userAgent = typeof window !== 'undefined' ? navigator.userAgent : ''
       const timezone = typeof window !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC'
 
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           username,
           password,
