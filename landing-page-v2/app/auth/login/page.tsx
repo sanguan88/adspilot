@@ -68,14 +68,15 @@ function LoginForm() {
   // Redirect jika sudah login
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
-      // Check user status and redirect accordingly
+      // Redirect to User Portal (app.adspilot.id) after successful login
+      const userPortalUrl = process.env.NEXT_PUBLIC_API_URL || 'https://app.adspilot.id'
       if (user.status_user === 'pending_payment') {
-        router.push('/dashboard/payment-status')
+        window.location.href = `${userPortalUrl}/dashboard/payment-status`
       } else {
-        router.push('/general')
+        window.location.href = `${userPortalUrl}/general`
       }
     }
-  }, [isAuthenticated, authLoading, user, router])
+  }, [isAuthenticated, authLoading, user])
 
   // Cek query parameter untuk pesan sukses
   useEffect(() => {
