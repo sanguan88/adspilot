@@ -162,7 +162,7 @@ function PaymentConfirmationContent() {
       try {
         setLoadingTransaction(true)
         const url = transactionId
-          ? `${process.env.NEXT_PUBLIC_API_URL}/api/transactions/${transactionId}`
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/transactions/public/${transactionId}`
           : `${process.env.NEXT_PUBLIC_API_URL}/api/transactions/undefined?userId=${userId}`
 
         const response = await fetch(url)
