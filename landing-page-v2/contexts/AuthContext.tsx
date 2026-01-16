@@ -162,7 +162,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           'Authorization': `Bearer ${tokenValue}`,
         },
-        credentials: 'include',
       })
 
       if (response.ok) {
@@ -202,7 +201,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({
           username,
           password,
