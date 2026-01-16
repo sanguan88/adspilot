@@ -176,36 +176,160 @@ created_at            TIMESTAMP
 
 ---
 
-## 🚀 Ready for Deployment
+## 🚀 Deployment to Production
 
-### Pre-Deployment Checklist
+### Deployment Timeline
+- **Started:** 16 Januari 2026, 15:20 WIB
+- **Completed:** 16 Januari 2026, 15:40 WIB
+- **Duration:** ~20 minutes
+- **Status:** ✅ **SUCCESS**
 
-#### ✅ Database
-- [x] All tables exist and have correct schema
-- [x] `affiliate_clicks` table has `link_id` column
-- [x] Tracking API tested and working
+### Deployment Steps Executed
 
-#### ✅ Environment Variables
-- [x] `.env.local` files configured correctly in all services
-- [x] DB credentials tested in all services (`app`, `aff`, `landing-page-v2`)
+#### 1. Code Push to GitHub ✅
+```bash
+git add .
+git commit -m "Fix: Landing Page DB Connection & Click Tracking System"
+git push origin main
+```
+**Result:** 3 commits pushed successfully
 
-#### ✅ Services
-- [x] `app` (port 3000): User Portal + Tracking API
-- [x] `aff` (port 3003): Affiliate Portal
-- [x] `landing-page-v2` (port 3002): Landing Page
+#### 2. Pull on VPS ✅
+```bash
+ssh root@154.19.37.198
+cd ~/adspilot
+git pull origin main
+```
+**Result:** 78 files updated, 2869 insertions
 
-#### ✅ Features Verified
-- [x] Click tracking real-time
-- [x] Sparkline chart displays correctly
-- [x] Tooltip shows click details
-- [x] CORS configured for cross-origin tracking
+#### 3. Build Landing Page ✅
+```bash
+cd ~/adspilot/landing-page-v2
+npm install --legacy-peer-deps
+npm run build
+```
+**Result:** Production build completed in ~2 minutes
 
-### Deployment Notes
+#### 4. PM2 Configuration Fix ✅
+**Issue:** `.env` files not read by Next.js production build
 
-**For Production:**
-1. **Environment Variables:**
-   - Ensure `.env.production` has correct DB credentials
-   - Update `NEXT_PUBLIC_API_URL` to production URLs
+**Solution:** Created `ecosystem.config.js` with hardcoded environment variables:
+```javascript
+env: {
+  NODE_ENV: 'production',
+  DB_HOST: '154.19.37.198',
+  DB_PORT: '3306',
+  DB_NAME: 'soroboti_ads',
+  DB_USER: 'soroboti_db',
+  DB_PASSWORD: '123qweASD!@#!@#',
+  // ...
+}
+```
+
+#### 5. Service Restart ✅
+```bash
+pm2 delete app-landing
+pm2 start landing-page-v2/ecosystem.config.js
+pm2 save
+```
+**Result:** All services online
+
+---
+
+### ✅ Production Verification
+
+#### Service Status
+| Service | Port | Status | PID | Memory | Uptime |
+|---------|------|--------|-----|--------|--------|
+| User Portal | 3000 | 🟢 ONLINE | 3284593 | 123.7mb | Stable |
+| Admin Portal | 3001 | 🟢 ONLINE | 3284547 | 56.8mb | Stable |
+| **Landing Page** | 3002 | 🟢 ONLINE | 3287484 | 18.8mb | **NEW** |
+| Affiliate Portal | 3003 | 🟢 ONLINE | 3284548 | 56.8mb | Stable |
+| Automation Worker | N/A | 🟢 ONLINE | 3284565 | 94.3mb | Stable |
+
+#### URLs Accessible
+- ✅ http://app.adspilot.id (User Portal)
+- ✅ http://adm.adspilot.id (Admin Portal)
+- ✅ http://adspilot.id (Landing Page) - **FIXED!**
+- ✅ http://aff.adspilot.id (Affiliate Portal)
+
+#### Database Connection
+- ✅ No more `password authentication failed` errors
+- ✅ Landing page successfully connects to PostgreSQL
+- ✅ Click tracking inserts working
+
+#### Tracking System
+- ✅ POST `/api/tracking/click` returns 200 OK
+- ✅ Data persists in `affiliate_clicks` table
+- ✅ Sparkline updates with real-time data
+- ✅ Tooltip displays daily click counts
+
+---
+
+### Deployment Challenges & Solutions
+
+#### Challenge 1: Password Authentication Error
+**Problem:** Landing page couldn't connect to database in production
+```
+error: password authentication failed for user "soroboti_db"
+```
+
+**Root Cause:** Next.js production build doesn't read `.env` files at runtime
+
+**Solution:**
+1. Copied working `lib/db.ts` from `aff` module
+2. Created PM2 ecosystem config with hardcoded credentials
+3. Rebuilt application from scratch (removed `.next` cache)
+
+#### Challenge 2: PM2 Script Path Error
+**Problem:** PM2 couldn't find Next.js binary
+```
+Error: Script not found: /root/adspilot/node_modules/next/dist/bin/next
+```
+
+**Solution:** Changed PM2 config to use `npm start` instead of direct Next.js command:
+```javascript
+script: 'npm',
+args: 'start',
+cwd: '/root/adspilot/landing-page-v2'
+```
+
+---
+
+### Post-Deployment Checklist
+
+#### ✅ Completed
+- [x] All services online and stable
+- [x] Database connections working
+- [x] Click tracking functional
+- [x] Sparkline displaying data
+- [x] Tooltip interactive
+- [x] CORS configured correctly
+- [x] PM2 auto-restart enabled
+- [x] Logs clean (no critical errors)
+
+#### Production URLs Tested
+- [x] Landing page loads: http://adspilot.id
+- [x] Tracking link works: http://adspilot.id/?ref=TES79C6_TTK1010
+- [x] API endpoint responds: POST /api/tracking/click
+- [x] Affiliate portal shows data: http://aff.adspilot.id/links
+
+---
+
+### Deployment Notes for Future
+
+**For Production Environment:**
+1. **PM2 Ecosystem Config:**
+   - Always use `ecosystem.config.js` with explicit env vars
+   - Don't rely on `.env` files in production builds
+   
+2. **Database Credentials:**
+   - Hardcode in ecosystem.config.js (or use PM2 secrets)
+   - Ensure password special characters are properly handled
+   
+3. **Build Process:**
+   - Always clean `.next` folder before production build
+   - Use `npm run build` to ensure fresh compilation
    
 2. **Database:**
    - Run in production:
