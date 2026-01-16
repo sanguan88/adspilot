@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDatabaseConnection } from '@/lib/db'
 
+// Handle OPTIONS for CORS preflight
+export async function OPTIONS() {
+    return new NextResponse(null, {
+        status: 200,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+    })
+}
+
 export async function POST(request: NextRequest) {
     try {
         const { referralCode } = await request.json()
 
         if (!referralCode) {
-            return NextResponse.json({ success: false, error: 'Missing referral code' }, { status: 400 })
+            return NextResponse.json(
+                { success: false, error: 'Missing referral code' },
+                { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } }
+            )
         }
 
         const connection = await getDatabaseConnection()
@@ -15,46 +30,66 @@ export async function POST(request: NextRequest) {
             // 1. Verify affiliate exists and is active
             const affiliateResult = await connection.query(
                 'SELECT affiliate_id FROM affiliates WHERE affiliate_code = $1 AND status = $2',
-                [referralCode, 'active']
+                [referralCode.split('_')[0], 'active'] // Handle custom ref format like CODE_VAR
             )
 
-            if (affiliateResult.rows.length === 0) {
-                // We log it anyway or just return success but do nothing? 
-                // Better to return success so the frontend doesn't show an error, but don't log if it's fake.
-                return NextResponse.json({ success: true, message: 'Invalid or inactive referral code' })
+            // If main code not found, try exact match (just in case)
+            let affiliateId = null;
+
+            if (affiliateResult.rows.length > 0) {
+                affiliateId = affiliateResult.rows[0].affiliate_id
+            } else {
+                // Try exact match
+                const exactMatch = await connection.query(
+                    'SELECT affiliate_id FROM affiliates WHERE affiliate_code = $1 AND status = $2',
+                    [referralCode, 'active']
+                )
+                if (exactMatch.rows.length > 0) {
+                    affiliateId = exactMatch.rows[0].affiliate_id
+                }
             }
 
-            const affiliateId = affiliateResult.rows[0].affiliate_id
+            if (!affiliateId) {
+                return NextResponse.json(
+                    { success: true, message: 'Invalid or inactive referral code' },
+                    { headers: { 'Access-Control-Allow-Origin': '*' } }
+                )
+            }
 
-            // 2. Log the click (optional, but good for analytics)
-            // I need to create affiliate_clicks table or just add to existing if I want.
-            // For now, let's just create it if not exists.
+            // Ensure link_id column exists
             await connection.query(`
-        CREATE TABLE IF NOT EXISTS affiliate_clicks (
-          click_id SERIAL PRIMARY KEY,
-          affiliate_id VARCHAR(50) NOT NULL,
-          referral_code VARCHAR(50) NOT NULL,
-          ip_address VARCHAR(50),
-          user_agent TEXT,
-          created_at TIMESTAMP DEFAULT NOW(),
-          FOREIGN KEY (affiliate_id) REFERENCES affiliates(affiliate_id)
-        );
-      `)
+                ALTER TABLE affiliate_clicks 
+                ADD COLUMN IF NOT EXISTS link_id INTEGER;
+            `);
+
+            // Try to find matching tracking link
+            const linkResult = await connection.query(
+                `SELECT link_id FROM tracking_links WHERE url LIKE $1 ORDER BY created_at DESC LIMIT 1`,
+                [`%ref=${referralCode}%`]
+            );
+
+            const linkId = linkResult.rows.length > 0 ? linkResult.rows[0].link_id : null;
 
             const ip = request.headers.get('x-forwarded-for') || 'unknown'
             const ua = request.headers.get('user-agent') || 'unknown'
 
             await connection.query(
-                'INSERT INTO affiliate_clicks (affiliate_id, referral_code, ip_address, user_agent) VALUES ($1, $2, $3, $4)',
-                [affiliateId, referralCode, ip, ua]
+                'INSERT INTO affiliate_clicks (affiliate_id, referral_code, link_id, ip_address, user_agent) VALUES ($1, $2, $3, $4, $5)',
+                [affiliateId, referralCode, linkId, ip, ua]
             )
 
-            return NextResponse.json({ success: true })
+            return NextResponse.json(
+                { success: true },
+                { headers: { 'Access-Control-Allow-Origin': '*' } }
+            )
         } finally {
             connection.release()
         }
     } catch (error) {
         console.error('Tracking click error:', error)
-        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
+        return NextResponse.json(
+            { success: false, error: 'Internal server error' },
+            { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } }
+        )
     }
 }

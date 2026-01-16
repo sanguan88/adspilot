@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Link2, Copy, ExternalLink, Plus, Trash2 } from "lucide-react"
+import { Link2, Copy, ExternalLink, Plus, Trash2, Ticket, CheckCircle2, CheckCircle, Loader2 } from "lucide-react"
 import { authenticatedFetch } from "@/lib/api-client"
 import { toast } from "sonner"
 import { useAuth } from "@/contexts/AuthContext"
@@ -15,8 +15,19 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
 import { TableSkeleton } from "@/components/ui/loading-skeleton"
 import { DualLayerInfoBanner } from "@/components/dual-layer-info-banner"
+import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
-import { Area, AreaChart, ResponsiveContainer } from "recharts"
+import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts"
 
 interface TrackingLink {
   id: string
@@ -28,17 +39,138 @@ interface TrackingLink {
   trend: number[]
 }
 
+interface Voucher {
+  id: number
+  voucher_code: string
+  discount_type: string
+  discount_value: number
+  is_active: boolean
+  usage_count: number
+}
+
+interface AffiliateSettings {
+  discountRate: number
+  commissionRate: number
+}
+
 export function MyLinksPage() {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [links, setLinks] = useState<TrackingLink[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<'landing' | 'checkout' | ''>('')
   const [customRef, setCustomRef] = useState('')
 
+  // Voucher state
+  const [voucher, setVoucher] = useState<Voucher | null>(null)
+  const [voucherLoading, setVoucherLoading] = useState(true)
+  const [showVoucherForm, setShowVoucherForm] = useState(false)
+  const [newVoucherCode, setNewVoucherCode] = useState('')
+  const [creatingVoucher, setCreatingVoucher] = useState(false)
+  // Delete confirmation states
+  const [voucherToDelete, setVoucherToDelete] = useState(false)
+  const [linkToDelete, setLinkToDelete] = useState<string | null>(null)
+
+  const [settings, setSettings] = useState<AffiliateSettings>({
+    discountRate: 50,
+    commissionRate: 30
+  })
+
   useEffect(() => {
     fetchLinks()
+    fetchVoucher()
+    fetchSettings()
   }, [])
+
+  // Fetch affiliate settings
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/settings/affiliate')
+      const result = await response.json()
+      if (result.success && result.data) {
+        setSettings({
+          discountRate: result.data.voucherDiscountRate || 50,
+          commissionRate: result.data.defaultCommissionRate || 30
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error)
+    }
+  }
+
+  // Fetch voucher
+  const fetchVoucher = async () => {
+    try {
+      setVoucherLoading(true)
+      const response = await authenticatedFetch('/api/vouchers')
+      const result = await response.json()
+      if (result.success && result.data?.length > 0) {
+        setVoucher(result.data[0])
+      } else {
+        setVoucher(null)
+      }
+    } catch (error) {
+      console.error('Error fetching voucher:', error)
+    } finally {
+      setVoucherLoading(false)
+    }
+  }
+
+  // Create voucher
+  const handleCreateVoucher = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newVoucherCode.trim()) {
+      toast.error('Masukkan kode voucher')
+      return
+    }
+
+    try {
+      setCreatingVoucher(true)
+      const response = await authenticatedFetch('/api/vouchers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voucherCode: newVoucherCode })
+      })
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success('Voucher berhasil dibuat!')
+        setNewVoucherCode('')
+        setShowVoucherForm(false)
+        fetchVoucher()
+      } else {
+        toast.error(result.error || 'Gagal membuat voucher')
+      }
+    } catch (error) {
+      console.error('Error creating voucher:', error)
+      toast.error('Terjadi kesalahan')
+    } finally {
+      setCreatingVoucher(false)
+    }
+  }
+
+  // Delete voucher
+  const handleDeleteVoucher = async () => {
+    if (!voucher) return
+
+    try {
+      const response = await authenticatedFetch(`/api/vouchers?id=${voucher.id}`, {
+        method: 'DELETE'
+      })
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success('Voucher berhasil dihapus')
+        setVoucher(null)
+        setVoucherToDelete(false)
+      } else {
+        toast.error(result.error || 'Gagal menghapus voucher')
+      }
+    } catch (error) {
+      console.error('Error deleting voucher:', error)
+      toast.error('Terjadi kesalahan')
+    }
+  }
 
   const fetchLinks = async () => {
     try {
@@ -56,12 +188,12 @@ export function MyLinksPage() {
       } else {
         console.error('API returned error:', data.error)
         toast.error(data.error || 'Gagal memuat tracking links')
-        setLinks([]) // Set empty array on error
+        setLinks([])
       }
     } catch (error) {
       console.error('Error fetching links:', error)
       toast.error('Gagal memuat tracking links')
-      setLinks([]) // Set empty array on error
+      setLinks([])
     } finally {
       setIsLoading(false)
     }
@@ -103,39 +235,48 @@ export function MyLinksPage() {
   }
 
   const deleteLink = async (linkId: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus link ini?')) {
-      return
-    }
-
     try {
-      const response = await authenticatedFetch(`/api/links/${linkId}`, {
+      const response = await authenticatedFetch(`/api/links?id=${linkId}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
         toast.success('Link berhasil dihapus')
         fetchLinks()
+        setLinkToDelete(null)
+      } else {
+        const data = await response.json().catch(() => ({}))
+        toast.error(data.error || 'Gagal menghapus link')
       }
     } catch (error) {
       toast.error('Gagal menghapus link')
     }
   }
 
-  // Point to Main Landing Page (Port 3000) for generated links
-  const baseUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL || 'http://localhost:3000'
+  // Use correct domain for production
+  const baseUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL || 'https://adspilot.id'
   const affiliateCode = user?.affiliateCode || 'BYPASS'
 
   const landingPageLink = `${baseUrl}/?ref=${affiliateCode}`
   const checkoutLink = `${baseUrl}/auth/checkout?ref=${affiliateCode}`
+
+  // Helper to clean up old URLs for display
+  const formatUrl = (url: string) => {
+    return url
+      .replace('https://aff.shopadexpert.com/landing', 'https://adspilot.id')
+      .replace('https://aff.shopadexpert.com', 'https://adspilot.id') // Fallback generic
+      .replace('https://aff.adspilot.id/landing', 'https://adspilot.id')
+      .replace('/landing?ref=', '/?ref=') // Fix path to root
+  }
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">My Links</h1>
+          <h1 className="text-2xl font-bold text-foreground">Link & Voucher</h1>
           <p className="text-sm text-muted-foreground">
-            Generate dan kelola tracking links untuk promosi
+            Kelola link referral dan voucher untuk promosi
           </p>
         </div>
         <Button onClick={() => setIsDialogOpen(true)}>
@@ -147,47 +288,140 @@ export function MyLinksPage() {
       {/* Info Banner */}
       <DualLayerInfoBanner />
 
-      {/* Quick Generate */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Generate</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Landing Page Link */}
-            <div className="flex items-center gap-2 p-3 border rounded-lg">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">Landing Page Link</p>
-                <p className="text-xs text-muted-foreground truncate">{landingPageLink}</p>
-                <p className="text-xs text-muted-foreground mt-1">Untuk affiliate yang menggunakan landing page default</p>
+      {/* Voucher & Quick Links Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Voucher Card */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Ticket className="h-4 w-4" />
+              Voucher Anda
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {voucherLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => copyToClipboard(landingPageLink)}
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
-            </div>
+            ) : voucher ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <div>
+                    <span className="text-lg font-bold font-mono">{voucher.voucher_code}</span>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                      <CheckCircle2 className="h-3 w-3 text-green-500" />
+                      Diskon {Math.round(voucher.discount_value)}%
+                      <span>•</span>
+                      <span>{voucher.usage_count} penggunaan</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyToClipboard(voucher.voucher_code)}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setVoucherToDelete(true)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3 text-emerald-500" />
+                  Voucher otomatis diterapkan saat visitor klik link Anda
+                </p>
+              </div>
+            ) : showVoucherForm ? (
+              <form onSubmit={handleCreateVoucher} className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Contoh: RIZKI50"
+                    value={newVoucherCode}
+                    onChange={(e) => setNewVoucherCode(e.target.value.toUpperCase())}
+                    className="uppercase text-sm"
+                    maxLength={20}
+                  />
+                  <Badge variant="secondary" className="whitespace-nowrap text-xs">
+                    {settings.discountRate}%
+                  </Badge>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" size="sm" disabled={creatingVoucher} className="flex-1">
+                    {creatingVoucher && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                    Buat
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setShowVoucherForm(false)}>
+                    Batal
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="text-center py-2">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Buat voucher untuk komisi {settings.commissionRate}%
+                </p>
+                <Button size="sm" variant="outline" onClick={() => setShowVoucherForm(true)}>
+                  <Plus className="h-3 w-3 mr-1" />
+                  Buat Voucher
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-            {/* Checkout Link */}
-            <div className="flex items-center gap-2 p-3 border rounded-lg">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">Checkout Link</p>
-                <p className="text-xs text-muted-foreground truncate">{checkoutLink}</p>
-                <p className="text-xs text-muted-foreground mt-1">Untuk affiliate yang punya landing page sendiri</p>
+        {/* Quick Generate Links */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Quick Links</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Landing Page Link */}
+              <div className="flex items-center gap-2 p-3 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">Landing Page</p>
+                  <p className="text-xs text-muted-foreground truncate">{landingPageLink}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copyToClipboard(landingPageLink)}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
               </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => copyToClipboard(checkoutLink)}
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
+
+              {/* Checkout Link */}
+              <div className="flex items-center gap-2 p-3 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">Checkout Page</p>
+                  <p className="text-xs text-muted-foreground truncate">{checkoutLink}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copyToClipboard(checkoutLink)}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            {voucher && (
+              <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                <CheckCircle className="w-3 h-3" />
+                <span>Voucher <strong>{voucher.voucher_code}</strong> akan otomatis diterapkan</span>
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Tracking Links Table */}
       <Card>
@@ -235,12 +469,12 @@ export function MyLinksPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <code className="text-xs bg-muted px-2 py-1 rounded max-w-xs truncate">
-                          {link.url}
+                          {formatUrl(link.url)}
                         </code>
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => copyToClipboard(link.url)}
+                          onClick={() => copyToClipboard(formatUrl(link.url))}
                         >
                           <Copy className="w-4 h-4" />
                         </Button>
@@ -249,7 +483,25 @@ export function MyLinksPage() {
                     <TableCell>
                       <div className="h-8 w-24">
                         <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={link.trend.map((val, i) => ({ value: val }))}>
+                          <AreaChart data={link.trend.map((val, i) => {
+                            const date = new Date();
+                            date.setDate(date.getDate() - (6 - i));
+                            return {
+                              value: val,
+                              date: date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+                            };
+                          })}>
+                            <Tooltip
+                              content={({ payload }) => {
+                                if (!payload || !payload[0]) return null;
+                                return (
+                                  <div className="bg-popover text-popover-foreground p-2 rounded-md border shadow-md text-xs">
+                                    <p className="font-semibold">{payload[0].payload.date}</p>
+                                    <p className="text-muted-foreground">{payload[0].value} clicks</p>
+                                  </div>
+                                );
+                              }}
+                            />
                             <Area
                               type="monotone"
                               dataKey="value"
@@ -283,7 +535,8 @@ export function MyLinksPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => deleteLink(link.id)}
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setLinkToDelete(link.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -343,7 +596,41 @@ export function MyLinksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialogs */}
+      <AlertDialog open={!!voucherToDelete} onOpenChange={(open) => !open && setVoucherToDelete(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Voucher</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus voucher ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteVoucher} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!linkToDelete} onOpenChange={(open) => !open && setLinkToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Tracking Link</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus link ini? Traffic dari link ini tidak akan ditrack lagi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={() => linkToDelete && deleteLink(linkToDelete)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
-

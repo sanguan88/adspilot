@@ -264,15 +264,55 @@ function CheckoutContent() {
     }
   }
 
-  // Fetch default voucher on mount
+  // Fetch and apply voucher on mount (Priority: Ref Param > Cookie > Default)
   useEffect(() => {
-    const fetchDefaultVoucher = async () => {
+    const getCookie = (name: string) => {
+      if (typeof document === 'undefined') return null
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+      return null;
+    }
+
+    const applyVoucher = async () => {
+      // Priority 1: Check ?ref= parameter in URL and fetch affiliate voucher
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const refCode = params.get('ref')
+        if (refCode && !voucherCode.trim()) {
+          console.log('[Checkout] Found ref code, fetching affiliate voucher:', refCode)
+          try {
+            const response = await fetch(`/api/vouchers/affiliate-lookup?ref=${refCode}`)
+            const result = await response.json()
+            if (result.success && result.data?.voucherCode) {
+              console.log('[Checkout] Applying affiliate voucher from ref:', result.data.voucherCode)
+              setVoucherCode(result.data.voucherCode)
+              handleValidateVoucher(result.data.voucherCode)
+              return // Don't check cookie/default if ref voucher exists
+            }
+          } catch (error) {
+            console.error('Error fetching affiliate voucher:', error)
+          }
+        }
+      }
+
+      // Priority 2: Check affiliate voucher cookie
+      const affiliateVoucher = getCookie('affiliate_voucher')
+      if (affiliateVoucher && !voucherCode.trim()) {
+        console.log('[Checkout] Applying affiliate voucher from cookie:', affiliateVoucher)
+        setVoucherCode(affiliateVoucher)
+        handleValidateVoucher(affiliateVoucher)
+        return // Don't check default if affiliate voucher exists
+      }
+
+      // Priority 3: Check default voucher from payment settings
       try {
         const response = await fetch('/api/payment-settings/public')
         const result = await response.json()
         if (result.success && result.data.defaultVoucherCode) {
           // Auto-apply default voucher if user hasn't entered a code
           if (!voucherCode.trim()) {
+            console.log('[Checkout] Applying default voucher:', result.data.defaultVoucherCode)
             setVoucherCode(result.data.defaultVoucherCode)
             handleValidateVoucher(result.data.defaultVoucherCode)
           }
@@ -281,7 +321,8 @@ function CheckoutContent() {
         console.error('Error fetching default voucher:', error)
       }
     }
-    fetchDefaultVoucher()
+
+    applyVoucher()
   }, [])
 
   // Debounced voucher validation

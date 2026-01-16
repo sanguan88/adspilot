@@ -28,7 +28,20 @@ export async function GET(request: NextRequest) {
           u.email as "userEmail",
           ar.status,
           ar.first_payment_date as "convertedAt",
-          ar.created_at as "createdAt"
+          ar.created_at as "createdAt",
+          (
+            SELECT COALESCE(SUM(total_amount), 0) 
+            FROM transactions 
+            WHERE user_id = ar.user_id 
+            AND payment_status = 'paid'
+          ) as "totalRevenue",
+          (
+            SELECT sp.name
+            FROM transactions t
+            JOIN subscription_plans sp ON t.plan_id = sp.plan_id
+            WHERE t.user_id = ar.user_id AND t.payment_status = 'paid'
+            ORDER BY t.created_at DESC LIMIT 1
+          ) as "planName"
         FROM affiliate_referrals ar
         LEFT JOIN data_user u ON ar.user_id = u.user_id
         WHERE ar.affiliate_id = $1
@@ -51,8 +64,10 @@ export async function GET(request: NextRequest) {
         userName: row.userName || 'Unknown',
         userEmail: row.userEmail || 'unknown@example.com',
         status: row.status,
-        convertedAt: row.convertedAt,
+        convertedAt: row.convertedAt || row.createdAt, // Fallback to createdAt if convertedAt is null for converted users
         createdAt: row.createdAt,
+        revenue: parseFloat(row.totalRevenue || 0),
+        planName: row.planName || '-',
       }))
 
       return NextResponse.json({ success: true, data: referrals })

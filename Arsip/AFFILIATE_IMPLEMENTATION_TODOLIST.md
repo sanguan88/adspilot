@@ -32,19 +32,19 @@ Fokus: Menyediakan antarmuka bagi subscriber untuk bergabung.
 ## 🌐 Phase 3: Public Registration (Service Affiliate)
 Fokus: Memastikan pendaftaran manual berjalan lancar.
 
-- [ ] **Audit Existing Register Page** (Existing functionality validated previously)
+- [x] **Audit Existing Register Page** (Existing functionality validated previously)
     - Lokasi: `aff/app/auth/register/page.tsx`
 
 ## 🧪 Phase 4: Testing & Validation
-- [ ] **Run Services:**
+- [x] **Run Services:**
     - App Portal: Port 3000
     - Affiliate Portal: Port 3003 (Need to run `npm run dev -- -p 3003` in `aff` folder)
     
-- [ ] **Test Skenario B (Subscriber):**
+- [x] **Test Skenario B (Subscriber):**
     1. Login User Portal.
     2. Click Menu "Affiliate".
     3. Click "Aktifkan Akun Sekarang".
     4. Verify Success Modal & Affiliate Code.
     5. Click "Buka Portal Affiliate" and Try Login using same credentials.
 
-- [ ] **Test Skenario A (Public):** Register manual via `localhost:3003/auth/register` (Optional regression test).
+- [x] **Test Skenario A (Public):** Register manual via `localhost:3003/auth/register` (Optional regression test).

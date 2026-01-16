@@ -94,7 +94,7 @@ export default function LandingPage() {
     fetchPlans()
   }, [])
 
-  // Handle Referral Tracking (First-Click Attribution)
+  // Handle Referral Tracking (First-Click Attribution) + Auto-inject Affiliate Voucher
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -109,9 +109,16 @@ export default function LandingPage() {
         return null;
       }
 
+      // ALWAYS track click for statistics (even if cookie exists)
+      fetch(`${API_URL}/api/tracking/click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referralCode: refCode }),
+      }).catch(err => console.error('Tracking error:', err))
+
+      // But ONLY set cookie on first visit (First-Click Wins for commission)
       const existingRef = getCookie('referral_code')
       if (!existingRef) {
-        // First-Click Wins: Only set if not already present
         const expiryDate = new Date()
         expiryDate.setDate(expiryDate.getDate() + 90) // 3 months
         document.cookie = `referral_code=${refCode}; expires=${expiryDate.toUTCString()}; path=/; samesite=strict`
@@ -120,13 +127,23 @@ export default function LandingPage() {
         if (!localStorage.getItem('referral_first_click')) {
           localStorage.setItem('referral_first_click', new Date().toISOString())
         }
+      }
 
-        // Log click to server
-        fetch(`${API_URL}/api/tracking/click`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ referralCode: refCode }),
-        }).catch(err => console.error('Tracking error:', err))
+      // Auto-inject affiliate voucher (always set/update based on current ref)
+      // This ensures the affiliate voucher is prioritized over default voucher
+      const existingAffVoucher = getCookie('affiliate_voucher')
+      if (!existingAffVoucher) {
+        fetch(`/api/tracking/voucher?ref=${refCode}`)
+          .then(res => res.json())
+          .then(result => {
+            if (result.success && result.data?.voucherCode) {
+              const expiryDate = new Date()
+              expiryDate.setDate(expiryDate.getDate() + 90) // 3 months
+              document.cookie = `affiliate_voucher=${result.data.voucherCode}; expires=${expiryDate.toUTCString()}; path=/; samesite=strict`
+              console.log('[Affiliate] Voucher auto-injected:', result.data.voucherCode)
+            }
+          })
+          .catch(err => console.error('Voucher lookup error:', err))
       }
     }
   }, [])

@@ -54,7 +54,7 @@ export function DashboardOverview() {
           const funnelData = [
             {
               id: "visits",
-              value: data.data.totalClicks || 0,
+              value: Math.max(data.data.totalClicks || 0, data.data.totalReferrals || 0),
               name: "Visits",
               fill: "#3b82f6",
             },

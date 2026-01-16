@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DollarSign, Search, Calendar, TrendingUp } from "lucide-react"
 import { authenticatedFetch } from "@/lib/api-client"
 import { toast } from "sonner"
@@ -19,7 +20,7 @@ interface Commission {
   id: string
   referralId: string
   referralName: string
-  orderId: string
+  transactionId: string
   type: 'first_payment' | 'recurring'
   amount: number
   status: 'pending' | 'approved' | 'paid' | 'cancelled'
@@ -50,9 +51,9 @@ export function CommissionsPage() {
     try {
       setIsLoading(true)
       const params = new URLSearchParams()
-      if (statusFilter) params.append('status', statusFilter)
-      if (typeFilter) params.append('type', typeFilter)
-      
+      if (statusFilter && statusFilter !== 'all_status') params.append('status', statusFilter)
+      if (typeFilter && typeFilter !== 'all_types') params.append('type', typeFilter)
+
       const response = await authenticatedFetch(`/api/commissions?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
@@ -76,7 +77,7 @@ export function CommissionsPage() {
       const searchLower = search.toLowerCase()
       return (
         comm.referralName.toLowerCase().includes(searchLower) ||
-        comm.orderId.toLowerCase().includes(searchLower)
+        comm.transactionId.toLowerCase().includes(searchLower)
       )
     }
     return true
@@ -101,7 +102,7 @@ export function CommissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              Rp{(summary.total / 1000).toFixed(0)}K
+              Rp{summary.total.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
@@ -114,7 +115,7 @@ export function CommissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              Rp{(summary.pending / 1000).toFixed(0)}K
+              Rp{summary.pending.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Akan dibayar</p>
           </CardContent>
@@ -127,7 +128,7 @@ export function CommissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              Rp{(summary.paid / 1000).toFixed(0)}K
+              Rp{summary.paid.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Sudah dibayar</p>
           </CardContent>
@@ -140,7 +141,7 @@ export function CommissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              Rp{(summary.firstPayment / 1000).toFixed(0)}K
+              Rp{summary.firstPayment.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Komisi pertama</p>
           </CardContent>
@@ -153,7 +154,7 @@ export function CommissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              Rp{(summary.recurring / 1000).toFixed(0)}K
+              Rp{summary.recurring.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Komisi berulang</p>
           </CardContent>
@@ -178,29 +179,37 @@ export function CommissionsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Status</label>
-              <select
+              <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
+                onValueChange={setStatusFilter}
               >
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="paid">Paid</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_status">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Type</label>
-              <select
+              <Select
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
+                onValueChange={setTypeFilter}
               >
-                <option value="">All Types</option>
-                <option value="first_payment">First Payment</option>
-                <option value="recurring">Recurring</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_types">All Types</SelectItem>
+                  <SelectItem value="first_payment">First Payment</SelectItem>
+                  <SelectItem value="recurring">Recurring</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
@@ -239,7 +248,7 @@ export function CommissionsPage() {
                     <TableCell className="font-medium">{commission.referralName}</TableCell>
                     <TableCell>
                       <code className="text-xs bg-muted px-2 py-1 rounded">
-                        {commission.orderId}
+                        {commission.transactionId}
                       </code>
                     </TableCell>
                     <TableCell>
@@ -251,7 +260,7 @@ export function CommissionsPage() {
                       Rp{commission.amount.toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(commission.status)}>
+                      <Badge variant="outline" className={getStatusBadgeVariant(commission.status)}>
                         {commission.status}
                       </Badge>
                     </TableCell>

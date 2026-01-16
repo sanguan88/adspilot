@@ -124,10 +124,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Generate URL based on type
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://aff.adspilot.id'
+      // Generate URL based on type
+      const baseUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL || 'https://adspilot.id'
       const url = type === 'landing'
-        ? `${baseUrl}/landing?ref=${finalRef}`
-        : `${baseUrl}/checkout?ref=${finalRef}`
+        ? `${baseUrl}/?ref=${finalRef}`
+        : `${baseUrl}/auth/checkout?ref=${finalRef}`
 
       // Insert tracking link
       const insertResult = await connection.query(
@@ -155,6 +156,68 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: any) {
     console.error('Create link error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Terjadi kesalahan' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { authorized, response, affiliate } = await requireAffiliateAuth(request)
+
+    if (!authorized || !affiliate) {
+      return response
+    }
+
+    const { searchParams } = new URL(request.url)
+    const linkId = searchParams.get('id')
+
+    if (!linkId) {
+      return NextResponse.json(
+        { success: false, error: 'ID link diperlukan' },
+        { status: 400 }
+      )
+    }
+
+    const affiliateId = affiliate.affiliateId
+    const connection = await getDatabaseConnection()
+
+    try {
+      // Verify link belongs to affiliate
+      const verifyResult = await connection.query(
+        `SELECT affiliate_id FROM tracking_links WHERE link_id = $1`,
+        [linkId]
+      )
+
+      if (verifyResult.rows.length === 0) {
+        return NextResponse.json(
+          { success: false, error: 'Link not found' },
+          { status: 404 }
+        )
+      }
+
+      const ownerId = verifyResult.rows[0].affiliate_id
+      if (ownerId !== affiliateId) {
+        return NextResponse.json(
+          { success: false, error: 'Unauthorized' },
+          { status: 403 }
+        )
+      }
+
+      // Delete link
+      await connection.query(
+        `DELETE FROM tracking_links WHERE link_id = $1`,
+        [linkId]
+      )
+
+      return NextResponse.json({ success: true })
+    } finally {
+      connection.release()
+    }
+  } catch (error: any) {
+    console.error('Delete link error:', error)
     return NextResponse.json(
       { success: false, error: 'Terjadi kesalahan' },
       { status: 500 }

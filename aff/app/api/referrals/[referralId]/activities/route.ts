@@ -1,137 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDatabaseConnection } from '@/lib/db'
-import jwt from 'jsonwebtoken'
+import { requireAffiliateAuth } from '@/lib/auth-helper'
 
 export const dynamic = 'force-dynamic'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-
-async function getAffiliateId(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get('authorization')
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null
-  }
-
-  const token = authHeader.substring(7)
-  
-  if (token === 'bypass-token') {
-    return 'bypass-affiliate'
-  }
-
+export async function GET(request: NextRequest, { params }: { params: { referralId: string } }) {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any
-    return decoded.affiliateId || null
-  } catch {
-    return null
-  }
-}
+    const { authorized, response, affiliate } = await requireAffiliateAuth(request)
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { referralId: string } }
-) {
-  try {
-    const affiliateId = await getAffiliateId(request)
-    
-    if (!affiliateId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+    if (!authorized || !affiliate) {
+      return response
     }
 
     const { referralId } = params
 
-    // If bypass, return mock data
-    if (affiliateId === 'bypass-affiliate') {
-      return NextResponse.json({
-        success: true,
-        data: [
-          {
-            id: '1',
-            type: 'click',
-            description: 'User clicked affiliate link',
-            timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: '2',
-            type: 'signup',
-            description: 'User registered account',
-            timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: '3',
-            type: 'order',
-            description: 'User created order',
-            timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: '4',
-            type: 'payment',
-            description: 'User completed payment',
-            timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-        ],
-      })
-    }
+    // Fetch activities from database
+    // Since we don't have a dedicated activity log, we'll construct it from:
+    // 1. Signup date (from affiliate_referrals)
+    // 2. Transactions (purchases)
 
-    // Get real activities from database
     const connection = await getDatabaseConnection()
-    
+
     try {
-      // Verify referral belongs to affiliate
-      const verifyResult = await connection.query(
-        `SELECT affiliate_id FROM affiliate_referrals WHERE referral_id = $1`,
-        [referralId]
+      // Get referral info first
+      const referralResult = await connection.query(
+        `SELECT user_id, created_at, signup_date FROM affiliate_referrals 
+         WHERE referral_id = $1 AND affiliate_id = $2`,
+        [referralId, affiliate.affiliateId]
       )
 
-      if (verifyResult.rows.length === 0) {
-        return NextResponse.json(
-          { success: false, error: 'Referral not found' },
-          { status: 404 }
-        )
+      if (referralResult.rows.length === 0) {
+        return NextResponse.json({ success: true, data: [] })
       }
 
-      if (verifyResult.rows[0].affiliate_id !== affiliateId) {
-        return NextResponse.json(
-          { success: false, error: 'Unauthorized' },
-          { status: 403 }
-        )
+      const referral = referralResult.rows[0]
+      const activities = []
+
+      // 1. Add Signup Activity
+      if (referral.signup_date || referral.created_at) {
+        activities.push({
+          id: 'signup',
+          type: 'signup',
+          description: 'User mendaftar via link affiliate',
+          timestamp: referral.signup_date || referral.created_at
+        })
       }
 
-      // Get activities (from user_activities or similar table)
-      // This is a simplified version - adjust based on your actual schema
-      const result = await connection.query(
+      // 2. Add Transactions Activity
+      const transactionsResult = await connection.query(
         `SELECT 
-          activity_id as id,
-          activity_type as type,
-          description,
-          created_at as timestamp
-        FROM user_activities
-        WHERE user_id = (SELECT user_id FROM affiliate_referrals WHERE referral_id = $1)
-        ORDER BY created_at DESC
-        LIMIT 50`,
-        [referralId]
+           t.created_at, 
+           t.total_amount, 
+           sp.name as plan_name,
+           t.payment_status
+         FROM transactions t
+         LEFT JOIN subscription_plans sp ON t.plan_id = sp.plan_id
+         WHERE t.user_id = $1
+         ORDER BY t.created_at DESC`,
+        [referral.user_id]
       )
 
-      const activities = result.rows.map(row => ({
-        id: row.id,
-        type: row.type,
-        description: row.description,
-        timestamp: row.timestamp,
-      }))
+      transactionsResult.rows.forEach((txn, index) => {
+        if (txn.payment_status === 'paid') {
+          activities.push({
+            id: `txn-${index}`,
+            type: 'purchase',
+            description: `Pembelian paket ${txn.plan_name || 'Premium'} (Rp${parseFloat(txn.total_amount).toLocaleString('id-ID')})`,
+            timestamp: txn.created_at
+          })
+        } else if (txn.payment_status === 'pending') {
+          activities.push({
+            id: `txn-pending-${index}`,
+            type: 'checkout',
+            description: `Checkout paket ${txn.plan_name || 'Premium'} (Menunggu Pembayaran)`,
+            timestamp: txn.created_at
+          })
+        }
+      })
+
+      // Sort by timestamp desc
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
       return NextResponse.json({ success: true, data: activities })
     } finally {
       connection.release()
     }
   } catch (error: any) {
-    console.error('Get activities error:', error)
+    console.error('Get referral activities error:', error)
     return NextResponse.json(
       { success: false, error: 'Terjadi kesalahan' },
       { status: 500 }
     )
   }
 }
-

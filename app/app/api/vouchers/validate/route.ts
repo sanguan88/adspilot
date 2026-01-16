@@ -72,7 +72,68 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find voucher (case-insensitive)
+    // First, check if this is an affiliate voucher
+    let affiliateId: string | null = null
+    let isAffiliateVoucher = false
+
+    const affiliateVoucherResult = await connection.query(
+      `SELECT 
+        av.id, av.voucher_code as code, av.discount_type, av.discount_value,
+        av.is_active, av.affiliate_id,
+        a.name as affiliate_name
+      FROM affiliate_vouchers av
+      JOIN affiliates a ON av.affiliate_id = a.affiliate_id
+      WHERE UPPER(av.voucher_code) = UPPER($1)`,
+      [voucherCode.trim()]
+    )
+
+    if (affiliateVoucherResult.rows.length > 0) {
+      // Found affiliate voucher
+      const affVoucher = affiliateVoucherResult.rows[0]
+
+      if (!affVoucher.is_active) {
+        connection.release()
+        return NextResponse.json(
+          { success: false, error: 'Voucher affiliate tidak aktif' },
+          { status: 400 }
+        )
+      }
+
+      isAffiliateVoucher = true
+      affiliateId = affVoucher.affiliate_id
+
+      // Calculate discount for affiliate voucher (fixed 50%)
+      const discountAmount = finalBaseAmount * (parseFloat(affVoucher.discount_value) / 100)
+
+      // Update usage count
+      await connection.query(
+        `UPDATE affiliate_vouchers SET usage_count = usage_count + 1, updated_at = NOW() WHERE id = $1`,
+        [affVoucher.id]
+      )
+
+      connection.release()
+      return NextResponse.json({
+        success: true,
+        data: {
+          voucher: {
+            id: affVoucher.id,
+            code: affVoucher.code,
+            name: `Voucher Affiliate - ${affVoucher.affiliate_name}`,
+            description: `Diskon ${affVoucher.discount_value}% dari affiliate`,
+            discountType: affVoucher.discount_type,
+            discountValue: parseFloat(affVoucher.discount_value),
+            maximumDiscount: null,
+            applicableType: 'all'
+          },
+          discountAmount,
+          baseAmount: finalBaseAmount,
+          isAffiliateVoucher: true,
+          affiliateId: affiliateId
+        },
+      })
+    }
+
+    // If not affiliate voucher, check regular vouchers table
     const voucherResult = await connection.query(
       `SELECT 
         id, code, name, description,

@@ -224,57 +224,98 @@ export async function POST(request: NextRequest) {
               }
             }
 
+            // Track affiliate from voucher (for commission)
+            let voucherAffiliateId: string | null = null;
+
             if (voucherCodeToUse) {
-              // Validate voucher
-              voucherResult = await connection.query(
+              // PRIORITY 1: Check if this is an affiliate voucher
+              const affiliateVoucherResult = await connection.query(
                 `SELECT 
-                  id, code, discount_type, discount_value,
-                  start_date, expiry_date, is_active,
-                  applicable_plans, minimum_purchase, maximum_discount
-                FROM vouchers
-                WHERE UPPER(code) = UPPER($1)`,
+                  av.id, av.voucher_code as code, av.discount_type, av.discount_value,
+                  av.is_active, av.affiliate_id
+                FROM affiliate_vouchers av
+                WHERE UPPER(av.voucher_code) = UPPER($1)`,
                 [voucherCodeToUse.trim()]
               );
 
-              if (voucherResult.rows.length > 0) {
-                const voucher = voucherResult.rows[0];
-                const now = new Date();
+              if (affiliateVoucherResult.rows.length > 0) {
+                // Found affiliate voucher
+                const affVoucher = affiliateVoucherResult.rows[0];
 
-                // Validate voucher
-                if (!voucher.is_active) {
-                  throw new Error('Voucher tidak aktif');
+                if (!affVoucher.is_active) {
+                  throw new Error('Voucher affiliate tidak aktif');
                 }
 
-                if (voucher.expiry_date && new Date(voucher.expiry_date) < now) {
-                  throw new Error('Voucher sudah kadaluarsa');
-                }
-
-                if (voucher.start_date && new Date(voucher.start_date) > now) {
-                  throw new Error('Voucher belum berlaku');
-                }
-
-                if (voucher.applicable_plans && voucher.applicable_plans.length > 0) {
-                  if (!voucher.applicable_plans.includes(planId)) {
-                    throw new Error(`Voucher tidak berlaku untuk plan ${planId}`);
-                  }
-                }
-
-                if (voucher.minimum_purchase && baseAmount < parseFloat(voucher.minimum_purchase)) {
-                  throw new Error(`Minimum purchase untuk voucher ini adalah Rp ${parseFloat(voucher.minimum_purchase).toLocaleString('id-ID')}`);
-                }
-
-                // Calculate discount
+                // Calculate discount for affiliate voucher
                 discountAmount = calculateDiscount(
                   baseAmount,
-                  voucher.discount_type,
-                  parseFloat(voucher.discount_value),
-                  voucher.maximum_discount ? parseFloat(voucher.maximum_discount) : null
+                  affVoucher.discount_type,
+                  parseFloat(affVoucher.discount_value),
+                  null // No maximum discount for affiliate vouchers
                 );
 
-                appliedVoucherCode = voucher.code;
-                voucherId = voucher.id;
+                appliedVoucherCode = affVoucher.code;
+                voucherAffiliateId = affVoucher.affiliate_id;
+
+                // Update usage count
+                await connection.query(
+                  `UPDATE affiliate_vouchers SET usage_count = usage_count + 1, updated_at = NOW() WHERE id = $1`,
+                  [affVoucher.id]
+                );
+
+                console.log(`[Register] Applied affiliate voucher: ${affVoucher.code} (Affiliate: ${voucherAffiliateId})`);
               } else {
-                throw new Error('Voucher code tidak ditemukan');
+                // PRIORITY 2: Check regular vouchers table
+                voucherResult = await connection.query(
+                  `SELECT 
+                    id, code, discount_type, discount_value,
+                    start_date, expiry_date, is_active,
+                    applicable_plans, minimum_purchase, maximum_discount
+                  FROM vouchers
+                  WHERE UPPER(code) = UPPER($1)`,
+                  [voucherCodeToUse.trim()]
+                );
+
+                if (voucherResult.rows.length > 0) {
+                  const voucher = voucherResult.rows[0];
+                  const now = new Date();
+
+                  // Validate voucher
+                  if (!voucher.is_active) {
+                    throw new Error('Voucher tidak aktif');
+                  }
+
+                  if (voucher.expiry_date && new Date(voucher.expiry_date) < now) {
+                    throw new Error('Voucher sudah kadaluarsa');
+                  }
+
+                  if (voucher.start_date && new Date(voucher.start_date) > now) {
+                    throw new Error('Voucher belum berlaku');
+                  }
+
+                  if (voucher.applicable_plans && voucher.applicable_plans.length > 0) {
+                    if (!voucher.applicable_plans.includes(planId)) {
+                      throw new Error(`Voucher tidak berlaku untuk plan ${planId}`);
+                    }
+                  }
+
+                  if (voucher.minimum_purchase && baseAmount < parseFloat(voucher.minimum_purchase)) {
+                    throw new Error(`Minimum purchase untuk voucher ini adalah Rp ${parseFloat(voucher.minimum_purchase).toLocaleString('id-ID')}`);
+                  }
+
+                  // Calculate discount
+                  discountAmount = calculateDiscount(
+                    baseAmount,
+                    voucher.discount_type,
+                    parseFloat(voucher.discount_value),
+                    voucher.maximum_discount ? parseFloat(voucher.maximum_discount) : null
+                  );
+
+                  appliedVoucherCode = voucher.code;
+                  voucherId = voucher.id;
+                } else {
+                  throw new Error('Voucher code tidak ditemukan');
+                }
               }
             }
 
@@ -295,11 +336,11 @@ export async function POST(request: NextRequest) {
               `INSERT INTO transactions (
                 transaction_id, user_id, plan_id,
                 base_amount, ppn_percentage, ppn_amount, unique_code, total_amount,
-                voucher_code, discount_amount,
+                voucher_code, discount_amount, voucher_affiliate_id,
                 payment_method, payment_status,
                 expires_at,
                 created_at, updated_at
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
               RETURNING id, transaction_id, base_amount, ppn_amount, unique_code, total_amount, voucher_code, discount_amount, payment_status`,
               [
                 transactionId,
@@ -312,6 +353,7 @@ export async function POST(request: NextRequest) {
                 totalAmount,
                 appliedVoucherCode,
                 discountAmount > 0 ? discountAmount : null,
+                voucherAffiliateId, // Track which affiliate's voucher was used
                 'manual', // Default payment method
                 'pending', // Default status
                 expiresAt.toISOString(), // Expires at (7 days from now)
@@ -340,10 +382,43 @@ export async function POST(request: NextRequest) {
                   discountAmount,
                   planId,
                   baseAmount,
-                  totalBeforeDiscount, // Total before discount
                   totalAmount, // Total after discount
                 ]
               );
+            }
+
+            // NEW: Ensure affiliate referral record exists if affiliate voucher was used
+            // This handles cases where user uses a voucher but doesn't have the referral cookie
+            if (voucherAffiliateId) {
+              try {
+                // Check if referral record already exists
+                const existingReferral = await connection.query(
+                  'SELECT id FROM affiliate_referrals WHERE user_id = $1 AND affiliate_id = $2',
+                  [newUser.user_id, voucherAffiliateId]
+                );
+
+                if (existingReferral.rows.length === 0) {
+                  console.log(`[Register] Creating missing referral record for voucher usage. Affiliate: ${voucherAffiliateId}`);
+
+                  // Create referral record
+                  await connection.query(
+                    `INSERT INTO affiliate_referrals (
+                      affiliate_id, user_id, referral_code, signup_date, status
+                    ) VALUES ($1, $2, $3, NOW(), 'converted')`,
+                    [voucherAffiliateId, newUser.user_id, appliedVoucherCode]
+                  );
+
+                  // Update data_user table if referred_by_affiliate is NULL
+                  await connection.query(
+                    `UPDATE data_user SET referred_by_affiliate = $1, referral_date = NOW() 
+                     WHERE user_id = $2 AND referred_by_affiliate IS NULL`,
+                    [appliedVoucherCode, newUser.user_id]
+                  );
+                }
+              } catch (referralError) {
+                console.error('[Register] Error creating voucher referral record:', referralError);
+                // Don't fail the registration
+              }
             }
 
             transactionData = {

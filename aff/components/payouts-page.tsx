@@ -75,7 +75,7 @@ export function PayoutsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              Rp{(summary.totalPaid / 1000).toFixed(0)}K
+              Rp{summary.totalPaid.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
@@ -88,7 +88,7 @@ export function PayoutsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              Rp{(summary.pending / 1000).toFixed(0)}K
+              Rp{summary.pending.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Akan dibayar</p>
           </CardContent>
@@ -101,7 +101,7 @@ export function PayoutsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              Rp{(summary.nextPayout / 1000).toFixed(0)}K
+              Rp{summary.nextPayout.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Estimasi payout berikutnya</p>
           </CardContent>
@@ -143,7 +143,7 @@ export function PayoutsPage() {
                     <TableCell>{payout.commissionCount} commissions</TableCell>
                     <TableCell>{payout.paymentMethod}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(payout.status)}>
+                      <Badge variant="outline" className={getStatusBadgeVariant(payout.status)}>
                         {payout.status}
                       </Badge>
                     </TableCell>

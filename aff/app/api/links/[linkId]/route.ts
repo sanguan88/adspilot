@@ -1,50 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDatabaseConnection } from '@/lib/db'
-import jwt from 'jsonwebtoken'
+import { requireAffiliateAuth } from '@/lib/auth-helper'
 
 export const dynamic = 'force-dynamic'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-
-async function getAffiliateId(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get('authorization')
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null
-  }
-
-  const token = authHeader.substring(7)
-  
-  if (token === 'bypass-token') {
-    return 'bypass-affiliate'
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any
-    return decoded.affiliateId || null
-  } catch {
-    return null
-  }
-}
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { linkId: string } }
 ) {
   try {
-    const affiliateId = await getAffiliateId(request)
-    
-    if (!affiliateId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+    const { authorized, response, affiliate } = await requireAffiliateAuth(request)
+
+    if (!authorized || !affiliate) {
+      return response
     }
 
     const { linkId } = params
 
     const connection = await getDatabaseConnection()
-    
+
     try {
       // Verify link belongs to affiliate
       const verifyResult = await connection.query(
@@ -59,7 +33,8 @@ export async function DELETE(
         )
       }
 
-      if (verifyResult.rows[0].affiliate_id !== affiliateId && affiliateId !== 'bypass-affiliate') {
+      const affiliateId = affiliate.affiliateId
+      if (verifyResult.rows[0].affiliate_id !== affiliateId) {
         return NextResponse.json(
           { success: false, error: 'Unauthorized' },
           { status: 403 }

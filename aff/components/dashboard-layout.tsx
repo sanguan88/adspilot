@@ -17,7 +17,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  Ticket
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -30,7 +31,7 @@ interface DashboardLayoutProps {
 
 const sidebarItems = [
   { icon: BarChart3, label: "Dashboard", href: "/" },
-  { icon: Link2, label: "My Links", href: "/links" },
+  { icon: Link2, label: "Link & Voucher", href: "/links" },
   { icon: Users, label: "Referrals", href: "/referrals" },
   { icon: DollarSign, label: "Commissions", href: "/commissions" },
   { icon: Wallet, label: "Payouts", href: "/payouts" },

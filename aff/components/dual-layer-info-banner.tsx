@@ -55,13 +55,13 @@ export function DualLayerInfoBanner() {
                     </p>
                     <ul className="list-disc list-inside space-y-1 mb-3 ml-1">
                         <li>
-                            <strong>Komisi Aman (Layer 1):</strong> Menggunakan aturan <em>First-Click Wins</em> (90 hari). Komisi Anda terkunci aman.
+                            <strong>Komisi Aman (First-Click):</strong> Lead terkunci ke Anda selama 90 hari sejak klik pertama.
                         </li>
                         <li>
-                            <strong>Pixel Jalan Terus (Layer 2):</strong> Pixel FB/TikTok/Google tetap menyala (<em>Always Fire</em>) untuk retargeting, meskipun user sudah terkunci affiliate lain.
+                            <strong>Voucher Priority:</strong> Kode voucher otomatis mentracking penjualan ke Anda, walau tanpa link.
                         </li>
                         <li>
-                            <strong>Support Custom Link:</strong> Bebas buat variasi link (contoh: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">?ref=BUDI_IG</code>). Sistem otomatis mengenali kode Anda!
+                            <strong>Smart Tracking:</strong> Pixel FB/TikTok tetap menyala. Custom link variation didukung penuh.
                         </li>
                     </ul>
                 </AlertDescription>

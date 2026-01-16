@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Search, Download, Eye, Calendar } from "lucide-react"
 import { authenticatedFetch } from "@/lib/api-client"
 import { toast } from "sonner"
@@ -52,8 +53,8 @@ export function ReferralsPage() {
     try {
       setIsLoading(true)
       const params = new URLSearchParams()
-      if (statusFilter) params.append('status', statusFilter)
-      
+      if (statusFilter && statusFilter !== 'all_status') params.append('status', statusFilter)
+
       const response = await authenticatedFetch(`/api/referrals?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
@@ -96,7 +97,7 @@ export function ReferralsPage() {
       r.userEmail,
       r.planName,
       r.status,
-      r.revenue.toString(),
+      (r.revenue || 0).toString(),
       r.convertedAt ? format(new Date(r.convertedAt), 'yyyy-MM-dd HH:mm') : '-',
       format(new Date(r.createdAt), 'yyyy-MM-dd HH:mm'),
     ])
@@ -165,16 +166,20 @@ export function ReferralsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Status</label>
-              <select
+              <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
+                onValueChange={setStatusFilter}
               >
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="converted">Converted</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_status">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="converted">Converted</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
@@ -215,11 +220,11 @@ export function ReferralsPage() {
                     <TableCell>{referral.userEmail}</TableCell>
                     <TableCell>{referral.planName}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(referral.status)}>
+                      <Badge variant="outline" className={getStatusBadgeVariant(referral.status)}>
                         {referral.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>Rp{referral.revenue.toLocaleString()}</TableCell>
+                    <TableCell>Rp{(referral.revenue || 0).toLocaleString()}</TableCell>
                     <TableCell>
                       {referral.convertedAt
                         ? format(new Date(referral.convertedAt), 'dd MMM yyyy HH:mm')
@@ -247,88 +252,111 @@ export function ReferralsPage() {
 
       {/* Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl min-h-[550px] flex flex-col p-0 gap-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle>Referral Details</DialogTitle>
             <DialogDescription>
               Detail informasi dan activity history
             </DialogDescription>
           </DialogHeader>
-          {selectedReferral && (
-            <Tabs defaultValue="info" className="w-full">
-              <TabsList>
-                <TabsTrigger value="info">Information</TabsTrigger>
-                <TabsTrigger value="activity">Activity History</TabsTrigger>
-              </TabsList>
-              <TabsContent value="info" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Name</label>
-                    <p className="text-sm font-medium">{selectedReferral.userName}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Email</label>
-                    <p className="text-sm font-medium">{selectedReferral.userEmail}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Plan</label>
-                    <p className="text-sm font-medium">{selectedReferral.planName}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    <Badge variant={getStatusBadgeVariant(selectedReferral.status)}>
-                      {selectedReferral.status}
-                    </Badge>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Revenue</label>
-                    <p className="text-sm font-medium">Rp{selectedReferral.revenue.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Created At</label>
-                    <p className="text-sm font-medium">
-                      {format(new Date(selectedReferral.createdAt), 'dd MMM yyyy HH:mm')}
-                    </p>
-                  </div>
-                  {selectedReferral.convertedAt && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Converted At</label>
-                      <p className="text-sm font-medium">
-                        {format(new Date(selectedReferral.convertedAt), 'dd MMM yyyy HH:mm')}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              <TabsContent value="activity" className="space-y-4">
-                {activities.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No activity history available
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {activities.map((activity) => (
-                      <div
-                        key={activity.id}
-                        className="flex items-start gap-3 p-3 border rounded-lg"
-                      >
-                        <Calendar className="w-4 h-4 text-muted-foreground mt-0.5" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{activity.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(activity.timestamp), 'dd MMM yyyy HH:mm')}
-                          </p>
+          <div className="flex-1 px-6 pb-6">
+            {selectedReferral && (
+              <Tabs defaultValue="info" className="w-full h-full flex flex-col">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="info">Information</TabsTrigger>
+                  <TabsTrigger value="activity">Activity History</TabsTrigger>
+                </TabsList>
+
+                <div className="flex-1 overflow-y-auto pr-1">
+                  <TabsContent value="info" className="mt-0 h-full">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm space-y-1">
+                        <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Name</label>
+                        <p className="text-sm font-medium text-foreground">{selectedReferral.userName}</p>
+                      </div>
+                      <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm space-y-1">
+                        <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Email</label>
+                        <p className="text-sm font-medium text-foreground break-all">{selectedReferral.userEmail}</p>
+                      </div>
+                      <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm space-y-1">
+                        <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Plan</label>
+                        <p className="text-sm font-medium text-foreground">{selectedReferral.planName}</p>
+                      </div>
+                      <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm space-y-1">
+                        <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Status</label>
+                        <div>
+                          <Badge variant="outline" className={`${getStatusBadgeVariant(selectedReferral.status)} mt-1`}>
+                            {selectedReferral.status}
+                          </Badge>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          )}
+                      <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm space-y-1">
+                        <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Revenue</label>
+                        <p className="text-sm font-medium text-emerald-600 font-mono">Rp{(selectedReferral.revenue || 0).toLocaleString()}</p>
+                      </div>
+                      <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm space-y-1">
+                        <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Created At</label>
+                        <p className="text-sm font-medium text-foreground">
+                          {format(new Date(selectedReferral.createdAt), 'dd MMM yyyy HH:mm')}
+                        </p>
+                      </div>
+                      {selectedReferral.convertedAt && (
+                        <div className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm space-y-1 col-span-2">
+                          <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Converted At</label>
+                          <p className="text-sm font-medium text-foreground">
+                            {format(new Date(selectedReferral.convertedAt), 'dd MMM yyyy HH:mm')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="activity" className="mt-0 h-full">
+                    {activities.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center border-2 border-dashed rounded-lg bg-muted/20">
+                        <Calendar className="w-10 h-10 text-muted-foreground/50 mb-3" />
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Belum ada riwayat aktivitas
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="relative space-y-6 pt-2 pb-6 pl-2 before:absolute before:inset-y-0 before:left-[19px] before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+                        {activities.map((activity, index) => (
+                          <div key={activity.id} className="relative flex gap-4 group">
+                            {/* Icon/Dot */}
+                            <div className="relative z-10 flex items-center justify-center w-10 h-10 rounded-full border bg-background shadow-sm shrink-0 group-hover:border-primary/50 transition-colors">
+                              {activity.type === 'purchase' ? (
+                                <Download className="w-4 h-4 text-emerald-500" />
+                              ) : activity.type === 'signup' ? (
+                                <Users className="w-4 h-4 text-blue-500" />
+                              ) : (
+                                <Calendar className="w-4 h-4 text-orange-500" />
+                              )}
+                            </div>
+
+                            {/* Content Card */}
+                            <div className="flex-1 p-4 rounded-lg border bg-card text-card-foreground shadow-sm group-hover:shadow-md transition-shadow">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-semibold text-sm">
+                                  {activity.type === 'purchase' ? 'Pembelian' : activity.type === 'signup' ? 'Registrasi' : 'Checkout'}
+                                </span>
+                                <time className="text-xs text-muted-foreground font-mono">
+                                  {format(new Date(activity.timestamp), 'dd MMM HH:mm')}
+                                </time>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{activity.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+                </div>
+              </Tabs>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
-

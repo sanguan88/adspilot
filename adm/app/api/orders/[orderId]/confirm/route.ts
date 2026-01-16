@@ -58,7 +58,7 @@ export async function POST(
       const transactionResult = await connection.query(
         `SELECT 
           id, transaction_id, user_id, payment_status, plan_id,
-          base_amount, ppn_amount, total_amount
+          base_amount, ppn_amount, total_amount, discount_amount, voucher_affiliate_id
         FROM transactions 
         WHERE transaction_id = $1`,
         [orderId]
@@ -252,25 +252,53 @@ export async function POST(
           )
 
           // 5. AFFILIATE COMMISSION PROCESSING
+          // Priority: Voucher-based attribution > Cookie-based attribution
           try {
-            // Check if user was referred by an affiliate
-            const userResult = await connection.query(
-              'SELECT referred_by_affiliate FROM data_user WHERE user_id = $1',
-              [transaction.user_id]
-            )
+            let affiliateId: string | null = null
+            let affiliateCode: string | null = null
+            let attributionSource = ''
 
-            const affiliateCode = userResult.rows[0]?.referred_by_affiliate
-
-            if (affiliateCode) {
-              // Get affiliate details and settings
-              const affiliateResult = await connection.query(
-                `SELECT affiliate_id, commission_rate FROM affiliates WHERE affiliate_code = $1 AND status = 'active'`,
-                [affiliateCode]
+            // PRIORITY 1: Check if transaction used an affiliate voucher
+            if (transaction.voucher_affiliate_id) {
+              affiliateId = transaction.voucher_affiliate_id
+              attributionSource = 'voucher'
+              console.log(`[Affiliate] Attribution via voucher, affiliate_id: ${affiliateId}`)
+            } else {
+              // PRIORITY 2: Check if user was referred by an affiliate (cookie)
+              const userResult = await connection.query(
+                'SELECT referred_by_affiliate FROM data_user WHERE user_id = $1',
+                [transaction.user_id]
               )
 
+              affiliateCode = userResult.rows[0]?.referred_by_affiliate
+              if (affiliateCode) {
+                attributionSource = 'referral_cookie'
+                console.log(`[Affiliate] Attribution via cookie, affiliate_code: ${affiliateCode}`)
+              }
+            }
+
+            // Process commission if we have an affiliate
+            if (affiliateId || affiliateCode) {
+              let affiliateResult
+
+              if (affiliateId) {
+                // Get by affiliate_id (from voucher)
+                affiliateResult = await connection.query(
+                  `SELECT affiliate_id, commission_rate FROM affiliates WHERE affiliate_id = $1 AND status = 'active'`,
+                  [affiliateId]
+                )
+              } else {
+                // Get by affiliate_code (from cookie)
+                affiliateResult = await connection.query(
+                  `SELECT affiliate_id, commission_rate FROM affiliates WHERE affiliate_code = $1 AND status = 'active'`,
+                  [affiliateCode]
+                )
+              }
+
+              // Process commission if affiliate found
               if (affiliateResult.rows.length > 0) {
                 const affiliate = affiliateResult.rows[0]
-                const affiliateId = affiliate.affiliate_id
+                const finalAffiliateId = affiliate.affiliate_id
 
                 // Get default commission rate from settings if not set for affiliate
                 let commissionRate = parseFloat(affiliate.commission_rate)
@@ -289,9 +317,11 @@ export async function POST(
 
                 const type = previousCommissions.rows.length === 0 ? 'first_payment' : 'recurring'
 
-                // Calculate amount (commission on base_amount)
+                // Calculate amount (commission on discounted price)
                 const baseAmount = parseFloat(String(transaction.base_amount))
-                const commissionAmount = (baseAmount * commissionRate) / 100
+                const discountAmount = parseFloat(String(transaction.discount_amount || 0))
+                const amountForCommission = baseAmount - discountAmount
+                const commissionAmount = (amountForCommission * commissionRate) / 100
 
                 // Insert Commission Record
                 if (commissionAmount > 0) {
@@ -301,10 +331,10 @@ export async function POST(
                       type, amount, commission_rate, status, created_at
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
                     [
-                      affiliateId,
+                      finalAffiliateId,
                       transaction.user_id,
                       transaction.transaction_id,
-                      transaction.transaction_id, // order_id is same as transaction_id here
+                      transaction.transaction_id,
                       type,
                       commissionAmount,
                       commissionRate,
@@ -318,11 +348,11 @@ export async function POST(
                       `UPDATE affiliate_referrals 
                        SET first_payment_date = NOW(), status = 'converted'
                        WHERE user_id = $1 AND affiliate_id = $2`,
-                      [transaction.user_id, affiliateId]
+                      [transaction.user_id, finalAffiliateId]
                     )
                   }
 
-                  console.log(`[Affiliate] Commission of ${commissionAmount} recorded for affiliate ${affiliateId}`)
+                  console.log(`[Affiliate] Commission of ${commissionAmount} recorded for affiliate ${finalAffiliateId} (source: ${attributionSource})`)
                 }
               }
             }
