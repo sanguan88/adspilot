@@ -18,7 +18,8 @@ import {
   Package,
   ArrowRight,
   Mail,
-  Loader2
+  Loader2,
+  RefreshCcw
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -344,6 +345,21 @@ function PaymentConfirmationContent() {
                       </p>
                     </div>
                   </div>
+                ) : transactionId ? (
+                  <div className="text-center py-4">
+                    <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Gagal memuat data transaksi
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.location.reload()}
+                    >
+                      <RefreshCcw className="h-4 w-4 mr-1" />
+                      Muat Ulang
+                    </Button>
+                  </div>
                 ) : selectedPlan ? (
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Total Pembayaran</span>
@@ -557,6 +573,18 @@ function PaymentConfirmationContent() {
                           {formatPrice(transaction.totalAmount)}
                         </span>
                       </div>
+                    </div>
+                  ) : transactionId ? (
+                    <div className="text-center py-2">
+                      <p className="text-xs text-amber-600">Gagal memuat data</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-6 px-2"
+                        onClick={() => window.location.reload()}
+                      >
+                        Coba lagi
+                      </Button>
                     </div>
                   ) : selectedPlan ? (
                     <div className="flex justify-between font-bold">
