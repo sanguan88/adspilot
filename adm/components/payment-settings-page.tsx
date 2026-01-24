@@ -17,7 +17,8 @@ import {
   Trash2,
   Save,
   Loader2,
-  Ticket
+  Ticket,
+  CheckCircle2
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { authenticatedFetch } from "@/lib/api-client"
@@ -83,6 +84,13 @@ export function PaymentSettingsPage() {
   })
   const [vouchers, setVouchers] = useState<Voucher[]>([])
   const [loadingVouchers, setLoadingVouchers] = useState(false)
+  const [testingMoota, setTestingMoota] = useState(false)
+  const [mootaStatus, setMootaStatus] = useState<{
+    connected: boolean;
+    name?: string;
+    points?: number;
+    error?: string;
+  } | null>(null)
   const confirm = useConfirm()
 
   useEffect(() => {
@@ -269,6 +277,41 @@ export function PaymentSettingsPage() {
     } catch (error) {
       console.error("Error deleting bank account:", error)
       toast.error("Terjadi kesalahan saat menghapus bank account")
+    }
+  }
+
+  const handleTestMoota = async () => {
+    try {
+      setTestingMoota(true)
+      setMootaStatus(null)
+      const response = await authenticatedFetch("/api/payment-settings/moota/test", {
+        method: "POST"
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        setMootaStatus({
+          connected: true,
+          name: data.data.name,
+          points: data.data.points
+        })
+        toast.success("Koneksi Moota berhasil!")
+      } else {
+        setMootaStatus({
+          connected: false,
+          error: data.error || "Gagal terhubung"
+        })
+        toast.error(data.error || "Koneksi Moota gagal")
+      }
+    } catch (error) {
+      console.error("Error testing Moota:", error)
+      setMootaStatus({
+        connected: false,
+        error: "Terjadi kesalahan sistem"
+      })
+      toast.error("Terjadi kesalahan saat mengetes koneksi")
+    } finally {
+      setTestingMoota(false)
     }
   }
 
@@ -699,14 +742,14 @@ export function PaymentSettingsPage() {
                   <p className="text-xs font-semibold text-emerald-800 mb-2">Webhook URL:</p>
                   <div className="flex items-center gap-2 bg-white p-2 rounded border border-emerald-200">
                     <code className="text-[10px] font-mono break-all flex-1">
-                      {typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host.replace('adm.', '')}/api/webhooks/moota` : 'https://adspilot.id/api/webhooks/moota'}
+                      {typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host.replace('adm.', 'app.')}/api/webhooks/moota` : 'https://app.adspilot.id/api/webhooks/moota'}
                     </code>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
                       onClick={() => {
-                        const url = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host.replace('adm.', '')}/api/webhooks/moota` : 'https://adspilot.id/api/webhooks/moota';
+                        const url = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host.replace('adm.', 'app.')}/api/webhooks/moota` : 'https://app.adspilot.id/api/webhooks/moota';
                         navigator.clipboard.writeText(url);
                         toast.success("URL disalin");
                       }}
@@ -717,6 +760,48 @@ export function PaymentSettingsPage() {
                   <p className="text-[10px] text-emerald-600 mt-2">
                     Daftarkan URL ini di dashboard Moota pada bagian Settings {">"} Webhooks.
                   </p>
+                </div>
+
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    className="w-full border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                    onClick={handleTestMoota}
+                    disabled={testingMoota || !settings.mootaEnabled}
+                  >
+                    {testingMoota ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                    )}
+                    Check Moota Connection
+                  </Button>
+
+                  {mootaStatus && (
+                    <div className={`mt-3 p-3 rounded-lg border flex items-center justify-between ${mootaStatus.connected ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                      }`}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${mootaStatus.connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                        <div>
+                          <p className={`text-xs font-bold ${mootaStatus.connected ? 'text-green-800' : 'text-red-800'}`}>
+                            {mootaStatus.connected ? 'CONNECTION ACTIVE' : 'CONNECTION FAILED'}
+                          </p>
+                          {mootaStatus.connected && (
+                            <p className="text-[10px] text-green-700">Account: {mootaStatus.name}</p>
+                          )}
+                          {mootaStatus.error && (
+                            <p className="text-[10px] text-red-600">{mootaStatus.error}</p>
+                          )}
+                        </div>
+                      </div>
+                      {mootaStatus.connected && (
+                        <div className="text-right">
+                          <p className="text-[10px] text-green-600 font-medium">Moota Points</p>
+                          <p className="text-sm font-bold text-green-800">{mootaStatus.points?.toLocaleString()}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
