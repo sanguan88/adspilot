@@ -35,6 +35,8 @@ interface DetailSectionProps {
     }
     totalCampaigns: number
     imageMap: Map<string, string>
+    statusFilters: Set<string>
+    onToggleStatusFilter: (status: string) => void
 }
 
 const COLORS = {
@@ -122,50 +124,16 @@ function getStatusBadge(status: string) {
     return config
 }
 
-export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaigns, imageMap }: DetailSectionProps) {
+export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaigns, imageMap, statusFilters, onToggleStatusFilter }: DetailSectionProps) {
     const router = useRouter()
     const [activeTab, setActiveTab] = useState<keyof typeof CATEGORY_LABELS>('question_marks')
     const [currentPage, setCurrentPage] = useState(1)
     const [copiedId, setCopiedId] = useState<string | null>(null)
-    const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set(['all']))
     const itemsPerPage = 10
 
-    // Toggle status filter
-    const toggleStatusFilter = (status: string) => {
-        setStatusFilters(prev => {
-            const next = new Set(prev)
-            if (status === 'all') {
-                // If clicking "all", select only "all"
-                return new Set(['all'])
-            } else {
-                // Remove "all" if clicking specific status
-                next.delete('all')
-                if (next.has(status)) {
-                    next.delete(status)
-                    // If no filter selected, go back to "all"
-                    if (next.size === 0) return new Set(['all'])
-                } else {
-                    next.add(status)
-                }
-            }
-            return next
-        })
-        setCurrentPage(1)
-    }
-
-    // Check if a status matches the filter
-    const matchesStatusFilter = (campaignStatus: string) => {
-        if (statusFilters.has('all')) return true
-        const normalizedStatus = campaignStatus?.toLowerCase() || 'paused'
-        if (statusFilters.has('ongoing') && (normalizedStatus === 'ongoing' || normalizedStatus === 'active')) return true
-        if (statusFilters.has('paused') && (normalizedStatus === 'paused' || normalizedStatus === 'pause')) return true
-        if (statusFilters.has('ended') && (normalizedStatus === 'ended' || normalizedStatus === 'expired' || normalizedStatus === 'deleted')) return true
-        return false
-    }
-
+    // Data is already filtered by status from parent, just filter by category tab
     const filteredCampaigns = bcgData
         .filter(c => c.category === activeTab)
-        .filter(c => matchesStatusFilter(c.status))
         .sort((a, b) => b.revenue - a.revenue)
 
     const currentInfo = CATEGORY_INFO[activeTab]
@@ -213,10 +181,10 @@ export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaign
                         ].map(({ key, label, color }) => (
                             <button
                                 key={key}
-                                onClick={() => toggleStatusFilter(key)}
+                                onClick={() => onToggleStatusFilter(key)}
                                 className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase transition-all border ${statusFilters.has(key)
-                                        ? 'text-white shadow-sm'
-                                        : 'bg-white text-gray-500 hover:bg-gray-50'
+                                    ? 'text-white shadow-sm'
+                                    : 'bg-white text-gray-500 hover:bg-gray-50'
                                     }`}
                                 style={{
                                     backgroundColor: statusFilters.has(key) ? color : undefined,

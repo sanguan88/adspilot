@@ -63,6 +63,7 @@ interface FunnelMetrics {
 interface BCGData {
   campaign_id: string
   title: string
+  status: string
   growthRate: number
   marketShare: number
   category: 'stars' | 'cash_cows' | 'question_marks' | 'dogs'
@@ -134,6 +135,51 @@ export function RekamMedicPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [infoBannerVisible, setInfoBannerVisible] = useState(true)
   const [showBannerConfirm, setShowBannerConfirm] = useState(false)
+  const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set(['all']))
+
+  // Toggle status filter
+  const toggleStatusFilter = (status: string) => {
+    setStatusFilters(prev => {
+      const next = new Set(prev)
+      if (status === 'all') {
+        return new Set(['all'])
+      } else {
+        next.delete('all')
+        if (next.has(status)) {
+          next.delete(status)
+          if (next.size === 0) return new Set(['all'])
+        } else {
+          next.add(status)
+        }
+      }
+      return next
+    })
+  }
+
+  // Check if a status matches the filter
+  const matchesStatusFilter = (campaignStatus: string) => {
+    if (statusFilters.has('all')) return true
+    const normalizedStatus = campaignStatus?.toLowerCase() || 'paused'
+    if (statusFilters.has('ongoing') && (normalizedStatus === 'ongoing' || normalizedStatus === 'active')) return true
+    if (statusFilters.has('paused') && (normalizedStatus === 'paused' || normalizedStatus === 'pause')) return true
+    if (statusFilters.has('ended') && (normalizedStatus === 'ended' || normalizedStatus === 'expired' || normalizedStatus === 'deleted')) return true
+    return false
+  }
+
+  // Filtered BCG data based on status
+  const filteredBcgData = useMemo(() => {
+    return bcgData.filter(c => matchesStatusFilter(c.status))
+  }, [bcgData, statusFilters])
+
+  // Filtered category counts based on status
+  const filteredCategoryCounts = useMemo(() => {
+    return {
+      stars: filteredBcgData.filter(c => c.category === 'stars').length,
+      cash_cows: filteredBcgData.filter(c => c.category === 'cash_cows').length,
+      question_marks: filteredBcgData.filter(c => c.category === 'question_marks').length,
+      dogs: filteredBcgData.filter(c => c.category === 'dogs').length,
+    }
+  }, [filteredBcgData])
 
   // Check localStorage for banner preference
   useEffect(() => {
@@ -319,7 +365,7 @@ export function RekamMedicPage() {
   }, [bcgData, dateRange])
 
   const bcgScatterData = useMemo(() => {
-    return bcgData.map(item => ({
+    return filteredBcgData.map(item => ({
       x: item.marketShare,
       y: item.growthRate,
       z: item.spend,
@@ -329,7 +375,7 @@ export function RekamMedicPage() {
       roas: item.roas,
       image: imageMap.get(item.campaign_id) || item.image || null,
     }))
-  }, [bcgData, imageMap])
+  }, [filteredBcgData, imageMap])
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -602,7 +648,7 @@ export function RekamMedicPage() {
                     <div className="flex flex-wrap gap-2 justify-center pt-4 border-t border-gray-100">
                       {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
                         const color = COLORS[key as keyof typeof COLORS]
-                        const count = summary?.categoryCounts[key as keyof typeof summary.categoryCounts] || 0
+                        const count = filteredCategoryCounts[key as keyof typeof filteredCategoryCounts] || 0
                         return (
                           <Badge key={key} variant="outline" className="px-3 py-1.5 border-2 font-bold text-[10px]" style={{ borderColor: color, backgroundColor: `${color}10`, color: color }}>
                             {label}: {count}
@@ -618,10 +664,12 @@ export function RekamMedicPage() {
             {/* Section III: Detail Rincian Iklan */}
             {summary && (
               <RekamMedicDetailSection
-                bcgData={bcgData}
-                categoryCounts={summary.categoryCounts}
-                totalCampaigns={summary.totalCampaigns}
+                bcgData={filteredBcgData}
+                categoryCounts={filteredCategoryCounts}
+                totalCampaigns={filteredBcgData.length}
                 imageMap={imageMap}
+                statusFilters={statusFilters}
+                onToggleStatusFilter={toggleStatusFilter}
               />
             )}
 
