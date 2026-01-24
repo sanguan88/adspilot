@@ -49,9 +49,6 @@ export function RekamMedicLabHeader({
             <div className="text-2xl font-bold text-gray-900 tracking-tight">REKAM MEDIC</div>
             <div className="text-sm text-gray-600 font-mono">- Hasil Analisis Iklan Shopee</div>
           </div>
-          <div className="text-xs text-gray-500 font-mono">
-            No. Laporan: <span className="font-semibold">{reportNumber}</span>
-          </div>
         </div>
         <Button
           onClick={onDownloadPDF}
@@ -120,11 +117,6 @@ export function RekamMedicLabHeader({
           </div>
         </div>
 
-        <div className="flex items-end">
-          <div className="text-xs text-gray-500">
-            <div>Tanggal Analisis: {format(new Date(), "dd MMM yyyy, HH:mm")} WIB</div>
-          </div>
-        </div>
       </div>
     </div>
   )

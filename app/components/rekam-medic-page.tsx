@@ -688,14 +688,7 @@ export function RekamMedicPage() {
               />
             )}
 
-            {/* Footer */}
-            <Card className="border-gray-300 shadow-sm bg-gray-50/50">
-              <CardContent className="p-4 flex flex-col md:flex-row justify-between items-center text-[10px] text-gray-500 gap-2">
-                <span>Sistem Analis: <strong>Rekam Medic v1.1 Premium</strong></span>
-                <span className="italic">Laporan ini dibuat secara otomatis berdasarkan data real-time Shopee Seller API</span>
-                <span className="font-mono bg-gray-200 px-2 py-0.5 rounded text-gray-700">SIG: {reportNumber}</span>
-              </CardContent>
-            </Card>
+
 
             {/* Banner Confirmation Dialog */}
             <AlertDialog open={showBannerConfirm} onOpenChange={setShowBannerConfirm}>
