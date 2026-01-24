@@ -10,8 +10,6 @@ import { Star, DollarSign, HelpCircle, AlertTriangle, ExternalLink, ChevronRight
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
 
 interface BCGData {
     campaign_id: string
@@ -22,7 +20,6 @@ interface BCGData {
     spend: number
     revenue: number
     roas: number
-    status: string
     image?: string
     id_toko?: string
 }
@@ -37,8 +34,6 @@ interface DetailSectionProps {
     }
     totalCampaigns: number
     imageMap: Map<string, string>
-    selectedStatuses: string[]
-    onStatusesChange: (statuses: string[]) => void
 }
 
 const COLORS = {
@@ -109,14 +104,7 @@ const CATEGORY_INFO = {
     },
 }
 
-export function RekamMedicDetailSection({
-    bcgData,
-    categoryCounts,
-    totalCampaigns,
-    imageMap,
-    selectedStatuses,
-    onStatusesChange
-}: DetailSectionProps) {
+export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaigns, imageMap }: DetailSectionProps) {
     const router = useRouter()
     const [activeTab, setActiveTab] = useState<keyof typeof CATEGORY_LABELS>('question_marks')
     const [currentPage, setCurrentPage] = useState(1)
@@ -158,50 +146,7 @@ export function RekamMedicDetailSection({
     return (
         <Card className="border-gray-300 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-gray-200">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <CardTitle className="text-lg font-bold text-gray-900 uppercase">III. Detail Rincian Iklan Per Kategori</CardTitle>
-
-                    {/* Status Filter Checkboxes */}
-                    <div className="flex flex-wrap items-center gap-4 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mr-2">Filter Status:</span>
-
-                        <div className="flex items-center gap-2">
-                            <Checkbox
-                                id="status-aktif"
-                                checked={selectedStatuses.includes('enabled')}
-                                onCheckedChange={(checked) => {
-                                    if (checked) onStatusesChange([...selectedStatuses, 'enabled'])
-                                    else onStatusesChange(selectedStatuses.filter(s => s !== 'enabled'))
-                                }}
-                            />
-                            <Label htmlFor="status-aktif" className="text-xs font-semibold cursor-pointer">Aktif</Label>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <Checkbox
-                                id="status-dijeda"
-                                checked={selectedStatuses.includes('paused')}
-                                onCheckedChange={(checked) => {
-                                    if (checked) onStatusesChange([...selectedStatuses, 'paused'])
-                                    else onStatusesChange(selectedStatuses.filter(s => s !== 'paused'))
-                                }}
-                            />
-                            <Label htmlFor="status-dijeda" className="text-xs font-semibold cursor-pointer">Dijeda</Label>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <Checkbox
-                                id="status-berakhir"
-                                checked={selectedStatuses.includes('finished') || selectedStatuses.includes('ended')}
-                                onCheckedChange={(checked) => {
-                                    if (checked) onStatusesChange([...selectedStatuses, 'finished', 'ended'])
-                                    else onStatusesChange(selectedStatuses.filter(s => s !== 'finished' && s !== 'ended'))
-                                }}
-                            />
-                            <Label htmlFor="status-berakhir" className="text-xs font-semibold cursor-pointer">Berakhir</Label>
-                        </div>
-                    </div>
-                </div>
+                <CardTitle className="text-lg font-bold text-gray-900 uppercase">III. Detail Rincian Iklan Per Kategori</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -314,20 +259,10 @@ export function RekamMedicDetailSection({
                                                                 >
                                                                     {campaign.title}
                                                                 </span>
-                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                <div className="flex items-center gap-2 group/id">
                                                                     <span className="text-[10px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
                                                                         ID: {campaign.campaign_id}
                                                                     </span>
-
-                                                                    {/* Status Badge */}
-                                                                    {campaign.status === 'enabled' ? (
-                                                                        <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50 text-[9px] h-4 px-1.5 font-bold uppercase">Berjalan</Badge>
-                                                                    ) : campaign.status === 'paused' ? (
-                                                                        <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-50 text-[9px] h-4 px-1.5 font-bold uppercase">Dijeda</Badge>
-                                                                    ) : (
-                                                                        <Badge className="bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-100 text-[9px] h-4 px-1.5 font-bold uppercase">Selesai</Badge>
-                                                                    )}
-
                                                                     <button
                                                                         onClick={() => handleCopy(campaign.campaign_id)}
                                                                         className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-400 hover:text-gray-700 flex-shrink-0"

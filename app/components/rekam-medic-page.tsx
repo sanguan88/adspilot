@@ -69,7 +69,6 @@ interface BCGData {
   spend: number
   revenue: number
   roas: number
-  status: string
   image?: string
   id_toko?: string
 }
@@ -135,7 +134,6 @@ export function RekamMedicPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [infoBannerVisible, setInfoBannerVisible] = useState(true)
   const [showBannerConfirm, setShowBannerConfirm] = useState(false)
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['enabled', 'paused', 'finished', 'ended'])
 
   // Check localStorage for banner preference
   useEffect(() => {
@@ -240,10 +238,6 @@ export function RekamMedicPage() {
           }
         }
 
-        if (selectedStatuses.length > 0) {
-          params.append('statuses', selectedStatuses.join(','))
-        }
-
         const response = await authenticatedFetch(`/api/rekam-medic?${params.toString()}`)
 
         if (response.status === 401) {
@@ -285,7 +279,7 @@ export function RekamMedicPage() {
     }
 
     fetchData()
-  }, [selectedAccount, dateRange, selectedStatuses])
+  }, [selectedAccount, dateRange])
 
   // Fetch images for BCG chart
   useEffect(() => {
@@ -404,7 +398,7 @@ export function RekamMedicPage() {
               </Link>
             </CardContent>
           </Card>
-        ) : (loading && !summary) ? (
+        ) : loading ? (
           <div className="space-y-6">
             <Skeleton className="h-64 w-full" />
             <Skeleton className="h-64 w-full" />
@@ -412,7 +406,7 @@ export function RekamMedicPage() {
         ) : error ? (
           <Card className="border-red-200"><CardContent className="p-6 flex items-center gap-3"><AlertTriangle className="w-5 h-5 text-red-600" /><p className="text-red-600 font-medium">{error}</p></CardContent></Card>
         ) : (
-          <div className={loading ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
+          <>
             {/* Section I: Informasi Umum */}
             <Card className="border-gray-300 shadow-sm overflow-hidden">
               <CardHeader className="border-b border-gray-200 bg-white">
@@ -628,8 +622,6 @@ export function RekamMedicPage() {
                 categoryCounts={summary.categoryCounts}
                 totalCampaigns={summary.totalCampaigns}
                 imageMap={imageMap}
-                selectedStatuses={selectedStatuses}
-                onStatusesChange={setSelectedStatuses}
               />
             )}
 
@@ -648,6 +640,14 @@ export function RekamMedicPage() {
               />
             )}
 
+            {/* Footer */}
+            <Card className="border-gray-300 shadow-sm bg-gray-50/50">
+              <CardContent className="p-4 flex flex-col md:flex-row justify-between items-center text-[10px] text-gray-500 gap-2">
+                <span>Sistem Analis: <strong>Rekam Medic v1.1 Premium</strong></span>
+                <span className="italic">Laporan ini dibuat secara otomatis berdasarkan data real-time Shopee Seller API</span>
+                <span className="font-mono bg-gray-200 px-2 py-0.5 rounded text-gray-700">SIG: {reportNumber}</span>
+              </CardContent>
+            </Card>
 
             {/* Banner Confirmation Dialog */}
             <AlertDialog open={showBannerConfirm} onOpenChange={setShowBannerConfirm}>
@@ -675,7 +675,7 @@ export function RekamMedicPage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </div>
+          </>
         )}
       </div>
     </div>

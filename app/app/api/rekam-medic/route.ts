@@ -14,15 +14,15 @@ interface CampaignMetrics {
   clicks: number
   conversions: number
   spend: number
+  revenue: number
   ctr: number
   cpc: number
   daily_budget: number
   nama_toko: string
   id_toko: string
+  image?: string | null
   created_at: string
   update_at: string
-  revenue: number
-  image?: string | null
 }
 
 interface FunnelMetrics {
@@ -47,9 +47,7 @@ interface BCGData {
   spend: number
   revenue: number
   roas: number
-  status: string
   image?: string
-  id_toko?: string
 }
 
 // Helper function to clean cookies
@@ -285,8 +283,7 @@ async function getCampaignsForAnalysis(
   connection: PoolClient,
   startTime: string,
   endTime: string,
-  tokoIds?: string[],
-  statuses?: string[]
+  tokoIds?: string[]
 ) {
   try {
     // Aggregate data per campaign_id for the date range
@@ -328,12 +325,6 @@ async function getCampaignsForAnalysis(
       const placeholders = tokoIds.map(() => `$${paramIndex++}`).join(',')
       query += ` AND dp.id_toko IN (${placeholders})`
       params.push(...tokoIds)
-    }
-
-    if (statuses && statuses.length > 0) {
-      const placeholders = statuses.map(() => `$${paramIndex++}`).join(',')
-      query += ` AND dp.status IN (${placeholders})`
-      params.push(...statuses)
     }
 
     query += ` GROUP BY dp.campaign_id, dp.id_toko
@@ -582,8 +573,7 @@ function calculateBCGMatrix(
       spend: campaign.spend,
       revenue: campaign.revenue,
       roas,
-      status: campaign.status,
-      image: campaign.image || undefined,
+      image: campaign.image,
       id_toko: campaign.id_toko,
     }
   })
@@ -599,8 +589,6 @@ export async function GET(request: NextRequest) {
     const endTime = searchParams.get('end_time') || new Date().toISOString().split('T')[0]
     const tokoIdsParam = searchParams.get('account_ids') || searchParams.get('toko_ids')
     const tokoIds = tokoIdsParam ? tokoIdsParam.split(',').filter(id => id.trim()) : undefined
-    const statusesParam = searchParams.get('statuses')
-    const statuses = statusesParam ? statusesParam.split(',').filter(s => s.trim()) : undefined
 
     connection = await getDatabaseConnection()
 
@@ -655,13 +643,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Get current period campaigns
-    const campaigns = await getCampaignsForAnalysis(
-      connection,
-      startTime,
-      endTime,
-      filteredTokoIds.length > 0 ? filteredTokoIds : undefined,
-      statuses
-    )
+    const campaigns = await getCampaignsForAnalysis(connection, startTime, endTime, filteredTokoIds.length > 0 ? filteredTokoIds : undefined)
 
     console.log('[Rekam Medic] Found campaigns:', campaigns.length)
 
@@ -677,8 +659,7 @@ export async function GET(request: NextRequest) {
       connection,
       prevStartDate.toISOString().split('T')[0],
       prevEndDate.toISOString().split('T')[0],
-      filteredTokoIds,
-      statuses
+      filteredTokoIds
     )
 
     // Calculate funnel metrics
