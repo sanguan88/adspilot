@@ -81,9 +81,10 @@ export async function GET(request: NextRequest) {
           id: config.id,
           provider: config.provider,
           environment: config.environment,
-          clientKey: config.client_key, // Only return client_key (public), not server_key
+          clientKey: config.client_key,
           webhookUrl: config.webhook_url,
           isActive: config.is_active,
+          hasServerKey: !!config.server_key, // Indikator apakah server_key (API Token) sudah di-set
         }
       }
 
@@ -270,6 +271,45 @@ export async function PUT(request: NextRequest) {
           ipAddress: getIpAddress(request),
           userAgent: getUserAgent(request),
         })
+
+        // --- NEW: Process Moota Config if provided ---
+        const { mootaConfig } = body
+        if (mootaConfig) {
+          const { enabled, apiToken, webhookSecret } = mootaConfig
+
+          // Check if moota config exists
+          const mootaCheck = await connection.query(
+            `SELECT id FROM payment_gateway_config WHERE provider = 'moota' LIMIT 1`
+          )
+
+          if (mootaCheck.rows.length === 0) {
+            // Insert new Moota config
+            await connection.query(
+              `INSERT INTO payment_gateway_config (
+                provider, environment, server_key, client_key, is_active, updated_at
+              ) VALUES ('moota', 'production', $1, $2, $3, NOW())`,
+              [apiToken || '', webhookSecret || '', enabled]
+            )
+          } else {
+            // Update existing Moota config
+            // Only update apiToken if it was provided (not undefined)
+            if (apiToken !== undefined) {
+              await connection.query(
+                `UPDATE payment_gateway_config 
+                 SET server_key = $1, client_key = $2, is_active = $3, updated_at = NOW()
+                 WHERE provider = 'moota'`,
+                [apiToken, webhookSecret, enabled]
+              )
+            } else {
+              await connection.query(
+                `UPDATE payment_gateway_config 
+                 SET client_key = $1, is_active = $2, updated_at = NOW()
+                 WHERE provider = 'moota'`,
+                [webhookSecret, enabled]
+              )
+            }
+          }
+        }
       }
 
       connection.release()

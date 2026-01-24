@@ -62,6 +62,10 @@ interface PaymentSettings {
   defaultVoucherEnabled: boolean
   defaultVoucherId: number | null
   defaultVoucher: Voucher | null
+  // Moota specific (optional, can be stored in gatewayConfig)
+  mootaEnabled: boolean
+  mootaApiToken: string
+  mootaWebhookSecret: string
 }
 
 export function PaymentSettingsPage() {
@@ -124,6 +128,9 @@ export function PaymentSettingsPage() {
           defaultVoucherEnabled: data.data.defaultVoucherEnabled || false,
           defaultVoucherId: data.data.defaultVoucherId || null,
           defaultVoucher: data.data.defaultVoucher || null,
+          mootaEnabled: data.data.gatewayConfig?.provider === 'moota' && data.data.gatewayConfig?.isActive,
+          mootaApiToken: data.data.gatewayConfig?.hasServerKey ? '********' : '',
+          mootaWebhookSecret: data.data.gatewayConfig?.provider === 'moota' ? data.data.gatewayConfig?.clientKey || '' : '',
         })
       } else {
         toast.error("Gagal memuat payment settings")
@@ -149,6 +156,12 @@ export function PaymentSettingsPage() {
           confirmationEmail: settings.confirmationEmail,
           defaultVoucherEnabled: settings.defaultVoucherEnabled,
           defaultVoucherId: settings.defaultVoucherId,
+          // Send moota config if changed
+          mootaConfig: {
+            enabled: settings.mootaEnabled,
+            apiToken: settings.mootaApiToken === '********' ? undefined : settings.mootaApiToken,
+            webhookSecret: settings.mootaWebhookSecret,
+          }
         }),
       })
 
@@ -611,21 +624,101 @@ export function PaymentSettingsPage() {
               Payment Gateway Settings
             </CardTitle>
             <CardDescription>
-              Konfigurasi payment gateway (akan diimplementasikan nanti)
+              Konfigurasi payment gateway (Midtrans, Xendit, dll)
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {settings.activeMethod === 'gateway' ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Payment Gateway integration akan diimplementasikan segera.
-                </AlertDescription>
-              </Alert>
+          <CardContent className="space-y-6">
+            <div className="flex items-center space-x-2 p-4 border rounded-lg bg-muted/30">
+              <CreditCard className="h-5 w-5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Coming Soon</p>
+                <p className="text-xs text-muted-foreground">Integrasi Midtrans dan Xendit sedang dalam tahap pengembangan.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Moota Automation Settings */}
+        <Card className={settings.activeMethod === 'manual' ? "border-emerald-200 shadow-md" : "opacity-60"}>
+          <CardHeader className="bg-emerald-50/50">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle className="flex items-center gap-2 text-emerald-800">
+                  <Building2 className="h-5 w-5" />
+                  Moota.co Automation
+                </CardTitle>
+                <CardDescription>
+                  Otomatisasi verifikasi transfer bank manual menggunakan Moota.co
+                </CardDescription>
+              </div>
+              <Switch
+                checked={settings.mootaEnabled}
+                onCheckedChange={(checked) => setSettings({ ...settings, mootaEnabled: checked })}
+                disabled={settings.activeMethod !== 'manual'}
+              />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            {!settings.mootaEnabled ? (
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center">
+                <p className="text-sm text-slate-600">
+                  Aktifkan Moota untuk mengotomatisasi verifikasi transfer bank manual.
+                  Sistem akan secara otomatis mengubah status transaksi menjadi <strong>Paid</strong> jika mutasi bank yang cocok ditemukan.
+                </p>
+              </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Aktifkan Payment Gateway untuk mengakses konfigurasi ini.
-              </p>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="mootaApiToken">Moota API Token</Label>
+                  <Input
+                    id="mootaApiToken"
+                    type="password"
+                    value={settings.mootaApiToken}
+                    onChange={(e) => setSettings({ ...settings, mootaApiToken: e.target.value })}
+                    placeholder="Masukkan API Token dari dashboard Moota"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Token ini digunakan untuk autentikasi API ke Moota.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="mootaWebhookSecret">Webhook Secret (Verification Key)</Label>
+                  <Input
+                    id="mootaWebhookSecret"
+                    value={settings.mootaWebhookSecret}
+                    onChange={(e) => setSettings({ ...settings, mootaWebhookSecret: e.target.value })}
+                    placeholder="Masukkan Secret Key untuk verifikasi webhook"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Gunakan key ini untuk memverifikasi bahwa callback berasal dari Moota.
+                  </p>
+                </div>
+
+                <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
+                  <p className="text-xs font-semibold text-emerald-800 mb-2">Webhook URL:</p>
+                  <div className="flex items-center gap-2 bg-white p-2 rounded border border-emerald-200">
+                    <code className="text-[10px] font-mono break-all flex-1">
+                      {typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host.replace('adm.', '')}/api/webhooks/moota` : 'https://adspilot.id/api/webhooks/moota'}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => {
+                        const url = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host.replace('adm.', '')}/api/webhooks/moota` : 'https://adspilot.id/api/webhooks/moota';
+                        navigator.clipboard.writeText(url);
+                        toast.success("URL disalin");
+                      }}
+                    >
+                      <Plus className="h-3 w-3 rotate-45" />
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-emerald-600 mt-2">
+                    Daftarkan URL ini di dashboard Moota pada bagian Settings {">"} Webhooks.
+                  </p>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
