@@ -127,9 +127,45 @@ export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaign
     const [activeTab, setActiveTab] = useState<keyof typeof CATEGORY_LABELS>('question_marks')
     const [currentPage, setCurrentPage] = useState(1)
     const [copiedId, setCopiedId] = useState<string | null>(null)
+    const [statusFilters, setStatusFilters] = useState<Set<string>>(new Set(['all']))
     const itemsPerPage = 10
 
-    const filteredCampaigns = bcgData.filter(c => c.category === activeTab)
+    // Toggle status filter
+    const toggleStatusFilter = (status: string) => {
+        setStatusFilters(prev => {
+            const next = new Set(prev)
+            if (status === 'all') {
+                // If clicking "all", select only "all"
+                return new Set(['all'])
+            } else {
+                // Remove "all" if clicking specific status
+                next.delete('all')
+                if (next.has(status)) {
+                    next.delete(status)
+                    // If no filter selected, go back to "all"
+                    if (next.size === 0) return new Set(['all'])
+                } else {
+                    next.add(status)
+                }
+            }
+            return next
+        })
+        setCurrentPage(1)
+    }
+
+    // Check if a status matches the filter
+    const matchesStatusFilter = (campaignStatus: string) => {
+        if (statusFilters.has('all')) return true
+        const normalizedStatus = campaignStatus?.toLowerCase() || 'paused'
+        if (statusFilters.has('ongoing') && (normalizedStatus === 'ongoing' || normalizedStatus === 'active')) return true
+        if (statusFilters.has('paused') && (normalizedStatus === 'paused' || normalizedStatus === 'pause')) return true
+        if (statusFilters.has('ended') && (normalizedStatus === 'ended' || normalizedStatus === 'expired' || normalizedStatus === 'deleted')) return true
+        return false
+    }
+
+    const filteredCampaigns = bcgData
+        .filter(c => c.category === activeTab)
+        .filter(c => matchesStatusFilter(c.status))
         .sort((a, b) => b.revenue - a.revenue)
 
     const currentInfo = CATEGORY_INFO[activeTab]
@@ -164,7 +200,34 @@ export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaign
     return (
         <Card className="border-gray-300 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-gray-200">
-                <CardTitle className="text-lg font-bold text-gray-900 uppercase">III. Detail Rincian Iklan Per Kategori</CardTitle>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-bold text-gray-900 uppercase">III. Detail Rincian Iklan Per Kategori</CardTitle>
+                    {/* Status Filter Badges */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 font-medium mr-1">Status:</span>
+                        {[
+                            { key: 'all', label: 'Semua', color: '#6B7280' },
+                            { key: 'ongoing', label: 'Aktif', color: '#059669' },
+                            { key: 'paused', label: 'Dijeda', color: '#D97706' },
+                            { key: 'ended', label: 'Berhenti', color: '#DC2626' },
+                        ].map(({ key, label, color }) => (
+                            <button
+                                key={key}
+                                onClick={() => toggleStatusFilter(key)}
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase transition-all border ${statusFilters.has(key)
+                                        ? 'text-white shadow-sm'
+                                        : 'bg-white text-gray-500 hover:bg-gray-50'
+                                    }`}
+                                style={{
+                                    backgroundColor: statusFilters.has(key) ? color : undefined,
+                                    borderColor: color,
+                                }}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </CardHeader>
             <CardContent className="p-0">
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
