@@ -191,7 +191,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <img
                   src="/logo.jpg"
                   alt="AdsBot Admin Logo"
-                  className="w-10 h-10 rounded-lg object-contain"
+                  className="w-10 h-10 rounded-none object-contain"
                   onError={(e) => {
                     const img = e.currentTarget as HTMLImageElement
                     if (!img.dataset.fallbackUsed) {
@@ -224,8 +224,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               <Button
                                 variant="ghost"
                                 className={cn(
-                                  "w-full justify-center p-2 text-sm font-medium text-primary hover:bg-primary/20 rounded-lg",
-                                  isItemActive(item.href) && "bg-primary text-primary-foreground shadow-md",
+                                  "w-full justify-center p-2 text-sm font-medium text-primary hover:bg-primary/20 rounded-none",
+                                  isItemActive(item.href) && "bg-primary text-primary-foreground shadow-none",
                                 )}
                               >
                                 <item.icon className="w-6 h-6 shrink-0" />
@@ -251,7 +251,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       variant="ghost"
                       onClick={() => toggleGroup(group.id)}
                       className={cn(
-                        "w-full justify-between h-9 px-2 text-xs font-semibold text-foreground/50 uppercase tracking-wider hover:bg-transparent",
+                        "w-full justify-between h-10 px-3 text-xs font-bold text-foreground/60 uppercase tracking-wider hover:bg-primary/5 rounded-none transition-colors",
                         isActive && "text-primary/70"
                       )}
                     >
@@ -279,8 +279,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               <Button
                                 variant="ghost"
                                 className={cn(
-                                  "w-full justify-start gap-3 text-sm font-medium text-primary hover:bg-primary/20 rounded-lg",
-                                  isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary",
+                                  "w-full justify-start gap-4 px-6 h-11 text-sm font-medium text-primary hover:bg-primary/20 rounded-none transition-all",
+                                  isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary shadow-none",
                                 )}
                               >
                                 <item.icon className="w-5 h-5 shrink-0" />
@@ -315,8 +315,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Button
                         variant="ghost"
                         className={cn(
-                          "w-full justify-start gap-3 text-sm font-medium text-primary hover:bg-primary/20 rounded-lg",
-                          isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary",
+                          "w-full justify-start gap-4 px-4 h-11 text-sm font-medium text-primary hover:bg-primary/20 rounded-none transition-all",
+                          isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary shadow-none",
                         )}
                       >
                         <item.icon className="w-5 h-5 shrink-0" />
@@ -342,18 +342,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-2 rounded hover:bg-white/50 transition-all duration-300 group"
+              className="flex items-center gap-3 p-2 rounded-none hover:bg-white/50 transition-all duration-300 group"
             >
-              <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100">
+              <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100 rounded-none">
                 {user?.photo_profile ? (
                   <AvatarImage
                     src={user.photo_profile?.startsWith('uploads/')
                       ? `https://app.adspilot.id/${user.photo_profile}`
                       : `https://app.adspilot.id/uploads/profiles/${user.photo_profile}`}
                     alt={user?.nama_lengkap || 'User'}
+                    className="rounded-none object-cover"
                   />
                 ) : null}
-                <AvatarFallback className="bg-slate-100">
+                <AvatarFallback className="bg-slate-100 rounded-none">
                   <User className="w-5 h-5 text-slate-400" />
                 </AvatarFallback>
               </Avatar>
@@ -367,7 +368,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="w-8 h-8 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                      className="w-8 h-8 rounded-none text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
                       onClick={handleLogout}
                     >
                       <LogOut className="w-4 h-4" />
@@ -384,16 +385,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100 cursor-pointer hover:scale-105 transition-transform">
+                    <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100 cursor-pointer hover:scale-105 transition-transform rounded-none">
                       {user?.photo_profile ? (
                         <AvatarImage
                           src={user.photo_profile?.startsWith('uploads/')
                             ? `https://app.adspilot.id/${user.photo_profile}`
                             : `https://app.adspilot.id/uploads/profiles/${user.photo_profile}`}
                           alt={user?.nama_lengkap || 'User'}
+                          className="rounded-none object-cover"
                         />
                       ) : null}
-                      <AvatarFallback className="bg-slate-100">
+                      <AvatarFallback className="bg-slate-100 rounded-none">
                         <User className="w-5 h-5 text-slate-400" />
                       </AvatarFallback>
                     </Avatar>
@@ -411,7 +413,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="w-10 h-10 rounded text-slate-400 hover:text-red-500 hover:bg-red-50"
+                      className="w-10 h-10 rounded-none text-slate-400 hover:text-red-500 hover:bg-red-50"
                       onClick={handleLogout}
                     >
                       <LogOut className="w-5 h-5" />
