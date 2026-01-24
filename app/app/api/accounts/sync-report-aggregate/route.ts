@@ -59,7 +59,7 @@ async function fetchShopeeHomepageQuery(cookies: string, date: string) {
     }
 
     const result = await response.json()
-    console.log(`[DEBUG_SYNC] SUCCESS for ${date}: ${result.data?.entry_list?.length || 0} campaigns found`)
+    console.log(`[DEBUG_SYNC] SUCCESS for ${date}: ${result.data?.entry_list?.length || 0} campaigns found. Full data: ${JSON.stringify(result).substring(0, 500)}`)
 
     if (!result.data?.entry_list) {
       return { success: true, data: { report_aggregate: {} } }
