@@ -14,6 +14,7 @@ import { toast } from "sonner"
 interface BCGData {
     campaign_id: string
     title: string
+    status: string
     growthRate: number
     marketShare: number
     category: 'stars' | 'cash_cows' | 'question_marks' | 'dogs'
@@ -102,6 +103,23 @@ const CATEGORY_INFO = {
         color: COLORS.dogs,
         lightColor: '#fef2f2',
     },
+}
+
+// Status badge helper
+const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
+    ongoing: { label: 'Aktif', color: '#059669', bgColor: '#ecfdf5' },
+    active: { label: 'Aktif', color: '#059669', bgColor: '#ecfdf5' },
+    paused: { label: 'Dijeda', color: '#D97706', bgColor: '#fffbeb' },
+    pause: { label: 'Dijeda', color: '#D97706', bgColor: '#fffbeb' },
+    ended: { label: 'Berhenti', color: '#DC2626', bgColor: '#fef2f2' },
+    expired: { label: 'Berhenti', color: '#DC2626', bgColor: '#fef2f2' },
+    deleted: { label: 'Dihapus', color: '#6B7280', bgColor: '#f3f4f6' },
+}
+
+function getStatusBadge(status: string) {
+    const normalizedStatus = status?.toLowerCase() || 'paused'
+    const config = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG['paused']
+    return config
 }
 
 export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaigns, imageMap }: DetailSectionProps) {
@@ -259,6 +277,22 @@ export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaign
                                                                 >
                                                                     {campaign.title}
                                                                 </span>
+                                                                {/* Status Badge */}
+                                                                {(() => {
+                                                                    const statusConfig = getStatusBadge(campaign.status)
+                                                                    return (
+                                                                        <span
+                                                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase mt-0.5"
+                                                                            style={{
+                                                                                backgroundColor: statusConfig.bgColor,
+                                                                                color: statusConfig.color,
+                                                                                border: `1px solid ${statusConfig.color}30`
+                                                                            }}
+                                                                        >
+                                                                            {statusConfig.label}
+                                                                        </span>
+                                                                    )
+                                                                })()}
                                                                 <div className="flex items-center gap-2 group/id">
                                                                     <span className="text-[10px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
                                                                         ID: {campaign.campaign_id}

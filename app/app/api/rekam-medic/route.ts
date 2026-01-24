@@ -41,13 +41,15 @@ interface FunnelMetrics {
 interface BCGData {
   campaign_id: string
   title: string
+  status: string
   growthRate: number // Growth rate (impressions, clicks, atau revenue)
   marketShare: number // Relative performance (CTR, Conversion Rate, atau ROAS)
   category: 'stars' | 'cash_cows' | 'question_marks' | 'dogs'
   spend: number
   revenue: number
   roas: number
-  image?: string
+  image?: string | null
+  id_toko?: string
 }
 
 // Helper function to clean cookies
@@ -567,6 +569,7 @@ function calculateBCGMatrix(
     return {
       campaign_id: campaign.campaign_id,
       title: campaign.title,
+      status: campaign.status,
       growthRate,
       marketShare,
       category,
