@@ -177,13 +177,7 @@ export function PaymentSettingsPage() {
 
       if (data.success) {
         toast.success("Payment settings berhasil disimpan")
-        // Reset toggle ke OFF setelah save berhasil
-        setSettings({
-          ...settings,
-          defaultVoucherEnabled: false,
-          defaultVoucherId: null,
-        })
-        fetchPaymentSettings() // Refresh data after save
+        await fetchPaymentSettings() // Refresh data after save to get masked keys
       } else {
         toast.error(data.error || "Gagal menyimpan payment settings")
       }

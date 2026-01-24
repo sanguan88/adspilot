@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
             const apiToken = result.rows[0].server_key
 
             // Call Moota API to check profile/balance
-            const response = await fetch('https://app.moota.co/api/v2/user/profile', {
+            const response = await fetch('https://app.moota.co/api/v2/profile', {
                 headers: {
                     'Authorization': `Bearer ${apiToken}`,
                     'Accept': 'application/json'
