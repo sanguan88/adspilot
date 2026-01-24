@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PostgreSQL IDE - Server Monitor</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ide: {
+                            bg: "#F1F5F9",        // slate-100
+                            panel: "#FFFFFF",     // white
+                            sidebar: "#F8FAFC",   // slate-50
+                            border: "#CBD5E1",    // slate-300
+                            borderLight: "#E2E8F0", // slate-200
+                            text: "#334155",      // slate-700
+                            textDark: "#0F172A",  // slate-900
+                            accent: "#2563EB",    // blue-600
+                            accentLight: "#EFF6FF", // blue-50
+                            select: "#DBEAFE",    // blue-100
+                            danger: "#EF4444",    // red-500
+                            success: "#22C55E",   // green-500
+                            warning: "#F59E0B",   // amber-500
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'ide': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background-color: #94A3B8;
+        }@keyframes pulse-line {
+            0% { stroke-dashoffset: 1000; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .chart-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 0;
+            animation: pulse-line 3s linear infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-ide-bg text-ide-text font-sans h-[100dvh] flex flex-col overflow-hidden selection:bg-ide-select selection:text-ide-textDark">
+<header class="h-12 bg-ide-panel border-b border-ide-border flex items-center justify-between px-3 shrink-0 z-20 shadow-sm">
+<div class="flex items-center gap-3">
+<button class="p-1.5 rounded hover:bg-ide-bg text-ide-textDark lg:hidden">
+<span class="material-symbols-outlined text-[22px]">menu</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="bg-ide-accent text-white p-1 rounded">
+<span class="material-symbols-outlined text-[18px] block">database</span>
+</div>
+<h1 class="font-semibold text-sm text-ide-textDark tracking-tight hidden sm:block">PGStudio <span class="text-xs text-slate-400 font-normal ml-1">v2.4.0</span></h1>
+</div>
+<div class="h-5 w-px bg-ide-border mx-2 hidden sm:block"></div>
+<div class="flex items-center text-xs gap-1.5 px-2 py-1 bg-ide-bg rounded border border-ide-borderLight">
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+<span class="font-mono text-ide-textDark">production-aws</span>
+<span class="text-slate-400">/</span>
+<span class="font-mono font-medium">Monitoring</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-1 px-2 py-1 text-xs font-medium text-ide-text bg-ide-bg border border-ide-border rounded hover:bg-slate-200">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+<span class="hidden sm:inline">Console</span>
+</button>
+<div class="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-white ml-2">
+                JD
+            </div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<aside class="w-[260px] bg-ide-sidebar border-r border-ide-border flex-col hidden lg:flex shrink-0">
+<div class="h-9 px-3 border-b border-ide-borderLight flex items-center justify-between bg-ide-bg/50">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Explorer</span>
+<div class="flex gap-1">
+<button class="p-0.5 rounded hover:bg-slate-200 text-slate-500"><span class="material-symbols-outlined text-[16px]">refresh</span></button>
+<button class="p-0.5 rounded hover:bg-slate-200 text-slate-500"><span class="material-symbols-outlined text-[16px]">collapse_all</span></button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-0.5 text-[13px] font-medium leading-6 select-none">
+<div class="flex items-center gap-1.5 px-2 py-1 bg-ide-select text-ide-accent border border-blue-200 rounded cursor-pointer text-ide-textDark">
+<span class="material-symbols-outlined text-[16px] text-ide-accent">arrow_drop_down</span>
+<span class="material-symbols-outlined text-[16px] text-purple-600">dns</span>
+<span>Production AWS</span>
+</div>
+<div class="ml-4 pl-2 border-l border-slate-300 space-y-0.5">
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer group">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+<span class="material-symbols-outlined text-[16px] text-yellow-500">database</span>
+<span class="group-hover:text-ide-textDark">ecommerce_db</span>
+</div>
+<div class="ml-4 pl-2 border-l border-slate-300 space-y-0.5">
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer group">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+<span class="material-symbols-outlined text-[16px] text-orange-500">schema</span>
+<span>public</span>
+</div>
+<div class="ml-4 pl-2 border-l border-slate-300 space-y-0.5">
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_right</span>
+<span class="material-symbols-outlined text-[16px] text-blue-500">folder</span>
+<span>Tables</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer text-slate-600">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_right</span>
+<span class="material-symbols-outlined text-[16px] text-cyan-500">visibility</span>
+<span>Views</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer text-slate-600">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_right</span>
+<span class="material-symbols-outlined text-[16px] text-slate-500">list_alt</span>
+<span>Indexes</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer opacity-75">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_right</span>
+<span class="material-symbols-outlined text-[16px] text-orange-500">schema</span>
+<span>auth</span>
+</div>
+</div>
+</div>
+<div class="p-2 border-t border-ide-border bg-white text-[11px] text-slate-500 flex justify-between items-center">
+<span>85 connections</span>
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-ide-bg relative">
+<div class="h-9 bg-ide-bg border-b border-ide-border flex items-end px-2 gap-1 overflow-x-auto scrollbar-thin shrink-0">
+<div class="flex items-center gap-2 px-3 py-1.5 min-w-[140px] max-w-[200px] h-9 mb-[-1px] text-xs font-bold text-ide-textDark bg-ide-panel rounded-t border-t border-l border-r border-ide-border shadow-sm cursor-default relative z-10">
+<span class="material-symbols-outlined text-[14px] text-purple-600">dns</span>
+<span class="truncate">Server Dashboard</span>
+<span class="material-symbols-outlined text-[12px] ml-auto text-slate-400 hover:text-red-500 cursor-pointer">close</span>
+</div>
+<div class="group flex items-center gap-2 px-3 py-1.5 min-w-[140px] max-w-[200px] h-8 mb-[-1px] text-xs font-medium text-slate-500 hover:bg-slate-200 rounded-t border border-transparent hover:border-ide-borderLight cursor-pointer">
+<span class="material-symbols-outlined text-[14px] text-blue-500">table_chart</span>
+<span class="truncate">Table: users</span>
+<span class="material-symbols-outlined text-[12px] opacity-0 group-hover:opacity-100 ml-auto hover:text-red-500">close</span>
+</div>
+<button class="w-6 h-6 mb-1 rounded hover:bg-slate-200 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+<div class="h-10 border-b border-ide-border flex items-center px-2 bg-white gap-2 shrink-0 overflow-x-auto">
+<div class="flex items-center border-r border-ide-borderLight pr-2 gap-1">
+<button class="p-1.5 text-slate-600 hover:text-ide-accent hover:bg-ide-accentLight rounded transition-colors" title="Refresh">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+<button class="p-1.5 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Stop">
+<span class="material-symbols-outlined text-[18px]">stop_circle</span>
+</button>
+</div>
+<div class="flex items-center gap-2 text-xs text-slate-600 border-r border-ide-borderLight pr-2">
+<span class="material-symbols-outlined text-[16px] text-slate-400">timer</span>
+<select class="bg-transparent border-none text-xs font-medium focus:ring-0 p-0 pr-6 cursor-pointer text-slate-700">
+<option>Auto-refresh: 5s</option>
+<option>Auto-refresh: 10s</option>
+<option>Manual</option>
+</select>
+</div>
+<div class="flex items-center gap-2 px-2 py-0.5 bg-yellow-50 border border-yellow-200 rounded text-[11px] text-yellow-800">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+<span>High Load</span>
+</div>
+<div class="flex-1"></div>
+<div class="flex items-center gap-2 text-[11px] text-slate-500">
+<span>Uptime: 14d 2h</span>
+</div>
+</div>
+<div class="flex-1 overflow-auto bg-ide-bg p-3 lg:p-4 scrollbar-thin">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+<div class="bg-white rounded border border-ide-border p-3 shadow-ide flex flex-col h-32 relative overflow-hidden">
+<div class="flex justify-between items-start z-10">
+<div>
+<h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">CPU Usage</h3>
+<div class="text-2xl font-bold text-ide-textDark mt-1 font-mono">82%</div>
+</div>
+<div class="p-1 rounded bg-red-50 text-red-600">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-16 opacity-20 bg-gradient-to-t from-red-500/50 to-transparent"></div>
+<svg class="absolute bottom-0 left-0 right-0 w-full h-16 stroke-red-500 fill-none stroke-[1.5]" preserveAspectRatio="none" viewBox="0 0 100 40">
+<polyline points="0,35 10,25 20,30 30,15 40,20 50,10 60,15 70,5 80,10 90,5 100,8"></polyline>
+</svg>
+</div>
+<div class="bg-white rounded border border-ide-border p-3 shadow-ide flex flex-col h-32 relative overflow-hidden">
+<div class="flex justify-between items-start z-10">
+<div>
+<h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Connections</h3>
+<div class="text-2xl font-bold text-ide-textDark mt-1 font-mono">85<span class="text-sm text-slate-400 font-normal">/100</span></div>
+</div>
+<div class="p-1 rounded bg-blue-50 text-blue-600">
+<span class="material-symbols-outlined text-[16px]">group</span>
+</div>
+</div>
+<svg class="absolute bottom-0 left-0 right-0 w-full h-16 stroke-blue-500 fill-none stroke-[1.5]" preserveAspectRatio="none" viewBox="0 0 100 40">
+<polyline points="0,25 15,25 30,24 45,26 60,25 75,22 90,20 100,18"></polyline>
+</svg>
+</div>
+<div class="bg-white rounded border border-ide-border p-3 shadow-ide flex flex-col h-32 relative overflow-hidden">
+<div class="flex justify-between items-start z-10">
+<div>
+<h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Trans/Sec</h3>
+<div class="text-2xl font-bold text-ide-textDark mt-1 font-mono">1,240</div>
+</div>
+<div class="p-1 rounded bg-green-50 text-green-600">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+</div>
+</div>
+<svg class="absolute bottom-0 left-0 right-0 w-full h-16 stroke-green-500 fill-none stroke-[1.5]" preserveAspectRatio="none" viewBox="0 0 100 40">
+<polyline points="0,30 10,25 20,28 30,15 40,18 50,12 60,20 70,10 80,15 90,8 100,5"></polyline>
+</svg>
+</div>
+</div>
+<div class="bg-white border border-ide-border rounded shadow-sm flex flex-col flex-1 min-h-[300px]">
+<div class="px-3 py-2 border-b border-ide-border bg-slate-50 flex items-center justify-between rounded-t">
+<h3 class="text-xs font-bold text-ide-textDark flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-slate-500">memory</span>
+                        Running Queries
+                    </h3>
+<div class="flex gap-1">
+<input class="px-2 py-1 text-[11px] border border-ide-borderLight rounded bg-white w-32 focus:border-ide-accent focus:ring-0" placeholder="Filter by PID/User..." type="text"/>
+<button class="p-1 hover:bg-slate-200 rounded text-slate-500">
+<span class="material-symbols-outlined text-[16px]">filter_list</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto scrollbar-thin rounded-b flex-1">
+<table class="w-full text-left border-collapse min-w-[600px]">
+<thead class="bg-ide-bg text-[10px] text-slate-500 font-semibold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
+<tr>
+<th class="border-b border-ide-border px-3 py-2 whitespace-nowrap w-16">PID</th>
+<th class="border-b border-ide-border px-3 py-2 whitespace-nowrap w-32">User</th>
+<th class="border-b border-ide-border px-3 py-2 whitespace-nowrap w-24">State</th>
+<th class="border-b border-ide-border px-3 py-2 whitespace-nowrap w-24 text-right">Duration</th>
+<th class="border-b border-ide-border px-3 py-2 whitespace-nowrap">Query</th>
+<th class="border-b border-ide-border px-3 py-2 whitespace-nowrap w-16 text-center">Action</th>
+</tr>
+</thead>
+<tbody class="font-mono text-[11px] text-ide-textDark divide-y divide-ide-borderLight">
+<tr class="hover:bg-slate-50 group">
+<td class="px-3 py-2 text-blue-600">3291</td>
+<td class="px-3 py-2 text-slate-600">postgres</td>
+<td class="px-3 py-2"><span class="inline-block px-1.5 py-0.5 rounded-sm bg-green-100 text-green-700 text-[10px] font-bold">active</span></td>
+<td class="px-3 py-2 text-right text-orange-600 font-bold">4.2s</td>
+<td class="px-3 py-2 text-slate-500 truncate max-w-[200px]" title="SELECT count(*) FROM orders WHERE created_at &lt; NOW() - INTERVAL '1 year'">
+                                            SELECT count(*) FROM orders WHERE created_at &lt; ...
+                                        </td>
+<td class="px-3 py-2 text-center">
+<button class="p-1 text-slate-400 hover:text-white hover:bg-ide-danger rounded transition-colors group-hover:text-red-400" title="Kill Process">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 group">
+<td class="px-3 py-2 text-blue-600">3295</td>
+<td class="px-3 py-2 text-slate-600">app_user</td>
+<td class="px-3 py-2"><span class="inline-block px-1.5 py-0.5 rounded-sm bg-green-100 text-green-700 text-[10px] font-bold">active</span></td>
+<td class="px-3 py-2 text-right text-slate-600">0.04s</td>
+<td class="px-3 py-2 text-slate-500 truncate max-w-[200px]">
+                                            UPDATE users SET last_login = NOW() WHERE id = $1
+                                        </td>
+<td class="px-3 py-2 text-center">
+<button class="p-1 text-slate-400 hover:text-white hover:bg-ide-danger rounded transition-colors group-hover:text-red-400" title="Kill Process">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 group bg-yellow-50/30">
+<td class="px-3 py-2 text-blue-600">3298</td>
+<td class="px-3 py-2 text-slate-600">report_srv</td>
+<td class="px-3 py-2"><span class="inline-block px-1.5 py-0.5 rounded-sm bg-yellow-100 text-yellow-700 text-[10px] font-bold">waiting</span></td>
+<td class="px-3 py-2 text-right text-red-600 font-bold">12.5s</td>
+<td class="px-3 py-2 text-slate-500 truncate max-w-[200px]">
+                                            SELECT * FROM large_log_table ORDER BY id DESC LIMIT 10000
+                                        </td>
+<td class="px-3 py-2 text-center">
+<button class="p-1 text-slate-400 hover:text-white hover:bg-ide-danger rounded transition-colors group-hover:text-red-400" title="Kill Process">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 group">
+<td class="px-3 py-2 text-blue-600">3301</td>
+<td class="px-3 py-2 text-slate-600">bg_worker</td>
+<td class="px-3 py-2"><span class="inline-block px-1.5 py-0.5 rounded-sm bg-slate-100 text-slate-500 text-[10px] font-bold">idle</span></td>
+<td class="px-3 py-2 text-right text-slate-400">-</td>
+<td class="px-3 py-2 text-slate-400 truncate max-w-[200px] italic">
+                                            COMMIT
+                                        </td>
+<td class="px-3 py-2 text-center">
+<button class="p-1 text-slate-400 hover:text-white hover:bg-ide-danger rounded transition-colors group-hover:text-red-400" title="Kill Process">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 group">
+<td class="px-3 py-2 text-blue-600">3304</td>
+<td class="px-3 py-2 text-slate-600">app_user</td>
+<td class="px-3 py-2"><span class="inline-block px-1.5 py-0.5 rounded-sm bg-green-100 text-green-700 text-[10px] font-bold">active</span></td>
+<td class="px-3 py-2 text-right text-slate-600">0.12s</td>
+<td class="px-3 py-2 text-slate-500 truncate max-w-[200px]">
+                                            INSERT INTO logs (level, msg) VALUES ('info', 'login')
+                                        </td>
+<td class="px-3 py-2 text-center">
+<button class="p-1 text-slate-400 hover:text-white hover:bg-ide-danger rounded transition-colors group-hover:text-red-400" title="Kill Process">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+</button>
+</td>
+</tr>
+<tr class="h-8 hover:bg-slate-50"><td class="px-3 py-2" colspan="6"></td></tr>
+<tr class="h-8 hover:bg-slate-50"><td class="px-3 py-2" colspan="6"></td></tr>
+<tr class="h-8 hover:bg-slate-50"><td class="px-3 py-2" colspan="6"></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="h-6 bg-ide-bg border-t border-ide-border flex items-center justify-between px-3 text-[10px] text-slate-500 shrink-0">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+<span>Connected</span>
+</div>
+<span>Latency: 42ms</span>
+</div>
+<div class="flex items-center gap-3">
+<span>PG 14.5</span>
+<span>RW</span>
+</div>
+</div>
+<div class="lg:hidden fixed bottom-8 right-6">
+<button class="w-12 h-12 bg-ide-accent hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</div>
+</main>
+</div>
+</body></html>

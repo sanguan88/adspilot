@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdsPilot - Feature Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .slide {
+            min-height: 100vh;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slide-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .slide-number {
+            font-size: 14px;
+            color: #10b981;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 48px;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 36px;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: #9ca3af;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 22px;
+            color: #10b981;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: #9ca3af;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        .feature-card ul {
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+
+        .feature-card li {
+            color: #d1d5db;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .highlight-box h3 {
+            font-size: 28px;
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+
+        /* Portal Section */
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .portal-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .portal-icon {
+            font-size: 36px;
+            flex-shrink: 0;
+        }
+
+        .portal-info h4 {
+            font-size: 18px;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .portal-url {
+            font-family: monospace;
+            color: #10b981;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .portal-info p {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        /* Flow Diagram */
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .flow-step {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px 30px;
+            text-align: center;
+            min-width: 180px;
+        }
+
+        .flow-step-number {
+            font-size: 32px;
+            color: #10b981;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .flow-step-title {
+            font-size: 16px;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .flow-step-desc {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .flow-arrow {
+            font-size: 28px;
+            color: #10b981;
+        }
+
+        /* CTA Section */
+        .feedback-section {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f2847 100%);
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .feedback-section h3 {
+            font-size: 32px;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        .feedback-points {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .feedback-point {
+            text-align: center;
+        }
+
+        .feedback-point span {
+            display: block;
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .feedback-point p {
+            color: #d1d5db;
+            font-size: 14px;
+        }
+
+        /* Automation Details */
+        .automation-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .automation-item {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+            padding: 25px;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .automation-item h4 {
+            color: #10b981;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .automation-item p {
+            color: #d1d5db;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .nav-dots {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot:hover,
+        .nav-dot.active {
+            background: #10b981;
+            transform: scale(1.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide {
+                padding: 40px 20px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            h2 {
+                font-size: 26px;
+            }
+
+            .portal-grid,
+            .automation-features {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-arrow {
+                display: none;
+            }
+
+            .nav-dots {
+                display: none;
+            }
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #10b981, #059669);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-left: 10px;
+        }
+
+        .badge.beta {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+
+        .badge.new {
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+        }
+
+        /* Table */
+        .metrics-table {
+            width: 100%;
+            margin-top: 30px;
+            border-collapse: collapse;
+        }
+
+        .metrics-table th,
+        .metrics-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metrics-table th {
+            color: #10b981;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metrics-table td {
+            color: #d1d5db;
+            font-size: 15px;
+        }
+
+        .metrics-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Dots -->
+    <nav class="nav-dots">
+        <div class="nav-dot active" onclick="scrollToSlide(0)"></div>
+        <div class="nav-dot" onclick="scrollToSlide(1)"></div>
+        <div class="nav-dot" onclick="scrollToSlide(2)"></div>
+        <div class="nav-dot" onclick="scrollToSlide(3)"></div>
+        <div class="nav-dot" onclick="scrollToSlide(4)"></div>
+        <div class="nav-dot" onclick="scrollToSlide(5)"></div>
+        <div class="nav-dot" onclick="scrollToSlide(6)"></div>
+        <div class="nav-dot" onclick="scrollToSlide(7)"></div>
+    </nav>
+
+    <!-- Slide 1: Title -->
+    <section class="slide" id="slide-0">
+        <div class="slide-header">
+            <div class="slide-number">Presentasi Fitur</div>
+            <h1>🚀 AdsPilot</h1>
+            <p class="subtitle">
+                Platform Manajemen & Otomasi Iklan Shopee<br>
+                <strong style="color: #10b981;">Sesi Feedback & Testing</strong>
+            </p>
+        </div>
+        <div class="content">
+            <div class="highlight-box">
+                <h3>🎯 Tujuan Sesi Ini</h3>
+                <p class="subtitle" style="max-width: 800px;">
+                    Mendemonstrasikan fitur-fitur AdsPilot dan mengumpulkan<br>
+                    <strong style="color: #ffffff;">feedback, bug report, dan saran improvement</strong> dari Anda.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 2: Overview Fitur -->
+    <section class="slide" id="slide-1">
+        <div class="slide-header">
+            <div class="slide-number">01 / Overview</div>
+            <h2>Fitur Utama AdsPilot</h2>
+            <p class="subtitle">Semua yang Anda butuhkan untuk mengelola iklan Shopee dalam satu dashboard</p>
+        </div>
+        <div class="content">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Dashboard Overview</h3>
+                    <p>Ringkasan performa iklan secara real-time</p>
+                    <ul>
+                        <li>Total GMV, Cost, ROAS</li>
+                        <li>CTR, Conversion Rate</li>
+                        <li>Grafik trend harian</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏪</div>
+                    <h3>Multi-Store Management</h3>
+                    <p>Kelola beberapa toko Shopee sekaligus</p>
+                    <ul>
+                        <li>Satu dashboard untuk semua toko</li>
+                        <li>Switch antar toko dengan mudah</li>
+                        <li>Perbandingan performa toko</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📢</div>
+                    <h3>Campaign Management</h3>
+                    <p>Lihat dan kelola semua campaign iklan</p>
+                    <ul>
+                        <li>Search Ads & Discovery Ads</li>
+                        <li>Edit budget langsung dari dashboard</li>
+                        <li>On/Off campaign secara cepat</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Automation Rules <span class="badge">Core</span></h3>
+                    <p>Otomasi aksi berdasarkan kondisi tertentu</p>
+                    <ul>
+                        <li>Auto adjust budget</li>
+                        <li>Auto on/off campaign</li>
+                        <li>Jadwal otomatis (harian/mingguan)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🩺</div>
+                    <h3>Rekam Medic <span class="badge new">New</span></h3>
+                    <p>Analisis AI untuk diagnosa performa toko</p>
+                    <ul>
+                        <li>Scoring performa per kategori</li>
+                        <li>Rekomendasi improvement</li>
+                        <li>Insight berbasis data</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📜</div>
+                    <h3>Activity Logs</h3>
+                    <p>Tracking semua aktivitas otomasi</p>
+                    <ul>
+                        <li>Log aksi yang dijalankan</li>
+                        <li>Detail kondisi yang terpenuhi</li>
+                        <li>History perubahan</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 3: Automation Detail - EXPANDED -->
+    <section class="slide" id="slide-2" style="min-height: auto; padding: 40px;">
+        <div class="slide-header" style="margin-bottom: 30px;">
+            <div class="slide-number">02 / Automation Engine</div>
+            <h2>Sistem Otomasi Iklan ⚡</h2>
+            <p class="subtitle">Pembuatan rule dengan wizard 6 langkah yang mudah dipahami</p>
+        </div>
+        <div class="content">
+            <!-- 6 Step Wizard Flow -->
+            <div
+                style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 25px; margin-bottom: 30px;">
+                <h4 style="color: #10b981; margin-bottom: 20px; font-size: 18px; text-align: center;">📋 Wizard
+                    Pembuatan Rule (6 Langkah)</h4>
+                <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <div style="text-align: center; flex: 1; min-width: 120px;">
+                        <div
+                            style="background: #10b981; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">
+                            1</div>
+                        <div style="color: #ffffff; font-size: 13px; font-weight: 600;">Action</div>
+                        <div style="color: #9ca3af; font-size: 11px;">Pilih aksi</div>
+                    </div>
+                    <div style="text-align: center; flex: 1; min-width: 120px;">
+                        <div
+                            style="background: #10b981; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">
+                            2</div>
+                        <div style="color: #ffffff; font-size: 13px; font-weight: 600;">Time</div>
+                        <div style="color: #9ca3af; font-size: 11px;">Atur jadwal</div>
+                    </div>
+                    <div style="text-align: center; flex: 1; min-width: 120px;">
+                        <div
+                            style="background: #10b981; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">
+                            3</div>
+                        <div style="color: #ffffff; font-size: 13px; font-weight: 600;">Conditions</div>
+                        <div style="color: #9ca3af; font-size: 11px;">Set kondisi</div>
+                    </div>
+                    <div style="text-align: center; flex: 1; min-width: 120px;">
+                        <div
+                            style="background: #10b981; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">
+                            4</div>
+                        <div style="color: #ffffff; font-size: 13px; font-weight: 600;">Target</div>
+                        <div style="color: #9ca3af; font-size: 11px;">Pilih campaign</div>
+                    </div>
+                    <div style="text-align: center; flex: 1; min-width: 120px;">
+                        <div
+                            style="background: #10b981; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">
+                            5</div>
+                        <div style="color: #ffffff; font-size: 13px; font-weight: 600;">Info</div>
+                        <div style="color: #9ca3af; font-size: 11px;">Nama & kategori</div>
+                    </div>
+                    <div style="text-align: center; flex: 1; min-width: 120px;">
+                        <div
+                            style="background: #10b981; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">
+                            6</div>
+                        <div style="color: #ffffff; font-size: 13px; font-weight: 600;">Preview</div>
+                        <div style="color: #9ca3af; font-size: 11px;">Review & save</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action & Conditions Grid -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px;">
+                <!-- Actions -->
+                <div class="automation-item" style="margin: 0;">
+                    <h4>🎯 Aksi yang Tersedia (Step 1)</h4>
+                    <p>
+                        • <strong>Tambah Budget</strong> - Naikkan budget (Rp atau %)<br>
+                        • <strong>Kurangi Budget</strong> - Turunkan budget (Rp atau %)<br>
+                        • <strong>Set Budget</strong> - Set budget ke nilai tertentu<br>
+                        • <strong>Mulai Iklan</strong> - Aktifkan campaign<br>
+                        • <strong>Pause Iklan</strong> - Nonaktifkan campaign<br>
+                        • <strong>Notif Telegram</strong> - Kirim notifikasi saja
+                    </p>
+                </div>
+
+                <!-- Metrics -->
+                <div class="automation-item" style="margin: 0;">
+                    <h4>📊 Metrik Kondisi (Step 3)</h4>
+                    <p>
+                        • <strong>GMV (Broad)</strong> - Total penjualan iklan<br>
+                        • <strong>Cost</strong> - Total pengeluaran iklan<br>
+                        • <strong>CPC</strong> - Cost Per Click<br>
+                        • <strong>CPM</strong> - Cost Per Mille (1000 impression)<br>
+                        • <strong>Saldo</strong> - Sisa saldo iklan<br>
+                        • <strong>ACOS</strong> - Advertising Cost of Sales<br>
+                        • <strong>CTR</strong> - Click Through Rate
+                    </p>
+                </div>
+            </div>
+
+            <!-- Time & Logic Grid -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px;">
+                <!-- Time Conditions -->
+                <div class="automation-item" style="margin: 0;">
+                    <h4>🕐 Mode Eksekusi (Step 2)</h4>
+                    <p>
+                        <strong style="color: #3b82f6;">Mode 1: Terus Menerus (24/7)</strong><br>
+                        Jalankan rule tanpa batasan waktu<br><br>
+                        <strong style="color: #f59e0b;">Mode 2: Waktu Tertentu</strong><br>
+                        • Waktu Spesifik (mis: 09:00, 14:00)<br>
+                        • Rentang Waktu (mis: 09:00 - 17:00)<br>
+                        • Hari Tertentu (Senin - Minggu)<br>
+                        • Tanggal Spesifik (kalender)
+                    </p>
+                </div>
+
+                <!-- Logic -->
+                <div class="automation-item" style="margin: 0;">
+                    <h4>🔀 Logika Kondisi (Step 3)</h4>
+                    <p>
+                        <strong style="color: #3b82f6;">AND (Semua Terpenuhi)</strong><br>
+                        Rule jalan HANYA jika SEMUA kondisi benar<br><br>
+                        <strong style="color: #f59e0b;">OR (Salah Satu)</strong><br>
+                        Rule jalan jika SALAH SATU kondisi benar<br><br>
+                        <span style="color: #9ca3af;">Operator: &gt;, &lt;, =, ≥, ≤, ≠</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Target Selection -->
+            <div class="automation-item" style="margin: 0 0 25px 0;">
+                <h4>🎛️ Target Seleksi (Step 4)</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px;">
+                    <div
+                        style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🏪</div>
+                        <div style="color: #ffffff; font-weight: 600; font-size: 14px;">Pilih Toko</div>
+                        <div style="color: #9ca3af; font-size: 12px;">Multi-select toko</div>
+                    </div>
+                    <div
+                        style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📢</div>
+                        <div style="color: #ffffff; font-weight: 600; font-size: 14px;">Pilih Campaign</div>
+                        <div style="color: #9ca3af; font-size: 12px;">Filter: ongoing/paused</div>
+                    </div>
+                    <div
+                        style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
+                        <div style="color: #ffffff; font-weight: 600; font-size: 14px;">Select All</div>
+                        <div style="color: #9ca3af; font-size: 12px;">Pilih semua sekaligus</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example Use Cases -->
+            <div class="highlight-box" style="margin-top: 0;">
+                <h3>💡 Contoh Rule yang Bisa Dibuat</h3>
+                <div
+                    style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px; text-align: left;">
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                        <div style="color: #10b981; font-weight: 600; margin-bottom: 8px;">📈 Scale Up Performer</div>
+                        <div style="color: #d1d5db; font-size: 13px;">
+                            JIKA ROAS > 5 DAN Cost > 100.000<br>
+                            MAKA Tambah Budget 20%
+                        </div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                        <div style="color: #f59e0b; font-weight: 600; margin-bottom: 8px;">⚠️ Stop Loss</div>
+                        <div style="color: #d1d5db; font-size: 13px;">
+                            JIKA CTR < 0.5% ATAU ACOS> 50%<br>
+                                MAKA Pause Iklan
+                        </div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                        <div style="color: #3b82f6; font-weight: 600; margin-bottom: 8px;">⏰ Scheduled On/Off</div>
+                        <div style="color: #d1d5db; font-size: 13px;">
+                            Setiap hari jam 09:00<br>
+                            MAKA Mulai Iklan
+                        </div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                        <div style="color: #ec4899; font-weight: 600; margin-bottom: 8px;">💰 Budget Control</div>
+                        <div style="color: #d1d5db; font-size: 13px;">
+                            JIKA Saldo < 50.000<br>
+                                MAKA Notif Telegram
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 4: Rekam Medic -->
+    <section class="slide" id="slide-3">
+        <div class="slide-header">
+            <div class="slide-number">03 / AI Analytics</div>
+            <h2>Rekam Medic Toko 🩺</h2>
+            <p class="subtitle">Diagnosa performa toko dengan AI untuk insight yang actionable</p>
+        </div>
+        <div class="content">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Scoring System</h3>
+                    <p>Penilaian performa berdasarkan kategori:</p>
+                    <ul>
+                        <li>Efisiensi Biaya (Cost Efficiency)</li>
+                        <li>Konversi (Conversion Performance)</li>
+                        <li>Engagement (CTR & Clicks)</li>
+                        <li>Revenue (GMV & ROAS)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💊</div>
+                    <h3>Rekomendasi</h3>
+                    <p>Saran improvement berdasarkan data:</p>
+                    <ul>
+                        <li>Campaign mana yang perlu dioptimasi</li>
+                        <li>Budget yang perlu disesuaikan</li>
+                        <li>Keyword yang perlu dihapus/ditambah</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚠️</div>
+                    <h3>Warning System</h3>
+                    <p>Alert untuk potensi masalah:</p>
+                    <ul>
+                        <li>Campaign dengan CTR rendah</li>
+                        <li>Spending tanpa konversi</li>
+                        <li>ROAS di bawah target</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Interpretasi Data</h3>
+                    <p>Penjelasan metrik yang mudah dipahami:</p>
+                    <ul>
+                        <li>Apa artinya angka-angka tersebut</li>
+                        <li>Perbandingan dengan benchmark</li>
+                        <li>Trend performa mingguan</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 5: User Flow -->
+    <section class="slide" id="slide-4">
+        <div class="slide-header">
+            <div class="slide-number">04 / User Journey</div>
+            <h2>Alur Penggunaan</h2>
+            <p class="subtitle">Dari registrasi hingga otomasi berjalan</p>
+        </div>
+        <div class="content">
+            <div class="flow-container">
+                <div class="flow-step">
+                    <div class="flow-step-number">1</div>
+                    <div class="flow-step-title">Register</div>
+                    <div class="flow-step-desc">Daftar akun di adspilot.id</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">2</div>
+                    <div class="flow-step-title">Login</div>
+                    <div class="flow-step-desc">Masuk ke User Portal</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">3</div>
+                    <div class="flow-step-title">Tambah Toko</div>
+                    <div class="flow-step-desc">Hubungkan akun Shopee</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">4</div>
+                    <div class="flow-step-title">Buat Rules</div>
+                    <div class="flow-step-desc">Setup automation rules</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-number">5</div>
+                    <div class="flow-step-title">Monitor</div>
+                    <div class="flow-step-desc">Pantau di dashboard</div>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 50px;">
+                <h3>🔗 Koneksi Toko via Cookies</h3>
+                <p class="subtitle" style="max-width: 800px;">
+                    Toko Shopee dihubungkan menggunakan <strong>cookies browser</strong>.<br>
+                    Cookies perlu di-update jika expired (biasanya setiap 30 hari).
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 6: Portal System -->
+    <section class="slide" id="slide-5">
+        <div class="slide-header">
+            <div class="slide-number">05 / Arsitektur Portal</div>
+            <h2>Sistem Multi-Portal</h2>
+            <p class="subtitle">Ekosistem aplikasi yang terintegrasi</p>
+        </div>
+        <div class="content">
+            <div class="portal-grid">
+                <div class="portal-card">
+                    <div class="portal-icon">👤</div>
+                    <div class="portal-info">
+                        <h4>User Portal</h4>
+                        <div class="portal-url">app.adspilot.id</div>
+                        <p>Dashboard utama untuk seller. Kelola toko, campaign, automation rules, dan lihat analytics.
+                        </p>
+                    </div>
+                </div>
+                <div class="portal-card">
+                    <div class="portal-icon">🌐</div>
+                    <div class="portal-info">
+                        <h4>Landing Page</h4>
+                        <div class="portal-url">adspilot.id</div>
+                        <p>Halaman registrasi, login, dan informasi produk untuk user baru.</p>
+                    </div>
+                </div>
+                <div class="portal-card">
+                    <div class="portal-icon">⚙️</div>
+                    <div class="portal-info">
+                        <h4>Admin Portal</h4>
+                        <div class="portal-url">adm.adspilot.id</div>
+                        <p>Untuk internal team. Manajemen user, monitoring sistem, dan konfigurasi.</p>
+                    </div>
+                </div>
+                <div class="portal-card">
+                    <div class="portal-icon">🤝</div>
+                    <div class="portal-info">
+                        <h4>Affiliate Portal</h4>
+                        <div class="portal-url">aff.adspilot.id</div>
+                        <p>Untuk partner affiliate. Tracking referral, link generation, dan komisi.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 7: Notifications -->
+    <section class="slide" id="slide-6">
+        <div class="slide-header">
+            <div class="slide-number">06 / Notifikasi & Integrasi</div>
+            <h2>Sistem Notifikasi</h2>
+            <p class="subtitle">Stay informed dengan notifikasi real-time</p>
+        </div>
+        <div class="content">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Telegram Bot</h3>
+                    <p>Notifikasi langsung ke Telegram Anda:</p>
+                    <ul>
+                        <li>Alert saat automation rule dijalankan</li>
+                        <li>Reminder cookies expired</li>
+                        <li>Notifikasi performa penting</li>
+                        <li>Status subscription</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📧</div>
+                    <h3>Email Notification</h3>
+                    <p>Email untuk hal-hal penting:</p>
+                    <ul>
+                        <li>Konfirmasi registrasi</li>
+                        <li>Reset password</li>
+                        <li>Invoice & pembayaran</li>
+                        <li>Reminder subscription</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3>In-App Notification</h3>
+                    <p>Notifikasi di dalam dashboard:</p>
+                    <ul>
+                        <li>Banner status cookies</li>
+                        <li>Alert limit tercapai</li>
+                        <li>Update sistem</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Activity Logs</h3>
+                    <p>Histori lengkap aktivitas:</p>
+                    <ul>
+                        <li>Log semua aksi automation</li>
+                        <li>Detail kondisi yang terpenuhi</li>
+                        <li>Timestamp setiap eksekusi</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 8: Feedback Request -->
+    <section class="slide" id="slide-7">
+        <div class="slide-header">
+            <div class="slide-number">07 / Feedback Session</div>
+            <h2>Kami Butuh Feedback Anda! 🙏</h2>
+            <p class="subtitle">Bantu kami improve AdsPilot dengan masukan Anda</p>
+        </div>
+        <div class="content">
+            <div class="feedback-section">
+                <h3>Yang Ingin Kami Ketahui</h3>
+                <div class="feedback-points">
+                    <div class="feedback-point">
+                        <span>🐛</span>
+                        <p><strong>Bug Report</strong><br>Error atau masalah yang ditemukan</p>
+                    </div>
+                    <div class="feedback-point">
+                        <span>🎨</span>
+                        <p><strong>UI/UX</strong><br>Tampilan yang membingungkan?</p>
+                    </div>
+                    <div class="feedback-point">
+                        <span>💡</span>
+                        <p><strong>Fitur Request</strong><br>Fitur yang diinginkan?</p>
+                    </div>
+                    <div class="feedback-point">
+                        <span>🚀</span>
+                        <p><strong>Performance</strong><br>Loading lambat? Error?</p>
+                    </div>
+                    <div class="feedback-point">
+                        <span>❓</span>
+                        <p><strong>Confusing Flow</strong><br>Alur yang tidak jelas?</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 40px;">
+                <h3>📝 Cara Memberikan Feedback</h3>
+                <p class="subtitle" style="max-width: 800px;">
+                    Silakan langsung sampaikan saat demo berlangsung,<br>
+                    atau catat dan kirimkan setelah sesi selesai.
+                </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 50px;">
+                <p style="font-size: 24px; color: #10b981;">🙏 Terima Kasih!</p>
+                <p style="color: #9ca3af; margin-top: 10px;">Feedback Anda sangat berharga untuk pengembangan AdsPilot
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Navigation Buttons -->
+    <nav class="nav-buttons">
+        <button class="nav-btn prev" onclick="prevSlide()" id="prevBtn">
+            ← Sebelumnya
+        </button>
+        <div class="page-counter">
+            <span id="currentPage">1</span> / <span id="totalPages">8</span>
+        </div>
+        <button class="nav-btn next" onclick="nextSlide()" id="nextBtn">
+            Selanjutnya →
+        </button>
+    </nav>
+
+    <style>
+        .nav-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 40px;
+            background: linear-gradient(to top, rgba(15, 15, 35, 0.98), rgba(15, 15, 35, 0.9));
+            border-top: 1px solid rgba(16, 185, 129, 0.3);
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 160px;
+        }
+
+        .nav-btn.prev {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-btn.prev:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .nav-btn.next {
+            background: linear-gradient(90deg, #10b981, #059669);
+            color: white;
+        }
+
+        .nav-btn.next:hover:not(:disabled) {
+            background: linear-gradient(90deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .page-counter {
+            font-size: 18px;
+            font-weight: 600;
+            color: #10b981;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .page-counter span {
+            font-size: 24px;
+        }
+
+        /* Adjust slide padding for navigation bar */
+        .slide {
+            padding-bottom: 100px !important;
+        }
+
+        @media (max-width: 768px) {
+            .nav-buttons {
+                padding: 15px 20px;
+                gap: 10px;
+            }
+
+            .nav-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+
+            .page-counter {
+                font-size: 14px;
+            }
+
+            .page-counter span {
+                font-size: 18px;
+            }
+        }
+    </style>
+
+    <script>
+        // Slide navigation
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.nav-dot');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const currentPageEl = document.getElementById('currentPage');
+        const totalPagesEl = document.getElementById('totalPages');
+
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        // Initialize
+        totalPagesEl.textContent = totalSlides;
+        updateNavButtons();
+
+        function scrollToSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                currentSlide = index;
+                slides[index].scrollIntoView({ behavior: 'smooth' });
+                updateNavButtons();
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                scrollToSlide(currentSlide + 1);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                scrollToSlide(currentSlide - 1);
+            }
+        }
+
+        function updateNavButtons() {
+            currentPageEl.textContent = currentSlide + 1;
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+
+            // Update dots
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        // Update on scroll (for manual scrolling)
+        window.addEventListener('scroll', () => {
+            let current = 0;
+            slides.forEach((slide, index) => {
+                const rect = slide.getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2) {
+                    current = index;
+                }
+            });
+
+            if (current !== currentSlide) {
+                currentSlide = current;
+                updateNavButtons();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+    </script>
+</body>
+
+</html>

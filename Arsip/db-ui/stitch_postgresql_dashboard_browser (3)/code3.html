@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PostgreSQL IDE</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ide: {
+                            bg: "#F1F5F9",        // slate-100
+                            panel: "#FFFFFF",     // white
+                            sidebar: "#F8FAFC",   // slate-50
+                            border: "#CBD5E1",    // slate-300
+                            borderLight: "#E2E8F0", // slate-200
+                            text: "#334155",      // slate-700
+                            textDark: "#0F172A",  // slate-900
+                            accent: "#2563EB",    // blue-600
+                            accentLight: "#EFF6FF", // blue-50
+                            select: "#DBEAFE",    // blue-100
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'ide': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background-color: #94A3B8;
+        }input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-ide-bg text-ide-text font-sans h-[100dvh] flex flex-col overflow-hidden selection:bg-ide-select selection:text-ide-textDark">
+<header class="h-12 bg-ide-panel border-b border-ide-border flex items-center justify-between px-3 shrink-0 z-20 shadow-sm">
+<div class="flex items-center gap-3">
+<button class="p-1.5 rounded hover:bg-ide-bg text-ide-textDark lg:hidden">
+<span class="material-symbols-outlined text-[22px]">menu</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="bg-ide-accent text-white p-1 rounded">
+<span class="material-symbols-outlined text-[18px] block">database</span>
+</div>
+<h1 class="font-semibold text-sm text-ide-textDark tracking-tight hidden sm:block">PGStudio <span class="text-xs text-slate-400 font-normal ml-1">v2.4.0</span></h1>
+</div>
+<div class="h-5 w-px bg-ide-border mx-2 hidden sm:block"></div>
+<div class="flex items-center text-xs gap-1.5 px-2 py-1 bg-ide-bg rounded border border-ide-borderLight">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="font-mono text-ide-textDark">production-aws</span>
+<span class="text-slate-400">/</span>
+<span class="font-mono font-medium">public.users</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-1 px-2 py-1 text-xs font-medium text-ide-text bg-ide-bg border border-ide-border rounded hover:bg-slate-200">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+<span class="hidden sm:inline">Console</span>
+</button>
+<div class="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-white ml-2">
+                JD
+            </div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<aside class="w-[260px] bg-ide-sidebar border-r border-ide-border flex-col hidden lg:flex shrink-0">
+<div class="h-9 px-3 border-b border-ide-borderLight flex items-center justify-between bg-ide-bg/50">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Explorer</span>
+<div class="flex gap-1">
+<button class="p-0.5 rounded hover:bg-slate-200 text-slate-500"><span class="material-symbols-outlined text-[16px]">refresh</span></button>
+<button class="p-0.5 rounded hover:bg-slate-200 text-slate-500"><span class="material-symbols-outlined text-[16px]">collapse_all</span></button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-0.5 text-[13px] font-medium leading-6 select-none">
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer text-ide-textDark">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+<span class="material-symbols-outlined text-[16px] text-purple-600">dns</span>
+<span>Production AWS</span>
+</div>
+<div class="ml-4 pl-2 border-l border-slate-300 space-y-0.5">
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer group">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+<span class="material-symbols-outlined text-[16px] text-yellow-500">database</span>
+<span class="group-hover:text-ide-textDark">ecommerce_db</span>
+</div>
+<div class="ml-4 pl-2 border-l border-slate-300 space-y-0.5">
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer group">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+<span class="material-symbols-outlined text-[16px] text-orange-500">schema</span>
+<span>public</span>
+</div>
+<div class="ml-4 pl-2 border-l border-slate-300 space-y-0.5">
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+<span class="material-symbols-outlined text-[16px] text-blue-500">folder</span>
+<span>Tables</span>
+</div>
+<div class="ml-4 pl-2 border-l border-slate-300 space-y-0.5">
+<div class="flex items-center gap-1.5 px-2 py-1 bg-ide-select text-ide-accent rounded cursor-pointer font-semibold border border-blue-200">
+<span class="material-symbols-outlined text-[16px] fill-current">table_chart</span>
+<span>users</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer text-slate-600">
+<span class="material-symbols-outlined text-[16px]">table_chart</span>
+<span>orders</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer text-slate-600">
+<span class="material-symbols-outlined text-[16px]">table_chart</span>
+<span>products</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer text-slate-600">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_right</span>
+<span class="material-symbols-outlined text-[16px] text-cyan-500">visibility</span>
+<span>Views</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer text-slate-600">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_right</span>
+<span class="material-symbols-outlined text-[16px] text-slate-500">list_alt</span>
+<span>Indexes</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 rounded cursor-pointer opacity-75">
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_right</span>
+<span class="material-symbols-outlined text-[16px] text-orange-500">schema</span>
+<span>auth</span>
+</div>
+</div>
+</div>
+<div class="p-2 border-t border-ide-border bg-white text-[11px] text-slate-500 flex justify-between items-center">
+<span>5 connections</span>
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-ide-panel relative">
+<div class="h-9 bg-ide-bg border-b border-ide-border flex items-end px-2 gap-1 overflow-x-auto scrollbar-thin shrink-0">
+<div class="group flex items-center gap-2 px-3 py-1.5 min-w-[140px] max-w-[200px] h-8 mb-[-1px] text-xs font-medium text-slate-500 hover:bg-slate-200 rounded-t border border-transparent hover:border-ide-borderLight cursor-pointer">
+<span class="material-symbols-outlined text-[14px] text-purple-600">dns</span>
+<span class="truncate">Server Dashboard</span>
+<span class="material-symbols-outlined text-[12px] opacity-0 group-hover:opacity-100 ml-auto hover:text-red-500">close</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 min-w-[140px] max-w-[200px] h-9 mb-[-1px] text-xs font-bold text-ide-textDark bg-ide-panel rounded-t border-t border-l border-r border-ide-border shadow-sm cursor-default relative z-10">
+<span class="material-symbols-outlined text-[14px] text-blue-500">table_chart</span>
+<span class="truncate">Table: users</span>
+<span class="material-symbols-outlined text-[12px] ml-auto text-slate-400 hover:text-red-500 cursor-pointer">close</span>
+</div>
+<button class="w-6 h-6 mb-1 rounded hover:bg-slate-200 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+<div class="h-9 bg-white border-b border-ide-border flex items-center px-3 gap-6 overflow-x-auto scrollbar-thin shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+<button class="h-full border-b-2 border-ide-accent text-ide-accent font-semibold text-xs px-1 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">view_column</span>
+            Columns
+        </button>
+<button class="h-full border-b-2 border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900 font-medium text-xs px-1 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">list</span>
+            Indexes
+        </button>
+<button class="h-full border-b-2 border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900 font-medium text-xs px-1 whitespace-nowrap flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">key</span>
+            Foreign Keys
+        </button>
+<button class="h-full border-b-2 border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900 font-medium text-xs px-1 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+            Triggers
+        </button>
+<button class="h-full border-b-2 border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900 font-medium text-xs px-1 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">code</span>
+            DDL
+        </button>
+</div>
+<div class="h-10 border-b border-ide-border flex items-center px-2 bg-slate-50 gap-2 shrink-0 overflow-x-auto">
+<button class="flex items-center gap-1.5 px-2 py-1 bg-white border border-ide-border rounded hover:bg-slate-50 text-xs font-medium text-slate-700 shadow-sm transition-colors group">
+<span class="material-symbols-outlined text-[16px] text-blue-600 group-hover:text-blue-700">add_circle</span>
+        Add Column
+    </button>
+<button class="flex items-center gap-1.5 px-2 py-1 hover:bg-white border border-transparent hover:border-ide-border rounded text-xs font-medium text-slate-600 transition-colors group disabled:opacity-50">
+<span class="material-symbols-outlined text-[16px] text-red-500 group-hover:text-red-600">remove_circle</span>
+        Drop Column
+    </button>
+<div class="w-px h-5 bg-ide-border mx-1"></div>
+<button class="p-1.5 text-slate-600 hover:text-ide-accent hover:bg-blue-50 rounded transition-colors" title="Save">
+<span class="material-symbols-outlined text-[18px]">save</span>
+</button>
+<button class="p-1.5 text-slate-600 hover:text-ide-accent hover:bg-blue-50 rounded transition-colors" title="Refresh">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+</div>
+<div class="flex-1 overflow-auto bg-white relative scrollbar-thin">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead class="bg-ide-bg text-[11px] text-slate-500 font-semibold uppercase tracking-wider sticky top-0 z-10">
+<tr>
+<th class="w-8 border-r border-b border-ide-border p-0 text-center sticky left-0 z-20 bg-ide-bg shadow-[1px_0_0_0_rgba(0,0,0,0.05)]"></th>
+<th class="w-10 border-r border-b border-ide-border p-0 text-center bg-ide-bg">#</th>
+<th class="border-r border-b border-ide-border px-3 py-2 w-48 min-w-[150px]">Name</th>
+<th class="border-r border-b border-ide-border px-3 py-2 w-32 min-w-[120px]">Data Type</th>
+<th class="border-r border-b border-ide-border px-3 py-2 w-20 text-center">Length</th>
+<th class="border-r border-b border-ide-border px-3 py-2 w-16 text-center" title="Allow Null">Null</th>
+<th class="border-r border-b border-ide-border px-3 py-2 w-20 text-center" title="Is Array">Array</th>
+<th class="border-r border-b border-ide-border px-3 py-2 w-56 min-w-[180px]">Default</th>
+<th class="border-r border-b border-ide-border px-3 py-2 min-w-[150px]">Comment</th>
+</tr>
+</thead>
+<tbody class="text-[12px] text-ide-textDark font-mono leading-tight">
+<tr class="group hover:bg-slate-50">
+<td class="border-r border-b border-ide-border bg-slate-50 text-center text-slate-400 sticky left-0 z-10 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+<span class="material-symbols-outlined text-[14px] text-yellow-600 mt-1.5" title="Primary Key">key</span>
+</td>
+<td class="border-r border-b border-ide-border bg-slate-50 text-center text-slate-400">1</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] font-bold text-ide-textDark rounded-sm placeholder-slate-300" type="text" value="id"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<div class="relative">
+<select class="w-full bg-transparent border-0 py-1.5 pl-1.5 pr-6 focus:ring-1 focus:ring-ide-accent text-[12px] text-purple-700 font-medium rounded-sm appearance-none cursor-pointer">
+<option selected="">int4</option>
+<option>int8</option>
+<option>varchar</option>
+<option>text</option>
+<option>bool</option>
+<option>timestamp</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-slate-400">
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</div>
+</div>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center">
+<input class="w-full text-center bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm" disabled="" placeholder="-" type="text"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" disabled="" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-600 rounded-sm italic truncate" type="text" value="nextval('users_id_seq'::regclass)"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm placeholder-slate-300" placeholder="Description..." type="text"/>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50">
+<td class="border-r border-b border-ide-border bg-white text-center text-slate-400 sticky left-0 z-10 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+<div class="w-full h-full bg-white group-hover:bg-slate-50 flex items-center justify-center">
+<span class="text-[9px] font-bold text-blue-500 border border-blue-200 bg-blue-50 rounded px-0.5" title="Unique">UQ</span>
+</div>
+</td>
+<td class="border-r border-b border-ide-border bg-slate-50 text-center text-slate-400">2</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] font-bold text-ide-textDark rounded-sm" type="text" value="email"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<div class="relative">
+<select class="w-full bg-transparent border-0 py-1.5 pl-1.5 pr-6 focus:ring-1 focus:ring-ide-accent text-[12px] text-purple-700 font-medium rounded-sm appearance-none cursor-pointer">
+<option>int4</option>
+<option selected="">varchar</option>
+<option>text</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-slate-400">
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</div>
+</div>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center">
+<input class="w-full text-center bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-600 rounded-sm" type="number" value="255"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-400 rounded-sm italic" placeholder="NULL" type="text"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm placeholder-slate-300" placeholder="Description..." type="text"/>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50">
+<td class="border-r border-b border-ide-border bg-white text-center text-slate-400 sticky left-0 z-10 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+<div class="w-full h-full bg-white group-hover:bg-slate-50"></div>
+</td>
+<td class="border-r border-b border-ide-border bg-slate-50 text-center text-slate-400">3</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] font-bold text-ide-textDark rounded-sm" type="text" value="full_name"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<div class="relative">
+<select class="w-full bg-transparent border-0 py-1.5 pl-1.5 pr-6 focus:ring-1 focus:ring-ide-accent text-[12px] text-purple-700 font-medium rounded-sm appearance-none cursor-pointer">
+<option selected="">text</option>
+<option>varchar</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-slate-400">
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</div>
+</div>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center">
+<input class="w-full text-center bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm" disabled="" placeholder="-" type="text"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input checked="" class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-400 rounded-sm italic" placeholder="NULL" type="text"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm placeholder-slate-300" placeholder="Description..." type="text"/>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50">
+<td class="border-r border-b border-ide-border bg-white text-center text-slate-400 sticky left-0 z-10 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+<div class="w-full h-full bg-white group-hover:bg-slate-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-slate-400" title="Foreign Key">vpn_key</span>
+</div>
+</td>
+<td class="border-r border-b border-ide-border bg-slate-50 text-center text-slate-400">4</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] font-bold text-ide-textDark rounded-sm" type="text" value="role_id"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<div class="relative">
+<select class="w-full bg-transparent border-0 py-1.5 pl-1.5 pr-6 focus:ring-1 focus:ring-ide-accent text-[12px] text-purple-700 font-medium rounded-sm appearance-none cursor-pointer">
+<option selected="">int4</option>
+<option>int8</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-slate-400">
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</div>
+</div>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center">
+<input class="w-full text-center bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm" disabled="" placeholder="-" type="text"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-600 rounded-sm" type="text" value="1"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm placeholder-slate-300" placeholder="Description..." type="text"/>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50">
+<td class="border-r border-b border-ide-border bg-white text-center text-slate-400 sticky left-0 z-10 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+<div class="w-full h-full bg-white group-hover:bg-slate-50"></div>
+</td>
+<td class="border-r border-b border-ide-border bg-slate-50 text-center text-slate-400">5</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] font-bold text-ide-textDark rounded-sm" type="text" value="is_active"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<div class="relative">
+<select class="w-full bg-transparent border-0 py-1.5 pl-1.5 pr-6 focus:ring-1 focus:ring-ide-accent text-[12px] text-purple-700 font-medium rounded-sm appearance-none cursor-pointer">
+<option selected="">bool</option>
+<option>int4</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-slate-400">
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</div>
+</div>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center">
+<input class="w-full text-center bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm" disabled="" placeholder="-" type="text"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-600 rounded-sm" type="text" value="true"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm placeholder-slate-300" placeholder="Description..." type="text"/>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50">
+<td class="border-r border-b border-ide-border bg-white text-center text-slate-400 sticky left-0 z-10 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+<div class="w-full h-full bg-white group-hover:bg-slate-50"></div>
+</td>
+<td class="border-r border-b border-ide-border bg-slate-50 text-center text-slate-400">6</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] font-bold text-ide-textDark rounded-sm" type="text" value="created_at"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<div class="relative">
+<select class="w-full bg-transparent border-0 py-1.5 pl-1.5 pr-6 focus:ring-1 focus:ring-ide-accent text-[12px] text-purple-700 font-medium rounded-sm appearance-none cursor-pointer">
+<option selected="">timestamptz</option>
+<option>timestamp</option>
+<option>date</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-slate-400">
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</div>
+</div>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center">
+<input class="w-full text-center bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm" disabled="" placeholder="-" type="text"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-600 rounded-sm" type="text" value="now()"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm placeholder-slate-300" placeholder="Description..." type="text"/>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50">
+<td class="border-r border-b border-ide-border bg-white text-center text-slate-400 sticky left-0 z-10 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+<div class="w-full h-full bg-white group-hover:bg-slate-50"></div>
+</td>
+<td class="border-r border-b border-ide-border bg-slate-50 text-center text-slate-400">7</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] font-bold text-ide-textDark rounded-sm" type="text" value="last_login"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<div class="relative">
+<select class="w-full bg-transparent border-0 py-1.5 pl-1.5 pr-6 focus:ring-1 focus:ring-ide-accent text-[12px] text-purple-700 font-medium rounded-sm appearance-none cursor-pointer">
+<option selected="">timestamptz</option>
+<option>timestamp</option>
+<option>date</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-slate-400">
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</div>
+</div>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center">
+<input class="w-full text-center bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm" disabled="" placeholder="-" type="text"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input checked="" class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5 text-center align-middle">
+<input class="rounded border-slate-300 text-ide-accent focus:ring-ide-accent w-3.5 h-3.5 cursor-pointer" type="checkbox"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-400 rounded-sm italic" placeholder="NULL" type="text"/>
+</td>
+<td class="border-r border-b border-ide-border p-0.5">
+<input class="w-full bg-transparent border-0 p-1.5 focus:ring-1 focus:ring-ide-accent text-[12px] text-slate-500 rounded-sm placeholder-slate-300" placeholder="Description..." type="text"/>
+</td>
+</tr>
+<tr class="h-6"><td class="border-r border-b border-ide-border bg-white sticky left-0 z-10"></td><td class="border-r border-b border-ide-border bg-slate-50" colspan="8"></td></tr>
+<tr class="h-6"><td class="border-r border-b border-ide-border bg-white sticky left-0 z-10"></td><td class="border-r border-b border-ide-border bg-white" colspan="8"></td></tr>
+<tr class="h-6"><td class="border-r border-b border-ide-border bg-white sticky left-0 z-10"></td><td class="border-r border-b border-ide-border bg-slate-50" colspan="8"></td></tr>
+</tbody>
+</table>
+</div>
+<div class="h-6 bg-ide-bg border-t border-ide-border flex items-center justify-between px-3 text-[10px] text-slate-500 shrink-0">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+<span>Ready</span>
+</div>
+<span>7 columns</span>
+<span>2 constraints</span>
+</div>
+<div class="flex items-center gap-3">
+<span>UTF-8</span>
+<span>PostgreSQL 14</span>
+<span>Owner: postgres</span>
+</div>
+</div>
+<div class="lg:hidden fixed bottom-6 right-6">
+<button class="w-12 h-12 bg-ide-accent hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95">
+<span class="material-symbols-outlined">terminal</span>
+</button>
+</div>
+</main>
+</div>
+
+</body></html>

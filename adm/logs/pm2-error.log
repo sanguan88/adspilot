@@ -1,0 +1,40 @@
+2025-12-19 19:14:27 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:27 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:27 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:27 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)
+2025-12-19 19:14:28 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:28 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:28 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:28 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)
+2025-12-19 19:14:28 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:28 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:28 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:28 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)
+2025-12-19 19:14:29 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:29 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:29 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:29 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)
+2025-12-19 19:14:29 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:29 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:29 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:29 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)
+2025-12-19 19:14:30 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:30 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:30 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:30 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)
+2025-12-19 19:14:31 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:31 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:31 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:31 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)
+2025-12-19 19:14:31 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:31 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:31 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:31 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)
+2025-12-19 19:14:32 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:32 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:32 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:32 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)
+2025-12-19 19:14:32 +07:00: Failed to prepare Next.js app: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2025-12-19 19:14:32 +07:00:     at setupFsCheck (/opt/admin/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+2025-12-19 19:14:32 +07:00:     at async initialize (/opt/admin/node_modules/next/dist/server/lib/router-server.js:64:23)
+2025-12-19 19:14:32 +07:00:     at async NextCustomServer.prepare (/opt/admin/node_modules/next/dist/server/next.js:242:28)

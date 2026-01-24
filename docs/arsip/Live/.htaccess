@@ -1,0 +1,17 @@
+RewriteEngine On
+
+# Proxy semua request ke localhost:2004
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ http://localhost:2004/$1 [P,L]
+
+# Set proxy headers
+ProxyPreserveHost On
+ProxyPass / http://localhost:2004/
+ProxyPassReverse / http://localhost:2004/
+
+# Headers untuk Next.js
+RequestHeader set X-Forwarded-Proto "https" env=HTTPS
+RequestHeader set X-Forwarded-Host "%{HTTP_HOST}e"
+RequestHeader set X-Real-IP "%{REMOTE_ADDR}e"
+
