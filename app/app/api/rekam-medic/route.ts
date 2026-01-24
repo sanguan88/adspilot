@@ -736,7 +736,14 @@ export async function GET(request: NextRequest) {
     if (uniqueTokoIds.length > 0 && campaignIds.length > 0) {
       try {
         const realTimeStatus = await fetchRealTimeStatus(connection, uniqueTokoIds, campaignIds)
-        console.log(`[Rekam Medic] Got real-time status for ${realTimeStatus.size} campaigns`)
+        console.log(`[Rekam Medic] Got real-time status for ${realTimeStatus.size} campaigns out of ${campaignIds.length}`)
+
+        // Log status distribution
+        const statusCounts: Record<string, number> = {}
+        realTimeStatus.forEach((status) => {
+          statusCounts[status] = (statusCounts[status] || 0) + 1
+        })
+        console.log('[Rekam Medic] Real-time status distribution:', statusCounts)
 
         // Update BCG data with real-time status
         bcgData = bcgData.map(campaign => {
@@ -744,6 +751,8 @@ export async function GET(request: NextRequest) {
           if (realStatus) {
             return { ...campaign, status: realStatus }
           }
+          // If campaign not found in real-time API but we have status from database, use database status
+          // (Campaign might not be found due to date range mismatch, not necessarily deleted)
           return campaign
         })
       } catch (error) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -131,10 +131,17 @@ export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaign
     const [copiedId, setCopiedId] = useState<string | null>(null)
     const itemsPerPage = 10
 
+    // Reset page when bcgData changes (due to status filter)
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [bcgData.length])
+
     // Data is already filtered by status from parent, just filter by category tab
     const filteredCampaigns = bcgData
         .filter(c => c.category === activeTab)
         .sort((a, b) => b.revenue - a.revenue)
+
+    console.log('[DetailSection] bcgData count:', bcgData.length, 'filteredCampaigns:', filteredCampaigns.length, 'activeTab:', activeTab)
 
     const currentInfo = CATEGORY_INFO[activeTab]
     const count = categoryCounts[activeTab]

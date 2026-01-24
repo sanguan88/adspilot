@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { authenticatedFetch } from '@/lib/api-client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -157,19 +157,23 @@ export function RekamMedicPage() {
   }
 
   // Check if a status matches the filter
-  const matchesStatusFilter = (campaignStatus: string) => {
+  const matchesStatusFilter = useCallback((campaignStatus: string) => {
     if (statusFilters.has('all')) return true
     const normalizedStatus = campaignStatus?.toLowerCase() || 'paused'
     if (statusFilters.has('ongoing') && (normalizedStatus === 'ongoing' || normalizedStatus === 'active')) return true
     if (statusFilters.has('paused') && (normalizedStatus === 'paused' || normalizedStatus === 'pause')) return true
     if (statusFilters.has('ended') && (normalizedStatus === 'ended' || normalizedStatus === 'expired' || normalizedStatus === 'deleted')) return true
     return false
-  }
+  }, [statusFilters])
 
   // Filtered BCG data based on status
   const filteredBcgData = useMemo(() => {
-    return bcgData.filter(c => matchesStatusFilter(c.status))
-  }, [bcgData, statusFilters])
+    console.log('[Rekam Medic] Filtering with status:', Array.from(statusFilters))
+    console.log('[Rekam Medic] BCG data count:', bcgData.length)
+    const filtered = bcgData.filter(c => matchesStatusFilter(c.status))
+    console.log('[Rekam Medic] Filtered count:', filtered.length)
+    return filtered
+  }, [bcgData, matchesStatusFilter])
 
   // Filtered category counts based on status
   const filteredCategoryCounts = useMemo(() => {
