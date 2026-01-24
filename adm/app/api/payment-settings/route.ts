@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
       // Get payment gateway config (always fetch, even if not active)
       const gatewayConfigResult = await connection.query(
-        `SELECT id, provider, environment, client_key, webhook_url, is_active
+        `SELECT id, provider, environment, server_key, client_key, webhook_url, is_active
          FROM payment_gateway_config
          ORDER BY id DESC
          LIMIT 1`
