@@ -270,29 +270,31 @@ export function RekamMedicDetailSection({ bcgData, categoryCounts, totalCampaign
                                                         </TableCell>
                                                         <TableCell className="p-3">
                                                             <div className="flex flex-col gap-1 w-[220px] sm:w-[280px] lg:w-[350px]">
-                                                                <span
-                                                                    onClick={() => handleRedirect(campaign.campaign_id, campaign.id_toko)}
-                                                                    className="text-[13px] font-bold text-gray-900 leading-tight cursor-pointer hover:text-primary hover:underline transition-all truncate block"
-                                                                    title={campaign.title}
-                                                                >
-                                                                    {campaign.title}
-                                                                </span>
-                                                                {/* Status Badge */}
-                                                                {(() => {
-                                                                    const statusConfig = getStatusBadge(campaign.status)
-                                                                    return (
-                                                                        <span
-                                                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase mt-0.5"
-                                                                            style={{
-                                                                                backgroundColor: statusConfig.bgColor,
-                                                                                color: statusConfig.color,
-                                                                                border: `1px solid ${statusConfig.color}30`
-                                                                            }}
-                                                                        >
-                                                                            {statusConfig.label}
-                                                                        </span>
-                                                                    )
-                                                                })()}
+                                                                <div className="flex items-center gap-2">
+                                                                    <span
+                                                                        onClick={() => handleRedirect(campaign.campaign_id, campaign.id_toko)}
+                                                                        className="text-[13px] font-bold text-gray-900 leading-tight cursor-pointer hover:text-primary hover:underline transition-all truncate"
+                                                                        title={campaign.title}
+                                                                    >
+                                                                        {campaign.title}
+                                                                    </span>
+                                                                    {/* Status Badge */}
+                                                                    {(() => {
+                                                                        const statusConfig = getStatusBadge(campaign.status)
+                                                                        return (
+                                                                            <span
+                                                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase whitespace-nowrap flex-shrink-0"
+                                                                                style={{
+                                                                                    backgroundColor: statusConfig.bgColor,
+                                                                                    color: statusConfig.color,
+                                                                                    border: `1px solid ${statusConfig.color}30`
+                                                                                }}
+                                                                            >
+                                                                                {statusConfig.label}
+                                                                            </span>
+                                                                        )
+                                                                    })()}
+                                                                </div>
                                                                 <div className="flex items-center gap-2 group/id">
                                                                     <span className="text-[10px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
                                                                         ID: {campaign.campaign_id}
