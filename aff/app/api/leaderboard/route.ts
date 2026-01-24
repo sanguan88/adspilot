@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
 
       query += `
         GROUP BY a.affiliate_id, a.name, a.affiliate_code
+        HAVING COUNT(DISTINCT CASE WHEN ar.status = 'converted' THEN ar.referral_id END) >= 1
         ORDER BY totalCommission DESC
         LIMIT 100
       `
