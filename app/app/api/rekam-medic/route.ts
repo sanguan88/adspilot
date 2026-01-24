@@ -582,6 +582,63 @@ function calculateBCGMatrix(
   })
 }
 
+// Function to fetch real-time status from Shopee API for campaigns
+async function fetchRealTimeStatus(
+  connection: PoolClient,
+  tokoIds: string[],
+  campaignIds: string[]
+): Promise<Map<string, string>> {
+  const statusMap = new Map<string, string>()
+
+  if (!tokoIds || tokoIds.length === 0 || !campaignIds || campaignIds.length === 0) {
+    return statusMap
+  }
+
+  // Get cookies for each toko
+  try {
+    const cookiesResult = await connection.query(
+      `SELECT id_toko, cookies FROM data_toko 
+       WHERE id_toko = ANY($1) AND cookies IS NOT NULL AND cookies != ''`,
+      [tokoIds]
+    )
+
+    // Use today's date for real-time status
+    const today = new Date()
+    const todayStr = today.toISOString().split('T')[0]
+
+    // Fetch status for each toko (in parallel for speed)
+    const fetchPromises = cookiesResult.rows.map(async (toko: any) => {
+      try {
+        const cleanedCookies = cleanCookies(toko.cookies)
+        const campaigns = await callShopeeAPI(cleanedCookies, todayStr, todayStr)
+
+        // Map campaign_id to status
+        for (const campaign of campaigns) {
+          const campaignId = campaign.campaign?.campaign_id || campaign.campaign_id || campaign.id || ''
+          const status = campaign.state || campaign.status || 'paused'
+          if (campaignId && campaignIds.includes(campaignId.toString())) {
+            statusMap.set(campaignId.toString(), status)
+          }
+        }
+      } catch (error) {
+        console.error(`[Rekam Medic] Error fetching real-time status for toko ${toko.id_toko}:`, error)
+        // Continue with other tokos
+      }
+    })
+
+    // Wait for all fetches to complete (with timeout)
+    await Promise.race([
+      Promise.allSettled(fetchPromises),
+      new Promise(resolve => setTimeout(resolve, 10000)) // 10 second timeout
+    ])
+
+  } catch (error) {
+    console.error('[Rekam Medic] Error fetching real-time status:', error)
+  }
+
+  return statusMap
+}
+
 export async function GET(request: NextRequest) {
   const user = await requireActiveStatus(request)
   let connection: PoolClient | null = null
@@ -669,7 +726,31 @@ export async function GET(request: NextRequest) {
     const funnelMetrics = calculateFunnelMetrics(campaigns)
 
     // Calculate BCG Matrix
-    const bcgData = calculateBCGMatrix(campaigns, previousCampaigns)
+    let bcgData = calculateBCGMatrix(campaigns, previousCampaigns)
+
+    // Fetch real-time status from Shopee API
+    console.log('[Rekam Medic] Fetching real-time status from Shopee API...')
+    const uniqueTokoIds = [...new Set(bcgData.map(c => c.id_toko).filter(Boolean))] as string[]
+    const campaignIds = bcgData.map(c => c.campaign_id)
+
+    if (uniqueTokoIds.length > 0 && campaignIds.length > 0) {
+      try {
+        const realTimeStatus = await fetchRealTimeStatus(connection, uniqueTokoIds, campaignIds)
+        console.log(`[Rekam Medic] Got real-time status for ${realTimeStatus.size} campaigns`)
+
+        // Update BCG data with real-time status
+        bcgData = bcgData.map(campaign => {
+          const realStatus = realTimeStatus.get(campaign.campaign_id)
+          if (realStatus) {
+            return { ...campaign, status: realStatus }
+          }
+          return campaign
+        })
+      } catch (error) {
+        console.error('[Rekam Medic] Error updating real-time status:', error)
+        // Continue with database status if real-time fetch fails
+      }
+    }
 
     // Calculate summary statistics
     const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0)
