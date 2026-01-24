@@ -41,6 +41,7 @@ const sidebarGroups = [
       { icon: TrendingUp, label: "Analytics", href: "/analytics", description: "Advanced analytics dan growth" },
       { icon: Users, label: "User Management", href: "/users", description: "Kelola user dan roles" },
       { icon: ShoppingCart, label: "Orders", href: "/orders", description: "Order tracking dan conversion" },
+      { icon: Building2, label: "Bank Mutations", href: "/bank-mutations", description: "Audit money in mutations from Moota" },
       { icon: CreditCard, label: "Subscription", href: "/subscriptions", description: "Plans, subscriptions, billing" },
       { icon: Ticket, label: "Vouchers", href: "/vouchers", description: "Voucher dan promo code management" },
     ],

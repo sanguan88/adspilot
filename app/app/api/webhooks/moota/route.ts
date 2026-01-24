@@ -51,64 +51,70 @@ export async function POST(request: NextRequest) {
 
             // 3. Process Mutations
             const mutations = JSON.parse(rawBody);
-
-            // Moota might send an array or a single object depending on configuration
             const mutationList = Array.isArray(mutations) ? mutations : [mutations];
-
             const results = [];
 
+            const { processSuccessfulPayment } = require('@/lib/payment-utils');
+
             for (const mutation of mutationList) {
-                const { amount, type, description, date } = mutation;
+                const { amount, type, description, date, bank_type, account_number, id: mootaMutationId } = mutation;
 
-                // We only care about Money In (Credit)
-                if (type !== 'CR') continue;
+                // Log all mutations (CR or DB) for audit trail
+                let mutationStatus = 'pending';
+                let matchedTrxId = null;
 
-                console.log(`[Moota Webhook] Processing CR mutation: ${amount} on ${date}`);
+                // 4. Find matching transaction (only for Credit)
+                if (type === 'CR') {
+                    console.log(`[Moota Webhook] Processing CR mutation: ${amount} on ${date}`);
 
-                // 4. Find matching transaction
-                // Match by total_amount (which includes the unique code)
-                // We look for 'pending' or 'waiting_confirmation' status
-                const trxResult = await connection.query(
-                    `SELECT id, transaction_id, user_id, plan_id, total_amount 
-                     FROM transactions 
-                     WHERE total_amount = $1 
-                     AND (payment_status = 'pending' OR payment_status = 'waiting_confirmation')
-                     ORDER BY created_at DESC 
-                     LIMIT 1`,
-                    [amount]
-                );
-
-                if (trxResult.rows.length > 0) {
-                    const trx = trxResult.rows[0];
-                    const trxId = trx.transaction_id;
-                    const userId = trx.user_id;
-
-                    console.log(`[Moota Webhook] Match found! Transaction: ${trxId} for User: ${userId}`);
-
-                    // 5. Update Transaction status to 'paid'
-                    await connection.query(
-                        `UPDATE transactions 
-                         SET payment_status = 'paid', 
-                             payment_method = 'moota_auto',
-                             updated_at = NOW() 
-                         WHERE id = $1`,
-                        [trx.id]
+                    const trxResult = await connection.query(
+                        `SELECT transaction_id 
+                         FROM transactions 
+                         WHERE total_amount = $1 
+                         AND (payment_status = 'pending' OR payment_status = 'waiting_confirmation')
+                         ORDER BY created_at DESC 
+                         LIMIT 1`,
+                        [amount]
                     );
 
-                    // 6. Activate User Account
-                    await connection.query(
-                        `UPDATE data_user 
-                         SET status_user = 'aktif', 
-                             update_at = NOW() 
-                         WHERE user_id = $1`,
-                        [userId]
-                    );
+                    if (trxResult.rows.length > 0) {
+                        const trx = trxResult.rows[0];
+                        matchedTrxId = trx.transaction_id;
 
-                    results.push({ mutation_id: mutation.id, status: 'processed', transaction_id: trxId });
+                        try {
+                            // Use shared activation logic
+                            await processSuccessfulPayment(matchedTrxId, connection);
+                            mutationStatus = 'processed';
+                            console.log(`[Moota Webhook] Successfully processed Transaction: ${matchedTrxId}`);
+                        } catch (err) {
+                            console.error(`[Moota Webhook] Error processing activation for ${matchedTrxId}:`, err);
+                            mutationStatus = 'failed';
+                        }
+                    } else {
+                        mutationStatus = 'ignored';
+                    }
                 } else {
-                    console.log(`[Moota Webhook] No matching pending transaction for amount: ${amount}`);
-                    results.push({ mutation_id: mutation.id, status: 'ignored', reason: 'no_match' });
+                    mutationStatus = 'ignored'; // Debit mutations are ignored for activation
                 }
+
+                // 5. Save to bank_mutations log
+                try {
+                    await connection.query(
+                        `INSERT INTO bank_mutations (
+                            moota_mutation_id, amount, bank_type, account_number, 
+                            description, date, type, status, transaction_id, raw_data
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                        ON CONFLICT (moota_mutation_id) DO NOTHING`,
+                        [
+                            mootaMutationId, amount, bank_type, account_number,
+                            description, date, type, mutationStatus, matchedTrxId, JSON.stringify(mutation)
+                        ]
+                    );
+                } catch (logErr) {
+                    console.error('[Moota Webhook] Failed to log mutation:', logErr);
+                }
+
+                results.push({ mutation_id: mootaMutationId, status: mutationStatus, transaction_id: matchedTrxId });
             }
 
             connection.release();
