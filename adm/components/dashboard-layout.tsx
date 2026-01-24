@@ -17,65 +17,102 @@ import {
   ChevronRight,
   User,
   LogOut,
-  TrendingUp,
+  TrendingDown, // Use for reports/analytics
   Monitor,
   Shield,
   Key,
   ShoppingCart,
   Ticket,
-  Building2
+  Building2,
+  ChevronDown,
+  LayoutDashboard,
+  Wallet
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
-const sidebarGroups = [
+interface SidebarItem {
+  icon: any
+  label: string
+  href: string
+  description?: string
+}
+
+interface SidebarGroup {
+  label: string | null
+  id: string
+  items: SidebarItem[]
+  isCollapsible?: boolean
+}
+
+const sidebarGroups: SidebarGroup[] = [
   {
-    label: null, // Core Management - no label
+    label: "Main",
+    id: "main",
     items: [
-      { icon: BarChart3, label: "Dashboard", href: "/", description: "Overview dan stats" },
-      { icon: TrendingUp, label: "Analytics", href: "/analytics", description: "Advanced analytics dan growth" },
+      { icon: LayoutDashboard, label: "Dashboard", href: "/", description: "Overview dan stats" },
       { icon: Users, label: "User Management", href: "/users", description: "Kelola user dan roles" },
+    ],
+  },
+  {
+    label: "Insights",
+    id: "insights",
+    isCollapsible: true, // Make this collapsible too
+    items: [
+      { icon: BarChart3, label: "Analytics", href: "/analytics", description: "Real-time performance metrics" },
+      { icon: FileText, label: "Reports", href: "/reports", description: "Historical automated reporting" },
+    ],
+  },
+  {
+    label: "Finance",
+    id: "finance",
+    isCollapsible: true,
+    items: [
       { icon: ShoppingCart, label: "Orders", href: "/orders", description: "Order tracking dan conversion" },
       { icon: Building2, label: "Bank Mutations", href: "/bank-mutations", description: "Audit money in mutations from Moota" },
-      { icon: CreditCard, label: "Subscription", href: "/subscriptions", description: "Plans, subscriptions, billing" },
+      { icon: Wallet, label: "Subscription", href: "/subscriptions", description: "Plans, subscriptions, billing" },
       { icon: Ticket, label: "Vouchers", href: "/vouchers", description: "Voucher dan promo code management" },
     ],
   },
   {
-    label: "Business & Marketing",
+    label: "Business",
+    id: "business",
     items: [
       { icon: Handshake, label: "Affiliate", href: "/affiliates", description: "Affiliate management" },
-      { icon: FileText, label: "Reports", href: "/reports", description: "Reports dan analytics" },
     ],
   },
   {
-    label: "System",
+    label: "Content",
+    id: "content",
+    isCollapsible: true,
     items: [
-      { icon: Shield, label: "Audit Logs", href: "/audit-logs", description: "Track all admin actions" },
-      // { icon: Key, label: "Licenses", href: "/licenses", description: "License keys dan aktivasi" },
-      { icon: Activity, label: "Usage & Monitoring", href: "/usage", description: "Usage analytics dan monitoring" },
-      { icon: Monitor, label: "App Health", href: "/health", description: "Application health monitoring" },
-    ],
-  },
-  {
-    label: "Configuration",
-    items: [
-      { icon: Settings, label: "Settings", href: "/settings", description: "System settings" },
-      { icon: CreditCard, label: "Payment Settings", href: "/payment-settings", description: "Payment method configuration" },
-      { icon: FileText, label: "Tutorials", href: "/tutorials", description: "Tutorial content management" },
       { icon: FileText, label: "Page Builder", href: "/page-builder", description: "Landing page builder" },
+      { icon: FileText, label: "Tutorials", href: "/tutorials", description: "Tutorial content management" },
+    ],
+  },
+  {
+    label: "System & Config",
+    id: "system",
+    isCollapsible: true,
+    items: [
+      { icon: Settings, label: "Settings", href: "/settings", description: "System settings & payments" },
+      { icon: Shield, label: "Audit Logs", href: "/audit-logs", description: "Track all admin actions" },
+      { icon: Monitor, label: "App Health", href: "/health", description: "Application health monitoring" },
+      { icon: Activity, label: "Usage & Monitoring", href: "/usage", description: "Usage analytics dan monitoring" },
     ],
   },
 ]
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [openGroup, setOpenGroup] = useState<string | null>("insights") // Accordion: only one string or null
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuth()
@@ -84,6 +121,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     await logout()
     router.push('/auth/login')
   }
+
+  const toggleGroup = (groupId: string) => {
+    setOpenGroup(prev => prev === groupId ? null : groupId)
+  }
+
+  const isItemActive = (href: string) => pathname === href
+
+  const isGroupActive = (items: SidebarItem[]) => items.some(item => pathname === item.href)
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -108,7 +153,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </Button>
 
         {/* Header */}
-        <div className={cn("border-b border-border relative flex items-center", isCollapsed ? "p-4 justify-center" : "p-6 justify-center")}>
+        <div className={cn("border-b border-border relative flex items-center shrink-0", isCollapsed ? "p-4 h-20 justify-center" : "p-6 h-20 justify-center")}>
           {!isCollapsed ? (
             <div className="flex items-center justify-center w-full">
               <img
@@ -147,70 +192,114 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Navigation */}
-        <nav className={cn("flex-1 overflow-y-auto", isCollapsed ? "p-2" : "p-6")}>
-          {/* Grouped Menu Items */}
+        <nav className={cn("flex-1 overflow-y-auto py-4", isCollapsed ? "p-2" : "p-6")}>
           <div className="space-y-4">
-            {sidebarGroups.map((group, groupIndex) => (
-              <div key={group.label || `group-${groupIndex}`} className="space-y-1">
-                {/* Group Label (only when not collapsed and label exists) */}
-                {!isCollapsed && group.label && (
-                  <div className="px-2 py-0.5">
-                    <p className="text-xs font-semibold text-foreground/50 uppercase tracking-wider">
-                      {group.label}
-                    </p>
-                  </div>
-                )}
+            {sidebarGroups.map((group) => {
+              const isActive = isGroupActive(group.items)
 
-                {/* Group Items */}
-                <ul className="space-y-1">
-                  {group.items.map((item) => (
-                    <li key={item.label}>
-                      {isCollapsed ? (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Link href={item.href}>
-                                <Button
-                                  variant="ghost"
-                                  className={cn(
-                                    "w-full justify-center p-2 text-sm font-medium text-primary hover:bg-primary/20 rounded-none",
-                                    pathname === item.href && "bg-primary text-primary-foreground border-l-4 border-primary",
-                                  )}
-                                >
-                                  <item.icon className="w-6 h-6" />
-                                </Button>
-                              </Link>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-xs">
-                              <p className="font-medium">{item.label}</p>
-                              <p className="text-xs opacity-90">{item.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        <Link href={item.href}>
+              if (isCollapsed) {
+                return (
+                  <div key={group.id} className="space-y-1">
+                    {group.items.map((item) => (
+                      <TooltipProvider key={item.label}>
+                        <Tooltip delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <Link href={item.href}>
+                              <Button
+                                variant="ghost"
+                                className={cn(
+                                  "w-full justify-center p-2 text-sm font-medium text-primary hover:bg-primary/20 rounded-none",
+                                  isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary",
+                                )}
+                              >
+                                <item.icon className="w-6 h-6" />
+                              </Button>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <p className="font-medium">{item.label}</p>
+                            <p className="text-xs opacity-90">{item.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ))}
+                  </div>
+                )
+              }
+
+              if (group.isCollapsible) {
+                const isOpen = openGroup === group.id
+                return (
+                  <Collapsible
+                    key={group.id}
+                    open={isOpen}
+                    onOpenChange={() => toggleGroup(group.id)}
+                    className="space-y-1"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-between h-9 px-2 text-xs font-semibold text-foreground/50 uppercase tracking-wider hover:bg-transparent",
+                          isActive && "text-primary/70"
+                        )}
+                      >
+                        <span className="flex items-center gap-2">
+                          {group.label}
+                        </span>
+                        <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-1 mt-1 transition-all">
+                      {group.items.map((item) => (
+                        <Link key={item.label} href={item.href}>
                           <Button
                             variant="ghost"
                             className={cn(
                               "w-full justify-start gap-3 text-sm font-medium text-primary hover:bg-primary/20 rounded-none",
-                              pathname === item.href && "bg-primary text-primary-foreground border-l-4 border-primary",
+                              isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary",
                             )}
                           >
                             <item.icon className="w-6 h-6" />
                             <span>{item.label}</span>
                           </Button>
                         </Link>
-                      )}
-                    </li>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                )
+              }
+
+              return (
+                <div key={group.id} className="space-y-1">
+                  {group.label && group.id !== 'main' && (
+                    <div className="px-2 py-0.5">
+                      <p className="text-xs font-semibold text-foreground/50 uppercase tracking-wider">
+                        {group.label}
+                      </p>
+                    </div>
+                  )}
+                  {group.items.map((item) => (
+                    <Link key={item.label} href={item.href}>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start gap-3 text-sm font-medium text-primary hover:bg-primary/20 rounded-none",
+                          isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary",
+                        )}
+                      >
+                        <item.icon className="w-6 h-6" />
+                        <span>{item.label}</span>
+                      </Button>
+                    </Link>
                   ))}
-                </ul>
-              </div>
-            ))}
+                </div>
+              )
+            })}
           </div>
         </nav>
 
         {/* User Profile */}
-        {/* User Profile & Logout Area (Refined) */}
         <div className={cn("mt-auto border-t border-border", isCollapsed ? "p-3" : "p-4")}>
           {!isCollapsed ? (
             <div className="flex items-center gap-3 p-2 rounded hover:bg-slate-50 transition-all duration-300 group">
