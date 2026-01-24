@@ -32,6 +32,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -130,12 +131,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isGroupActive = (items: SidebarItem[]) => items.some(item => pathname === item.href)
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar */}
-      <div
+      <motion.div
+        initial={false}
+        animate={{ width: isCollapsed ? 64 : 256 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
-          "bg-primary/10 border-r border-border transition-all duration-300 flex flex-col relative",
-          isCollapsed ? "w-16" : "w-64",
+          "bg-primary/10 border-r border-border flex flex-col relative h-full shrink-0 overflow-hidden",
         )}
       >
         {/* Floating Toggle Button */}
@@ -144,7 +147,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           size="sm"
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={cn(
-            "absolute p-2 text-foreground/60 hover:bg-muted hover:text-foreground rounded-lg z-20",
+            "absolute p-2 text-foreground/60 hover:bg-muted hover:text-foreground rounded-lg z-20 transition-all",
             isCollapsed ? "top-4 left-1/2 -translate-x-1/2" : "top-7 right-3 h-8 w-8"
           )}
         >
@@ -152,46 +155,60 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </Button>
 
         {/* Header */}
-        <div className={cn("border-b border-border relative flex items-center shrink-0", isCollapsed ? "p-4 h-20 justify-center" : "p-6 h-20 justify-center")}>
-          {!isCollapsed ? (
-            <div className="flex items-center justify-center w-full">
-              <img
-                src="/adspilot.png"
-                alt="AdsBot Admin"
-                className="h-10 w-auto object-contain"
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement
-                  if (!img.dataset.fallbackUsed) {
-                    img.dataset.fallbackUsed = "true"
-                    img.src = "/logo.jpg"
-                  } else {
-                    img.style.display = "none"
-                  }
-                }}
-              />
-            </div>
-          ) : (
-            <div className="w-10 h-10 relative flex items-center justify-center mt-6">
-              <img
-                src="/logo.jpg"
-                alt="AdsBot Admin Logo"
-                className="w-10 h-10 rounded-lg object-contain"
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement
-                  if (!img.dataset.fallbackUsed) {
-                    img.dataset.fallbackUsed = "true"
-                    img.src = "/placeholder-logo.png"
-                  } else {
-                    img.style.display = "none"
-                  }
-                }}
-              />
-            </div>
-          )}
+        <div className={cn("border-b border-border relative flex items-center shrink-0 overflow-hidden", isCollapsed ? "p-4 h-20 justify-center" : "p-6 h-20 justify-center")}>
+          <AnimatePresence mode="wait">
+            {!isCollapsed ? (
+              <motion.div
+                key="large-logo"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="flex items-center justify-center w-full"
+              >
+                <img
+                  src="/adspilot.png"
+                  alt="AdsBot Admin"
+                  className="h-10 w-auto object-contain"
+                  onError={(e) => {
+                    const img = e.currentTarget as HTMLImageElement
+                    if (!img.dataset.fallbackUsed) {
+                      img.dataset.fallbackUsed = "true"
+                      img.src = "/logo.jpg"
+                    } else {
+                      img.style.display = "none"
+                    }
+                  }}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="small-logo"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="w-10 h-10 relative flex items-center justify-center mt-6"
+              >
+                <img
+                  src="/logo.jpg"
+                  alt="AdsBot Admin Logo"
+                  className="w-10 h-10 rounded-lg object-contain"
+                  onError={(e) => {
+                    const img = e.currentTarget as HTMLImageElement
+                    if (!img.dataset.fallbackUsed) {
+                      img.dataset.fallbackUsed = "true"
+                      img.src = "/placeholder-logo.png"
+                    } else {
+                      img.style.display = "none"
+                    }
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Navigation */}
-        <nav className={cn("flex-1 overflow-y-auto py-4", isCollapsed ? "p-2" : "p-6")}>
+        <nav className={cn("flex-1 overflow-y-auto no-scrollbar py-4", isCollapsed ? "px-2" : "px-4")}>
           <div className="space-y-4">
             {sidebarGroups.map((group) => {
               const isActive = isGroupActive(group.items)
@@ -207,11 +224,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               <Button
                                 variant="ghost"
                                 className={cn(
-                                  "w-full justify-center p-2 text-sm font-medium text-primary hover:bg-primary/20 rounded-none",
-                                  isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary",
+                                  "w-full justify-center p-2 text-sm font-medium text-primary hover:bg-primary/20 rounded-lg",
+                                  isItemActive(item.href) && "bg-primary text-primary-foreground shadow-md",
                                 )}
                               >
-                                <item.icon className="w-6 h-6" />
+                                <item.icon className="w-6 h-6 shrink-0" />
                               </Button>
                             </Link>
                           </TooltipTrigger>
@@ -229,43 +246,58 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               if (group.isCollapsible) {
                 const isOpen = openGroup === group.id
                 return (
-                  <Collapsible
-                    key={group.id}
-                    open={isOpen}
-                    onOpenChange={() => toggleGroup(group.id)}
-                    className="space-y-1"
-                  >
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-between h-9 px-2 text-xs font-semibold text-foreground/50 uppercase tracking-wider hover:bg-transparent",
-                          isActive && "text-primary/70"
-                        )}
+                  <div key={group.id} className="space-y-1">
+                    <Button
+                      variant="ghost"
+                      onClick={() => toggleGroup(group.id)}
+                      className={cn(
+                        "w-full justify-between h-9 px-2 text-xs font-semibold text-foreground/50 uppercase tracking-wider hover:bg-transparent",
+                        isActive && "text-primary/70"
+                      )}
+                    >
+                      <span className="flex items-center gap-2">
+                        {group.label}
+                      </span>
+                      <motion.div
+                        animate={{ rotate: isOpen ? 0 : -90 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        <span className="flex items-center gap-2">
-                          {group.label}
-                        </span>
-                        <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-1 mt-1 transition-all">
-                      {group.items.map((item) => (
-                        <Link key={item.label} href={item.href}>
-                          <Button
-                            variant="ghost"
-                            className={cn(
-                              "w-full justify-start gap-3 text-sm font-medium text-primary hover:bg-primary/20 rounded-none",
-                              isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary",
-                            )}
-                          >
-                            <item.icon className="w-6 h-6" />
-                            <span>{item.label}</span>
-                          </Button>
-                        </Link>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
+                        <ChevronDown className="w-3 h-3" />
+                      </motion.div>
+                    </Button>
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="overflow-hidden space-y-1"
+                        >
+                          {group.items.map((item) => (
+                            <Link key={item.label} href={item.href}>
+                              <Button
+                                variant="ghost"
+                                className={cn(
+                                  "w-full justify-start gap-3 text-sm font-medium text-primary hover:bg-primary/20 rounded-lg",
+                                  isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary",
+                                )}
+                              >
+                                <item.icon className="w-5 h-5 shrink-0" />
+                                <motion.span
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  className="truncate"
+                                >
+                                  {item.label}
+                                </motion.span>
+                              </Button>
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )
               }
 
@@ -283,12 +315,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Button
                         variant="ghost"
                         className={cn(
-                          "w-full justify-start gap-3 text-sm font-medium text-primary hover:bg-primary/20 rounded-none",
+                          "w-full justify-start gap-3 text-sm font-medium text-primary hover:bg-primary/20 rounded-lg",
                           isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary",
                         )}
                       >
-                        <item.icon className="w-6 h-6" />
-                        <span>{item.label}</span>
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        <motion.span
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="truncate"
+                        >
+                          {item.label}
+                        </motion.span>
                       </Button>
                     </Link>
                   ))}
@@ -299,9 +337,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
 
         {/* User Profile */}
-        <div className={cn("mt-auto border-t border-border", isCollapsed ? "p-3" : "p-4")}>
+        <div className={cn("mt-auto border-t border-border bg-black/5", isCollapsed ? "p-3" : "p-4")}>
           {!isCollapsed ? (
-            <div className="flex items-center gap-3 p-2 rounded hover:bg-slate-50 transition-all duration-300 group">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 p-2 rounded hover:bg-white/50 transition-all duration-300 group"
+            >
               <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100">
                 {user?.photo_profile ? (
                   <AvatarImage
@@ -336,7 +378,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            </div>
+            </motion.div>
           ) : (
             <div className="flex flex-col items-center gap-4">
               <TooltipProvider>
@@ -383,10 +425,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-auto">{children}</div>
+      <div className="flex-1 flex flex-col overflow-auto relative bg-[#f1f5f9]">
+        <main className="flex-1 h-full">{children}</main>
+      </div>
     </div>
   )
 }
