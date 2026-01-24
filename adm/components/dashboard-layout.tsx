@@ -112,10 +112,23 @@ const sidebarGroups: SidebarGroup[] = [
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [openGroup, setOpenGroup] = useState<string | null>("insights") // Accordion: only one string or null
+  const [openGroup, setOpenGroup] = useState<string | null>(null)
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout } = useAuth()
+
+  const isItemActive = (href: string) => pathname === href
+  const isGroupActive = (items: SidebarItem[]) => items.some(item => pathname === item.href)
+
+  // Auto-expand group based on current path
+  React.useEffect(() => {
+    const activeGroup = sidebarGroups.find(group =>
+      group.isCollapsible && group.items.some(item => item.href === pathname)
+    )
+    if (activeGroup) {
+      setOpenGroup(activeGroup.id)
+    }
+  }, [pathname])
 
   const handleLogout = async () => {
     await logout()
@@ -125,10 +138,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const toggleGroup = (groupId: string) => {
     setOpenGroup(prev => prev === groupId ? null : groupId)
   }
-
-  const isItemActive = (href: string) => pathname === href
-
-  const isGroupActive = (items: SidebarItem[]) => items.some(item => pathname === item.href)
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
