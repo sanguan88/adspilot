@@ -97,7 +97,7 @@ export async function GET(
 
       // Generate PDF
       const pdfBuffer = await renderToBuffer(
-        React.createElement(InvoiceDocument, { invoice: invoiceData })
+        React.createElement(InvoiceDocument, { invoice: invoiceData }) as any
       );
 
       return pdfBuffer;
@@ -111,7 +111,7 @@ export async function GET(
     }
 
     // Return PDF as response
-    return new NextResponse(result, {
+    return new NextResponse(result as any, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

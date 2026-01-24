@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
     // Release connection jika masih ada (hanya sekali)
     if (connection) {
       try {
-        connection?.release();
+        (connection as any).release();
         connection = null;
       } catch (releaseError: any) {
         // Check if it's already released error

@@ -88,13 +88,13 @@ function MetricCard({ title, value, change, trend, icon, color = "blue", valueCo
 
   // Default value color is gray-900 (black), but can be overridden
   const valueColorClass = valueColor || "text-gray-900"
-  
+
   // Only show trend if both change and trend are defined
   const showTrend = change !== undefined && trend !== undefined
 
   // Determine if this is a primary card (larger) or secondary card (smaller)
   // Check icon size to determine card type
-  const iconSize = icon.props?.className?.match(/w-(\d+)/)?.[1]
+  const iconSize = (icon as any)?.props?.className?.match(/w-(\d+)/)?.[1]
   const isPrimary = iconSize === '5'
 
   return (
@@ -165,19 +165,19 @@ export function CampaignMetrics({ campaigns, loading = false, error = null, tota
   // Calculate totals from campaigns array (always use campaigns data for view and orders, as API summary doesn't include them)
   const totalViews = campaigns.reduce((acc, campaign) => acc + (campaign.view || 0), 0)
   const totalOrders = campaigns.reduce((acc, campaign) => acc + (campaign.orders || 0), 0)
-  
+
   // Average Conversion Rate = average of all campaign conversion rates
-  const averageConversionRate = campaigns.length > 0 
+  const averageConversionRate = campaigns.length > 0
     ? campaigns.reduce((acc, campaign) => {
-        // Calculate conversion rate per campaign: (orders / clicks) * 100
-        // If clicks is 0, conversion rate is 0
-        const campaignConversionRate = campaign.clicks > 0 
-          ? ((campaign.orders || 0) / campaign.clicks) * 100 
-          : 0
-        return acc + campaignConversionRate
-      }, 0) / campaigns.length
+      // Calculate conversion rate per campaign: (orders / clicks) * 100
+      // If clicks is 0, conversion rate is 0
+      const campaignConversionRate = campaign.clicks > 0
+        ? ((campaign.orders || 0) / campaign.clicks) * 100
+        : 0
+      return acc + campaignConversionRate
+    }, 0) / campaigns.length
     : 0
-  
+
   // Always calculate averages from campaigns array for consistency with filters
   const averageCTR = campaigns.length > 0 ? campaigns.reduce((acc, campaign) => acc + (campaign.ctr || 0), 0) / campaigns.length : 0
   const averageCPC = campaigns.length > 0 ? campaigns.reduce((acc, campaign) => acc + campaign.cpc, 0) / campaigns.length : 0
@@ -194,14 +194,14 @@ export function CampaignMetrics({ campaigns, loading = false, error = null, tota
     if (previous === undefined || previous === null || previous === 0) {
       return {}
     }
-    
+
     const change = ((current - previous) / previous) * 100
     const absChange = Math.abs(change)
-    
+
     if (absChange < 0.01) {
       return { change: 0, trend: "neutral" }
     }
-    
+
     return {
       change: Math.round(absChange * 10) / 10, // Round to 1 decimal place
       trend: change >= 0 ? "up" : "down"
@@ -221,8 +221,8 @@ export function CampaignMetrics({ campaigns, loading = false, error = null, tota
   const conversionRateTrend = calculateTrend(averageConversionRate, yesterday?.averageConversionRate)
   const roasTrend = calculateTrend(averageROAS, yesterday?.averageROAS)
   // Calculate yesterday ACOS for trend
-  const yesterdayACOS = yesterday?.totalSales && yesterday.totalSales > 0 
-    ? ((yesterday.totalSpend || 0) / yesterday.totalSales) * 100 
+  const yesterdayACOS = yesterday?.totalSales && yesterday.totalSales > 0
+    ? ((yesterday.totalSpend || 0) / yesterday.totalSales) * 100
     : undefined
   const acosTrend = calculateTrend(acos, yesterdayACOS)
   const commissionTrend = calculateTrend(estCommission, yesterday?.estCommission)

@@ -86,7 +86,9 @@ export async function POST(
       await connection.query('BEGIN')
 
       try {
-        const { processSuccessfulPayment } = require('@/lib/payment-utils');
+        let newStatus: string = '';
+        let message: string = '';
+        const { processSuccessfulPayment } = await import('@/lib/payment-utils');
 
         // Update user status based on action
         if (action === 'confirm') {

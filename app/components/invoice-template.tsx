@@ -6,28 +6,28 @@ export interface InvoiceData {
   invoiceNumber: string;
   invoiceDate: string;
   transactionId: string;
-  
+
   // Company info
   companyName: string;
   companyAddress?: string;
   companyPhone?: string;
   companyEmail?: string;
-  
+
   // Customer info
   customerName: string;
   customerEmail: string;
-  
+
   // Plan info
   planName: string;
   planId: string;
-  
+
   // Payment breakdown
   baseAmount: number;
   ppnPercentage: number;
   ppnAmount: number;
   uniqueCode: number;
   totalAmount: number;
-  
+
   // Payment status
   paymentStatus: string;
   paymentMethod: string;
@@ -173,7 +173,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   statusBadge: {
-    display: 'inline',
     padding: '4px 8px',
     borderRadius: 4,
     fontSize: 8,
@@ -258,10 +257,10 @@ export const InvoiceDocument: React.FC<{ invoice: InvoiceData }> = ({ invoice })
             <View style={styles.row}>
               <Text style={styles.label}>Status:</Text>
               <Text style={styles.value}>
-                {invoice.paymentStatus === 'paid' ? 'LUNAS' : 
-                 invoice.paymentStatus === 'pending' ? 'MENUNGGU PEMBAYARAN' :
-                 invoice.paymentStatus === 'waiting_verification' ? 'MENUNGGU VERIFIKASI' :
-                 invoice.paymentStatus.toUpperCase()}
+                {invoice.paymentStatus === 'paid' ? 'LUNAS' :
+                  invoice.paymentStatus === 'pending' ? 'MENUNGGU PEMBAYARAN' :
+                    invoice.paymentStatus === 'waiting_verification' ? 'MENUNGGU VERIFIKASI' :
+                      invoice.paymentStatus.toUpperCase()}
               </Text>
             </View>
             {invoice.paymentDate && (
@@ -273,9 +272,9 @@ export const InvoiceDocument: React.FC<{ invoice: InvoiceData }> = ({ invoice })
             <View style={styles.row}>
               <Text style={styles.label}>Metode Pembayaran:</Text>
               <Text style={styles.value}>
-                {invoice.paymentMethod === 'manual' ? 'Transfer Bank Manual' : 
-                 invoice.paymentMethod === 'gateway' ? 'Payment Gateway' :
-                 invoice.paymentMethod.toUpperCase()}
+                {invoice.paymentMethod === 'manual' ? 'Transfer Bank Manual' :
+                  invoice.paymentMethod === 'gateway' ? 'Payment Gateway' :
+                    invoice.paymentMethod.toUpperCase()}
               </Text>
             </View>
           </View>

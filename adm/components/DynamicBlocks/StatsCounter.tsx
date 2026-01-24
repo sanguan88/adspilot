@@ -15,11 +15,11 @@ export function StatsCounter({ block, isPreview = false }: StatsCounterProps) {
 
     return (
         <div className="text-center p-6">
-            <div className="text-4xl mb-2">{icon}</div>
+            <div className="text-4xl mb-2">{icon as any}</div>
             <div className="text-4xl font-bold text-blue-600">
-                {value}{suffix}
+                {value as any}{suffix as any}
             </div>
-            <div className="text-gray-600 mt-2">{label}</div>
+            <div className="text-gray-600 mt-2">{label as any}</div>
         </div>
     )
 }

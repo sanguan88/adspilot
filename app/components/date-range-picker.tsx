@@ -8,12 +8,12 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-type PresetPeriod = 
-  | "today" 
-  | "yesterday" 
-  | "last7days" 
-  | "thisMonth" 
-  | "lastMonth" 
+type PresetPeriod =
+  | "today"
+  | "yesterday"
+  | "last7days"
+  | "thisMonth"
+  | "lastMonth"
   | "last3Months"
   | "custom"
 
@@ -35,60 +35,60 @@ const PRESET_PERIODS: Array<{
   label: string
   getRange: () => DateRange
 }> = [
-  {
-    id: "today",
-    label: "Hari Ini",
-    getRange: () => {
-      const today = startOfDay(new Date())
-      return { from: today, to: today }
+    {
+      id: "today",
+      label: "Hari Ini",
+      getRange: () => {
+        const today = startOfDay(new Date())
+        return { from: today, to: today }
+      },
     },
-  },
-  {
-    id: "yesterday",
-    label: "Kemarin",
-    getRange: () => {
-      const yesterday = startOfDay(subDays(new Date(), 1))
-      return { from: yesterday, to: yesterday }
+    {
+      id: "yesterday",
+      label: "Kemarin",
+      getRange: () => {
+        const yesterday = startOfDay(subDays(new Date(), 1))
+        return { from: yesterday, to: yesterday }
+      },
     },
-  },
-  {
-    id: "last7days",
-    label: "1 Minggu Terakhir",
-    getRange: () => {
-      const today = startOfDay(new Date())
-      const sevenDaysAgo = startOfDay(subDays(today, 6))
-      return { from: sevenDaysAgo, to: today }
+    {
+      id: "last7days",
+      label: "1 Minggu Terakhir",
+      getRange: () => {
+        const today = startOfDay(new Date())
+        const sevenDaysAgo = startOfDay(subDays(today, 6))
+        return { from: sevenDaysAgo, to: today }
+      },
     },
-  },
-  {
-    id: "thisMonth",
-    label: "Bulan Ini",
-    getRange: () => {
-      const today = new Date()
-      const start = startOfMonth(today)
-      const end = startOfDay(today)
-      return { from: start, to: end }
+    {
+      id: "thisMonth",
+      label: "Bulan Ini",
+      getRange: () => {
+        const today = new Date()
+        const start = startOfMonth(today)
+        const end = startOfDay(today)
+        return { from: start, to: end }
+      },
     },
-  },
-  {
-    id: "lastMonth",
-    label: "1 Bulan Terakhir",
-    getRange: () => {
-      const today = startOfDay(new Date())
-      const oneMonthAgo = startOfDay(subDays(today, 29))
-      return { from: oneMonthAgo, to: today }
+    {
+      id: "lastMonth",
+      label: "1 Bulan Terakhir",
+      getRange: () => {
+        const today = startOfDay(new Date())
+        const oneMonthAgo = startOfDay(subDays(today, 29))
+        return { from: oneMonthAgo, to: today }
+      },
     },
-  },
-  {
-    id: "last3Months",
-    label: "3 Bulan Terakhir",
-    getRange: () => {
-      const today = startOfDay(new Date())
-      const threeMonthsAgo = startOfMonth(subMonths(today, 2))
-      return { from: threeMonthsAgo, to: today }
+    {
+      id: "last3Months",
+      label: "3 Bulan Terakhir",
+      getRange: () => {
+        const today = startOfDay(new Date())
+        const threeMonthsAgo = startOfMonth(subMonths(today, 2))
+        return { from: threeMonthsAgo, to: today }
+      },
     },
-  },
-]
+  ]
 
 export function DateRangePicker({
   dateRange,
@@ -115,14 +115,14 @@ export function DateRangePicker({
       if (presetRange.from && presetRange.to) {
         const presetFromTime = presetRange.from.getTime()
         const presetToTime = presetRange.to.getTime()
-        
+
         // Check if dates match (within same day)
-        const fromMatch = 
+        const fromMatch =
           presetRange.from.getFullYear() === dateRange.from.getFullYear() &&
           presetRange.from.getMonth() === dateRange.from.getMonth() &&
           presetRange.from.getDate() === dateRange.from.getDate()
-        
-        const toMatch = 
+
+        const toMatch =
           presetRange.to.getFullYear() === dateRange.to.getFullYear() &&
           presetRange.to.getMonth() === dateRange.to.getMonth() &&
           presetRange.to.getDate() === dateRange.to.getDate()
@@ -166,17 +166,17 @@ export function DateRangePicker({
     if (!dateRange.from) {
       return "Pilih tanggal"
     }
-    
+
     if (dateRange.from && dateRange.to) {
       const fromStr = format(dateRange.from, "d MMM yyyy", { locale: id })
       const toStr = format(dateRange.to, "d MMM yyyy", { locale: id })
-      
+
       if (fromStr === toStr) {
         return fromStr
       }
       return `${fromStr} - ${toStr}`
     }
-    
+
     return format(dateRange.from, "d MMM yyyy", { locale: id })
   }
 
@@ -237,7 +237,7 @@ export function DateRangePicker({
                 from: dateRange.from,
                 to: dateRange.to,
               }}
-              onSelect={handleCalendarSelect}
+              onSelect={handleCalendarSelect as any}
               numberOfMonths={2}
               fromDate={defaultMinDate}
               toDate={defaultMaxDate}

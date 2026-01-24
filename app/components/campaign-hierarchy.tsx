@@ -37,6 +37,7 @@ interface Campaign {
   objective: string
   spend_percentage: number
   cpm: number
+  ctr: number
   roas: number
   account_username: string
   account_id: string

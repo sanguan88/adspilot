@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDatabaseConnection } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { requireAuth, requireActiveStatus } from '@/lib/auth'
 import { getRoleBasedFilter, getRoleBasedFilterForOptions } from '@/lib/role-filter'
 
 // Force dynamic rendering karena menggunakan request.headers
@@ -12,30 +12,30 @@ export async function GET(request: NextRequest) {
     const user = await requireActiveStatus(request);
     const roleFilter = getRoleBasedFilter(user);
     console.log('Connecting to database for accounts...')
-    
+
     const connection = await getDatabaseConnection()
     console.log('Database connected successfully')
-    
+
     // Build WHERE clause with role filter
     const whereConditions: string[] = [];
     const params: any[] = [];
-    
+
     if (roleFilter.whereClause) {
-      const roleFilterClause = roleFilter.whereClause.startsWith('AND ') 
-        ? roleFilter.whereClause.substring(4) 
+      const roleFilterClause = roleFilter.whereClause.startsWith('AND ')
+        ? roleFilter.whereClause.substring(4)
         : roleFilter.whereClause;
       whereConditions.push(roleFilterClause);
       params.push(...roleFilter.params);
     }
-    
-    const whereClause = whereConditions.length > 0 
+
+    const whereClause = whereConditions.length > 0
       ? 'WHERE ' + whereConditions.join(' AND ')
       : '';
-    
+
     // Query untuk mengambil data akun dengan performa dari shopee_accounts
     const limit = 100
     let paramIndex = params.length + 1
-    
+
     const rowsResult = await connection.query(`
       SELECT 
         da.*,
@@ -67,22 +67,22 @@ export async function GET(request: NextRequest) {
       ORDER BY da.created_at DESC 
       LIMIT $${paramIndex}
     `, [...params, limit])
-    
+
     // Ambil data untuk dropdown filter dengan role filter
     const roleFilterOptions = getRoleBasedFilterForOptions(user);
     let timWhereClause = '';
     let timParams: any[] = [];
     let timParamIndex = 1;
-    
+
     if (roleFilterOptions.whereClause) {
-      const roleClause = roleFilterOptions.whereClause.startsWith('AND ') 
-        ? roleFilterOptions.whereClause.substring(4) 
+      const roleClause = roleFilterOptions.whereClause.startsWith('AND ')
+        ? roleFilterOptions.whereClause.substring(4)
         : roleFilterOptions.whereClause;
       timWhereClause = `AND ${roleClause}`;
       timParams.push(...roleFilterOptions.params);
       timParamIndex = timParams.length + 1;
     }
-    
+
     const timRowsResult = await connection.query(`
       SELECT DISTINCT dt.nama_tim 
       FROM data_tim dt 
@@ -90,20 +90,20 @@ export async function GET(request: NextRequest) {
       WHERE dt.nama_tim IS NOT NULL ${timWhereClause}
       ORDER BY dt.nama_tim
     `, timParams)
-    
+
     let picWhereClause = '';
     let picParams: any[] = [];
     let picParamIndex = 1;
-    
+
     if (roleFilterOptions.whereClause) {
-      const roleClause = roleFilterOptions.whereClause.startsWith('AND ') 
-        ? roleFilterOptions.whereClause.substring(4) 
+      const roleClause = roleFilterOptions.whereClause.startsWith('AND ')
+        ? roleFilterOptions.whereClause.substring(4)
         : roleFilterOptions.whereClause;
       picWhereClause = `AND ${roleClause}`;
       picParams.push(...roleFilterOptions.params);
       picParamIndex = picParams.length + 1;
     }
-    
+
     const picRowsResult = await connection.query(`
       SELECT DISTINCT da.pic_akun 
       FROM data_akun da
@@ -111,23 +111,23 @@ export async function GET(request: NextRequest) {
       WHERE da.pic_akun IS NOT NULL ${picWhereClause}
       ORDER BY da.pic_akun
     `, picParams)
-    
+
     connection.release()
-    
+
     const dataAkun = rowsResult.rows as any[]
     const timData = timRowsResult.rows as any[]
     const picData = picRowsResult.rows as any[]
-    
+
     // Hitung summary sederhana
     const totalAccounts = dataAkun.length
-    
+
     return NextResponse.json({
       success: true,
       data: {
         accounts: dataAkun.map(akun => {
           // Hapus cookies dari response untuk keamanan
           const { cookies, ...akunWithoutCookies } = akun
-          
+
           // Map status_cookies dari database ke cookie_status
           let cookieStatus = 'no_cookies'
           if (akun.status_cookies) {
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
           } else if (akun.cookies) {
             cookieStatus = 'checking'
           }
-          
+
           return {
             ...akunWithoutCookies,
             performa_data: {
@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
             profitable: Number(akun.profitable) || 0,
             rasio_iklan: Number(akun.rasio_iklan) || 0
           }))
-          
+
           const totalGmv = accounts.reduce((sum, acc) => sum + acc.total_gmv, 0)
           const totalKomisi = accounts.reduce((sum, acc) => sum + acc.total_komisi, 0)
           const totalBiayaIklan = accounts.reduce((sum, acc) => sum + acc.total_biaya_iklan, 0)
@@ -190,7 +190,7 @@ export async function GET(request: NextRequest) {
           const totalRoas = accounts.reduce((sum, acc) => sum + acc.roas, 0)
           const profitableCount = accounts.filter(acc => acc.profitable > 0).length
           const totalRasioIklan = accounts.reduce((sum, acc) => sum + acc.rasio_iklan, 0)
-          
+
           return {
             total_gmv: totalGmv,
             total_komisi: totalKomisi,
@@ -214,8 +214,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Database error:', error)
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
         details: error
       },

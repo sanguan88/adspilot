@@ -41,7 +41,7 @@ export async function GET(
 
     // Authenticate user
     const user = await requireActiveStatus(request);
-    const userId = user.id as string;
+    const userId = user.userId as string;
 
     // Check permission to view invoices
     await checkResourceAccess(user, 'view', 'subscriptions', false);
@@ -115,11 +115,11 @@ export async function GET(
 
     // Generate PDF
     const pdfBuffer = await renderToBuffer(
-      React.createElement(InvoiceDocument, { invoice: invoiceData })
+      React.createElement(InvoiceDocument, { invoice: invoiceData }) as any
     );
 
     // Return PDF as response
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

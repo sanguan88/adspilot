@@ -8,12 +8,12 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { 
-  Search, 
-  RefreshCw, 
-  Users, 
-  TrendingUp, 
-  DollarSign, 
+import {
+  Search,
+  RefreshCw,
+  Users,
+  TrendingUp,
+  DollarSign,
   Target,
   Loader2,
   AlertCircle,
@@ -50,6 +50,8 @@ interface Account {
     impression: number
     view: number
     persentasi: number
+    target_roas_low?: number
+    target_roas_high?: number
     last_affiliate_sync?: string
   }
   last_affiliate_sync?: string
@@ -73,11 +75,11 @@ interface AccountTableProps {
   onToggleShowTable: () => void
 }
 
-export function AccountTable({ 
-  onAccountSelect, 
-  selectedAccountIds, 
-  showTable, 
-  onToggleShowTable 
+export function AccountTable({
+  onAccountSelect,
+  selectedAccountIds,
+  showTable,
+  onToggleShowTable
 }: AccountTableProps) {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [metrics, setMetrics] = useState<AccountMetrics>({
@@ -112,7 +114,7 @@ export function AccountTable({
     try {
       setLoading(true)
       setError(null)
-      
+
       // Build query parameters for accounts
       const params = new URLSearchParams({
         page: page.toString(),
@@ -120,7 +122,7 @@ export function AccountTable({
         search: searchDebounce,
         filter_cookies: 'connected' // Only show accounts with status_cookies = 'aktif'
       })
-      
+
       // Build query parameters for metrics (get all accounts)
       const metricsParams = new URLSearchParams({
         page: '1',
@@ -128,45 +130,45 @@ export function AccountTable({
         search: searchDebounce,
         filter_cookies: 'all' // Get all accounts for metrics
       })
-      
+
       // Fetch both accounts and metrics in parallel
       const [accountsResponse, metricsResponse] = await Promise.all([
         authenticatedFetch(`/api/accounts?${params.toString()}`),
         authenticatedFetch(`/api/accounts?${metricsParams.toString()}`)
       ])
-      
+
       if (accountsResponse.status === 401 || metricsResponse.status === 401) {
         if (typeof window !== 'undefined') {
           window.location.href = '/auth/login'
         }
         throw new Error('Unauthorized')
       }
-      
+
       const accountsResult = await accountsResponse.json()
       const metricsResult = await metricsResponse.json()
-      
+
       if (accountsResult.success) {
         // API accounts returns data in format: { accounts: [...], summary: {...}, ... }
         const accountsData = accountsResult.data?.accounts || []
         const pagination = accountsResult.data?.pagination || {}
         const filterOptions = accountsResult.data?.filter_options || {}
-        
+
         setAccounts(accountsData)
         setTotalPages(pagination.total_pages || 1)
         setTotalRecords(pagination.total_records || 0)
-        
+
         // Get summary from metrics result
         const summary = metricsResult.data?.summary || {}
-        
+
         // Calculate metrics from accountsData (connected accounts only)
         const totalGmv = accountsData.reduce((sum: number, acc: Account) => sum + safeNumber(acc.performa_data?.total_gmv), 0)
         const totalKomisi = accountsData.reduce((sum: number, acc: Account) => sum + safeNumber(acc.performa_data?.total_komisi), 0)
         const totalPersentasi = accountsData.reduce((sum: number, acc: Account) => sum + safeNumber(acc.performa_data?.persentasi), 0)
         const avgKomisiPercent = accountsData.length > 0 ? (totalPersentasi / accountsData.length) : 0
-        const avgRoas = accountsData.length > 0 
-          ? accountsData.reduce((sum: number, acc: Account) => sum + safeNumber(acc.performa_data?.target_roas_high || acc.performa_data?.target_roas_low), 0) / accountsData.length 
+        const avgRoas = accountsData.length > 0
+          ? accountsData.reduce((sum: number, acc: Account) => sum + safeNumber(acc.performa_data?.target_roas_high || acc.performa_data?.target_roas_low), 0) / accountsData.length
           : 0
-        
+
         setMetrics({
           total_akun: summary.total_accounts || 0,
           akun_aktif: accountsData.length, // All accounts shown are connected
@@ -190,7 +192,7 @@ export function AccountTable({
 
   // Track initial mount
   const isInitialMount = useRef(true)
-  
+
   // Initial load and when filters change
   useEffect(() => {
     if (isInitialMount.current) {
@@ -223,7 +225,7 @@ export function AccountTable({
     if (!amount && amount !== 0) {
       return 'Rp 0'
     }
-    
+
     // Handle very large numbers
     if (amount >= 1000000000000) {
       return `Rp ${(amount / 1000000000000).toFixed(1)}T`
@@ -261,7 +263,7 @@ export function AccountTable({
       console.warn('[AccountTable] Invalid accountId:', accountId)
       return
     }
-    
+
     if (checked) {
       const newIds = [...selectedAccountIds, accountId].filter(id => id && id !== 'null' && id !== 'undefined')
       console.log('[AccountTable] Select Account - New IDs:', newIds)
@@ -291,172 +293,172 @@ export function AccountTable({
                 Hide
               </Button>
               <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Cari toko, email, tim, atau site..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-              {searchQuery !== searchDebounce && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                </div>
-              )}
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Cari toko, email, tim, atau site..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+                {searchQuery !== searchDebounce && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Selected Accounts Info */}
-          {selectedAccountIds.length > 0 && (
-            <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
-              <p className="text-sm text-primary">
-                <strong>{selectedAccountIds.length}</strong> toko dipilih untuk melihat iklan
-              </p>
-            </div>
-          )}
+            {/* Selected Accounts Info */}
+            {selectedAccountIds.length > 0 && (
+              <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <p className="text-sm text-primary">
+                  <strong>{selectedAccountIds.length}</strong> toko dipilih untuk melihat iklan
+                </p>
+              </div>
+            )}
 
-          {/* Loading State */}
-          {loading && (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
-              <span className="ml-2 text-gray-600">Memuat data toko...</span>
-            </div>
-          )}
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+                <span className="ml-2 text-gray-600">Memuat data toko...</span>
+              </div>
+            )}
 
-          {/* Error State */}
-          {error && (
-            <div className="flex items-center justify-center py-8 text-destructive">
-              <AlertCircle className="w-6 h-6 mr-2" />
-              <span>{error}</span>
-            </div>
-          )}
+            {/* Error State */}
+            {error && (
+              <div className="flex items-center justify-center py-8 text-destructive">
+                <AlertCircle className="w-6 h-6 mr-2" />
+                <span>{error}</span>
+              </div>
+            )}
 
-          {/* Table */}
-          {!loading && !error && (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4">
-                          <Checkbox
-                            checked={filteredAccounts.length > 0 && selectedAccountIds.length === filteredAccounts.length}
-                            onCheckedChange={handleSelectAll}
-                          />
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-sm">TOKO</th>
-                        <th className="text-right py-3 px-4 font-medium text-sm">GMV</th>
-                      </tr>
-                    </thead>
-                <tbody>
-                  {filteredAccounts.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="text-center py-12">
-                        <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                        <p className="text-lg font-medium text-gray-600 mb-2">Tidak ada toko ditemukan</p>
-                        <p className="text-sm text-gray-400">Belum ada data toko yang terhubung di database.</p>
-                      </td>
+            {/* Table */}
+            {!loading && !error && (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4">
+                        <Checkbox
+                          checked={filteredAccounts.length > 0 && selectedAccountIds.length === filteredAccounts.length}
+                          onCheckedChange={handleSelectAll}
+                        />
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-sm">TOKO</th>
+                      <th className="text-right py-3 px-4 font-medium text-sm">GMV</th>
                     </tr>
-                  ) : (
-                    filteredAccounts.map((account) => {
-                      const accountId = account.id || account.username
-                      return (
-                      <tr 
-                        key={account.username} 
-                        className="border-b hover:bg-muted/50 cursor-pointer"
-                        onClick={() => handleSelectAccount(accountId, !selectedAccountIds.includes(accountId))}
-                      >
-                        <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={selectedAccountIds.includes(accountId)}
-                            onCheckedChange={(checked) => handleSelectAccount(accountId, checked as boolean)}
-                          />
+                  </thead>
+                  <tbody>
+                    {filteredAccounts.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="text-center py-12">
+                          <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                          <p className="text-lg font-medium text-gray-600 mb-2">Tidak ada toko ditemukan</p>
+                          <p className="text-sm text-gray-400">Belum ada data toko yang terhubung di database.</p>
                         </td>
-                        <td className="py-3 px-4">
-                          <div>
-                            <p className="font-medium text-sm">{account.nama_toko || account.username}</p>
-                            <p className="text-xs text-gray-600">{account.email}</p>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right text-sm">{formatCurrency(account.performa_data?.total_gmv)}</td>
                       </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+                    ) : (
+                      filteredAccounts.map((account) => {
+                        const accountId = account.id || account.username
+                        return (
+                          <tr
+                            key={account.username}
+                            className="border-b hover:bg-muted/50 cursor-pointer"
+                            onClick={() => handleSelectAccount(accountId, !selectedAccountIds.includes(accountId))}
+                          >
+                            <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={selectedAccountIds.includes(accountId)}
+                                onCheckedChange={(checked) => handleSelectAccount(accountId, checked as boolean)}
+                              />
+                            </td>
+                            <td className="py-3 px-4">
+                              <div>
+                                <p className="font-medium text-sm">{account.nama_toko || account.username}</p>
+                                <p className="text-xs text-gray-600">{account.email}</p>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right text-sm">{formatCurrency(account.performa_data?.total_gmv)}</td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-          {/* Pagination */}
-          {!loading && !error && totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span>Menampilkan {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalRecords)} dari {totalRecords} toko</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
+            {/* Pagination */}
+            {!loading && !error && totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>Menampilkan {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalRecords)} dari {totalRecords} toko</span>
                 </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Per halaman:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Per halaman:</span>
-                <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
+            )}
           </>
         ) : (
           <div className="flex items-center">

@@ -23,8 +23,8 @@ export function CTASection({ block, isPreview = false }: CTASectionProps) {
 
     return (
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16 px-6 rounded-lg text-center">
-            <h2 className="text-4xl font-bold mb-4">{headline}</h2>
-            {description && <p className="text-xl mb-8 opacity-90">{description}</p>}
+            <h2 className="text-4xl font-bold mb-4">{headline as any}</h2>
+            {description && <p className="text-xl mb-8 opacity-90">{description as any}</p>}
             <div className="flex gap-4 justify-center">
                 {primaryCtaText && (
                     <a
@@ -32,7 +32,7 @@ export function CTASection({ block, isPreview = false }: CTASectionProps) {
                         onClick={handleClick}
                         className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
                     >
-                        {primaryCtaText}
+                        {primaryCtaText as any}
                     </a>
                 )}
                 {secondaryCtaText && (
@@ -41,7 +41,7 @@ export function CTASection({ block, isPreview = false }: CTASectionProps) {
                         onClick={handleClick}
                         className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors cursor-pointer"
                     >
-                        {secondaryCtaText}
+                        {secondaryCtaText as any}
                     </a>
                 )}
             </div>

@@ -22,7 +22,8 @@ import {
   Shield,
   Key,
   ShoppingCart,
-  Ticket
+  Ticket,
+  Building2
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"

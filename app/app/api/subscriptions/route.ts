@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
           AND s.end_date > NOW()
         ORDER BY s.end_date DESC
         LIMIT 1`,
-                [user.id]
+                [user.userId]
             );
 
             connection.release();

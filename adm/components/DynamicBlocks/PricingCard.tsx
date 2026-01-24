@@ -48,15 +48,15 @@ export function PricingCard({ block, isPreview = false }: PricingCardProps) {
                 </div>
             )}
             <div className="text-center mb-6">
-                <h3 className="text-xl sm:text-2xl font-bold mb-2">{name}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold mb-2">{name as any}</h3>
                 <div className="mb-4">
                     <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-sm">{currency}</span>
+                        <span className="text-sm">{currency as any}</span>
                         <span className="text-3xl sm:text-4xl font-bold">
                             {Number(price).toLocaleString("id-ID")}
                         </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{period}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{period as any}</p>
                 </div>
             </div>
 
@@ -64,15 +64,15 @@ export function PricingCard({ block, isPreview = false }: PricingCardProps) {
                 {featuresArray.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
                         <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        <span className="text-sm text-muted-foreground">{feature}</span>
+                        <span className="text-sm text-muted-foreground">{feature as any}</span>
                     </li>
                 ))}
             </ul>
 
             <Button
                 className={`w-full ${isHighlighted
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-gray-100 text-gray-900 hover:bg-gray-200"
                     }`}
                 asChild
             >
@@ -80,7 +80,7 @@ export function PricingCard({ block, isPreview = false }: PricingCardProps) {
                     href={isPreview ? undefined : (ctaLink as string)}
                     onClick={handleClick}
                 >
-                    {ctaText}
+                    {ctaText as any}
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
             </Button>

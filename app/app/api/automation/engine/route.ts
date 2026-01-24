@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth'
+import { requireAuth, requireActiveStatus } from '@/lib/auth'
 
 // In-memory state (untuk development)
 // Untuk production, gunakan database atau Redis untuk state management
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   try {
     // Authenticate user and check active status
     const user = await requireActiveStatus(request)
-    
+
     // Only superadmin can control engine
     if (user.role !== 'superadmin') {
       return NextResponse.json(

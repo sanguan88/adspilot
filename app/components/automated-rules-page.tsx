@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { RuleList } from "./rule-list"
 import { RuleMetricsDashboard } from "./rule-metrics-dashboard"
 import { RuleCreationModal } from "./rule-creation-modal"
-import { AdvancedRuleCreationModal } from "./advanced-rule-creation-modal"
+import { MultiStepRuleModal as AdvancedRuleCreationModal } from "./multi-step-rule-modal"
 
 const ruleCategories = [
   {
