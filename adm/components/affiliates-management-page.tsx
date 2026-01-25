@@ -50,6 +50,7 @@ interface Affiliate {
   pendingCommissions: number
   commissionRate: number | null
   createdAt: string
+  voucherCode: string | null
 }
 
 interface Referral {
@@ -419,6 +420,7 @@ export function AffiliatesManagementPage() {
                       <TableRow>
                         <TableHead>Affiliate</TableHead>
                         <TableHead>Referral Code</TableHead>
+                        <TableHead>Kupon</TableHead>
                         <TableHead>Referrals</TableHead>
                         <TableHead>Total Commissions</TableHead>
                         <TableHead>Pending</TableHead>
@@ -454,6 +456,28 @@ export function AffiliatesManagementPage() {
                                 )}
                               </Button>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            {aff.voucherCode ? (
+                              <div className="flex items-center gap-2">
+                                <code className="text-xs bg-primary/5 text-primary px-2 py-1 rounded border border-primary/10">
+                                  {aff.voucherCode}
+                                </code>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(aff.voucherCode!)
+                                    toast.success("Voucher code copied!")
+                                  }}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Copy className="w-3 h-3 text-primary/60" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-xs italic">No Voucher</span>
+                            )}
                           </TableCell>
                           <TableCell>{aff.totalReferrals}</TableCell>
                           <TableCell>{formatPrice(aff.totalCommissions)}</TableCell>
@@ -851,6 +875,6 @@ export function AffiliatesManagementPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </div >
   )
 }

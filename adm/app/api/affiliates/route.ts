@@ -23,10 +23,12 @@ export async function GET(request: NextRequest) {
           a.status,
           a.commission_rate as "commissionRate",
           a.created_at as "createdAt",
+          av.voucher_code as "voucherCode",
           (SELECT COUNT(*) FROM affiliate_referrals WHERE affiliate_id = a.affiliate_id AND status = 'converted') as "totalReferrals",
           (SELECT COALESCE(SUM(amount), 0) FROM affiliate_commissions WHERE affiliate_id = a.affiliate_id AND status = 'paid') as "totalCommissions",
           (SELECT COALESCE(SUM(amount), 0) FROM affiliate_commissions WHERE affiliate_id = a.affiliate_id AND status = 'pending') as "pendingCommissions"
         FROM affiliates a
+        LEFT JOIN affiliate_vouchers av ON a.affiliate_id = av.affiliate_id
         WHERE 1=1
       `
       const queryParams: any[] = []
