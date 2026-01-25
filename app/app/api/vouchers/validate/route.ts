@@ -130,8 +130,8 @@ export async function POST(request: NextRequest) {
           voucher: {
             id: affVoucher.id,
             code: affVoucher.code,
-            name: `Voucher Affiliate - ${affVoucher.affiliate_name}`,
-            description: `Diskon ${affVoucher.discount_value}% dari affiliate`,
+            name: `Voucher ${Math.round(parseFloat(affVoucher.discount_value))}% berhasil digunakan`,
+            description: `Diskon otomatis ${Math.round(parseFloat(affVoucher.discount_value))}% diterapkan`,
             discountType: affVoucher.discount_type,
             discountValue: parseFloat(affVoucher.discount_value),
             maximumDiscount: null,
