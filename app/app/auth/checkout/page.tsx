@@ -281,54 +281,54 @@ function CheckoutContent() {
       const voucherParam = params.get('voucher')
       const refCode = params.get('ref')
 
-      // Priority 1: Direct Voucher Parameter (?voucher=KODEVOUCHER)
+      // Case 1: Direct Voucher Parameter (?voucher=KODEVOUCHER) - absolute priority
       if (voucherParam) {
-        console.log('[Checkout] Found direct voucher parameter:', voucherParam)
-        setVoucherCode(voucherParam.toUpperCase())
-        handleValidateVoucher(voucherParam.toUpperCase())
-        return // ABSOLUTE PRIORITY: Stop here, don't even check ref or global
+        console.log('[Checkout] Applying direct voucher from URL:', voucherParam)
+        const code = voucherParam.toUpperCase()
+        setVoucherCode(code)
+        handleValidateVoucher(code)
+        return // STOP: URL parameter is absolute priority
       }
 
-      // Priority 2: Referral Parameter (?ref=AFF123)
+      // Case 2: Referral Parameter (?ref=AFF123)
       if (refCode) {
         console.log('[Checkout] Found ref code, seeking affiliate voucher:', refCode)
         try {
           const response = await fetch(`/api/vouchers/affiliate-lookup?ref=${refCode}`)
           const result = await response.json()
           if (result.success && result.data?.voucherCode) {
-            console.log('[Checkout] Applying affiliate voucher from ref:', result.data.voucherCode)
+            console.log('[Checkout] Applying affiliate voucher found via ref:', result.data.voucherCode)
             setVoucherCode(result.data.voucherCode)
             handleValidateVoucher(result.data.voucherCode)
           } else {
-            console.log('[Checkout] Ref exists but no voucher found for this affiliate. Blocking fallback to global.')
-            // Clear if previously set by cookie
+            console.log('[Checkout] No voucher found for this affiliate ref. Maintaining empty field to respect ref priority.')
             setVoucherCode("")
           }
-          return // BLOCK FALLBACK: If ref exists, we DON'T want global voucher even if affiliate has no voucher
+          return // STOP: Even if no affiliate voucher found, we don't fall back if ?ref exists
         } catch (error) {
           console.error('Error fetching affiliate voucher:', error)
-          return // Stop here on error if ref exists
+          return
         }
       }
 
-      // Priority 3: Check affiliate voucher cookie (from previous visits)
+      // Case 3: Affiliate Cookie (previous clicks)
       const affiliateVoucher = getCookie('affiliate_voucher')
       if (affiliateVoucher) {
-        console.log('[Checkout] Applying affiliate voucher from cookie:', affiliateVoucher)
+        console.log('[Checkout] Applying voucher from affiliate cookie:', affiliateVoucher)
         setVoucherCode(affiliateVoucher)
         handleValidateVoucher(affiliateVoucher)
-        return // Block fallback if cookie exists
+        return // STOP: Cookie takes priority over global default
       }
 
-      // Priority 4: Global Default Voucher (Last Resort)
+      // Case 4: Global Default Voucher (Last Resort)
       try {
-        console.log('[Checkout] No affiliate/voucher parameters found. Checking global default...')
+        console.log('[Checkout] No ref/voucher params. Checking global master policy...')
         const response = await fetch('/api/payment-settings/public')
         const result = await response.json()
         if (result.success && result.data.defaultVoucherCode) {
-          // Only apply if user hasn't manually entered anything
+          // Double check: user hasn't typed anything while we were fetching
           if (!voucherCode.trim()) {
-            console.log('[Checkout] Applying global default voucher:', result.data.defaultVoucherCode)
+            console.log('[Checkout] Setting global default voucher:', result.data.defaultVoucherCode)
             setVoucherCode(result.data.defaultVoucherCode)
             handleValidateVoucher(result.data.defaultVoucherCode)
           }

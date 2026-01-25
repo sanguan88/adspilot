@@ -446,7 +446,7 @@ export function MyLinksPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama Campaign</TableHead>
-                  <TableHead className="w-[45%]">Link URL</TableHead>
+                  <TableHead className="w-[30%]">Link URL</TableHead>
                   <TableHead>Trend (7 Hari)</TableHead>
                   <TableHead>Clicks</TableHead>
                   <TableHead>Conversions</TableHead>
@@ -475,8 +475,8 @@ export function MyLinksPage() {
                         {/* 1. Direct Link */}
                         <div className="group">
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground/60 leading-none">Halaman Tujuan</span>
-                            <Badge variant="outline" className="text-[9px] py-0 h-4 bg-muted/30">Direct Link</Badge>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground/60 leading-none">Tracking Link</span>
+                            <Badge variant="outline" className="text-[9px] py-0 h-4 bg-muted/30">Direct</Badge>
                           </div>
                           <div className="flex items-center gap-2">
                             <code className="text-[11px] bg-muted/50 px-2 py-1 rounded flex-1 truncate border border-transparent group-hover:border-muted-foreground/20 transition-colors">
@@ -493,14 +493,14 @@ export function MyLinksPage() {
                           </div>
                         </div>
 
-                        {/* 2. Voucher Link (Si Raja) */}
+                        {/* 2. Voucher Link */}
                         <div className="border-t border-dashed pt-3 group">
                           <div className="flex items-center justify-between mb-1.5">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] uppercase font-bold text-primary/70 leading-none">Link Belanja</span>
-                              <Badge className="text-[9px] py-0 h-4 bg-primary text-primary-foreground border-none">Si Raja</Badge>
+                              <span className="text-[10px] uppercase font-bold text-primary/70 leading-none">Checkout Link</span>
+                              <Badge className="text-[9px] py-0 h-4 bg-primary text-primary-foreground border-none">Auto-Apply Voucher</Badge>
                             </div>
-                            <span className="text-[9px] text-muted-foreground font-medium italic">Auto-Apply Voucher & Privacy</span>
+                            <span className="text-[9px] text-muted-foreground font-medium italic">Privacy Protected</span>
                           </div>
                           <div className="flex items-center gap-2">
                             {voucher ? (
@@ -519,7 +519,7 @@ export function MyLinksPage() {
                               </>
                             ) : (
                               <div className="flex-1 flex items-center justify-between bg-muted/30 px-2 py-1 rounded border border-dashed border-muted-foreground/30">
-                                <span className="text-[10px] text-muted-foreground italic">Buat voucher di atas dahulu untuk mengaktifkan link sakti ini</span>
+                                <span className="text-[10px] text-muted-foreground italic">Buat voucher terlebih dahulu untuk mengaktifkan link checkout otomatis</span>
                                 <Ticket className="w-3 h-3 text-muted-foreground/40 animate-pulse" />
                               </div>
                             )}
