@@ -279,8 +279,8 @@ function CheckoutContent() {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search)
         const refCode = params.get('ref')
-        if (refCode && !voucherCode.trim()) {
-          console.log('[Checkout] Found ref code, fetching affiliate voucher:', refCode)
+        if (refCode) {
+          console.log('[Checkout] Found ref code, absolute priority mode:', refCode)
           try {
             const response = await fetch(`/api/vouchers/affiliate-lookup?ref=${refCode}`)
             const result = await response.json()
@@ -288,31 +288,36 @@ function CheckoutContent() {
               console.log('[Checkout] Applying affiliate voucher from ref:', result.data.voucherCode)
               setVoucherCode(result.data.voucherCode)
               handleValidateVoucher(result.data.voucherCode)
-              return // Don't check cookie/default if ref voucher exists
+              return // Successfully applied ref voucher
+            } else {
+              console.log('[Checkout] Ref exists but no voucher found for this affiliate. Blocking fallback to global voucher.')
+              return // BLOCK FALLBACK: If ref exists, we DON'T want global voucher
             }
           } catch (error) {
             console.error('Error fetching affiliate voucher:', error)
+            return // Stop here on error if ref exists
           }
         }
       }
 
       // Priority 2: Check affiliate voucher cookie
       const affiliateVoucher = getCookie('affiliate_voucher')
-      if (affiliateVoucher && !voucherCode.trim()) {
+      if (affiliateVoucher) {
         console.log('[Checkout] Applying affiliate voucher from cookie:', affiliateVoucher)
         setVoucherCode(affiliateVoucher)
         handleValidateVoucher(affiliateVoucher)
-        return // Don't check default if affiliate voucher exists
+        return // Block fallback if cookie exists
       }
 
       // Priority 3: Check default voucher from payment settings
       try {
+        console.log('[Checkout] No affiliate ref/cookie found. Checking global default voucher...')
         const response = await fetch('/api/payment-settings/public')
         const result = await response.json()
         if (result.success && result.data.defaultVoucherCode) {
           // Auto-apply default voucher if user hasn't entered a code
           if (!voucherCode.trim()) {
-            console.log('[Checkout] Applying default voucher:', result.data.defaultVoucherCode)
+            console.log('[Checkout] Applying global default voucher:', result.data.defaultVoucherCode)
             setVoucherCode(result.data.defaultVoucherCode)
             handleValidateVoucher(result.data.defaultVoucherCode)
           }

@@ -467,17 +467,67 @@ export function MyLinksPage() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <code className="text-xs bg-muted px-2 py-1 rounded max-w-xs truncate">
-                          {formatUrl(link.url)}
-                        </code>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => copyToClipboard(formatUrl(link.url))}
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
+                      <div className="space-y-2 py-1">
+                        {/* Landing Link */}
+                        <div className="flex items-center gap-2 group">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground/60 leading-none mb-1">Landing Page</span>
+                            <code className="text-xs bg-muted px-2 py-1 rounded max-w-[280px] truncate">
+                              {(() => {
+                                const formatted = formatUrl(link.url)
+                                return formatted.includes('checkout')
+                                  ? formatted.replace('/auth/checkout', '/')
+                                  : formatted
+                              })()}
+                            </code>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 opacity-50 group-hover:opacity-100 transition-opacity self-end"
+                            onClick={() => {
+                              const formatted = formatUrl(link.url)
+                              const final = formatted.includes('checkout')
+                                ? formatted.replace('/auth/checkout', '/')
+                                : formatted
+                              copyToClipboard(final)
+                            }}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+
+                        {/* Checkout Link */}
+                        <div className="flex items-center gap-2 group border-t pt-2">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground/60 leading-none mb-1">Checkout Page</span>
+                            <code className="text-xs bg-muted px-2 py-1 rounded max-w-[280px] truncate">
+                              {(() => {
+                                const formatted = formatUrl(link.url)
+                                return formatted.includes('checkout')
+                                  ? formatted
+                                  : formatted.replace('https://adspilot.id/', 'https://adspilot.id/auth/checkout/')
+                                    .replace('//auth', '/auth') // Fix double slash if any
+                                    .replace('.id/auth', '.id/auth') // Ensure domain-relative
+                              })()}
+                            </code>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 opacity-50 group-hover:opacity-100 transition-opacity self-end"
+                            onClick={() => {
+                              const formatted = formatUrl(link.url)
+                              const final = formatted.includes('checkout')
+                                ? formatted
+                                : formatted.replace('https://adspilot.id/', 'https://adspilot.id/auth/checkout/')
+                                  .replace('//auth', '/auth')
+                              copyToClipboard(final)
+                            }}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
