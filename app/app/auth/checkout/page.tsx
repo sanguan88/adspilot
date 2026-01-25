@@ -275,32 +275,43 @@ function CheckoutContent() {
     }
 
     const applyVoucher = async () => {
-      // Priority 1: Check ?ref= parameter in URL and fetch affiliate voucher
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search)
-        const refCode = params.get('ref')
-        if (refCode) {
-          console.log('[Checkout] Found ref code, absolute priority mode:', refCode)
-          try {
-            const response = await fetch(`/api/vouchers/affiliate-lookup?ref=${refCode}`)
-            const result = await response.json()
-            if (result.success && result.data?.voucherCode) {
-              console.log('[Checkout] Applying affiliate voucher from ref:', result.data.voucherCode)
-              setVoucherCode(result.data.voucherCode)
-              handleValidateVoucher(result.data.voucherCode)
-              return // Successfully applied ref voucher
-            } else {
-              console.log('[Checkout] Ref exists but no voucher found for this affiliate. Blocking fallback to global voucher.')
-              return // BLOCK FALLBACK: If ref exists, we DON'T want global voucher
-            }
-          } catch (error) {
-            console.error('Error fetching affiliate voucher:', error)
-            return // Stop here on error if ref exists
+      if (typeof window === 'undefined') return
+
+      const params = new URLSearchParams(window.location.search)
+      const voucherParam = params.get('voucher')
+      const refCode = params.get('ref')
+
+      // Priority 1: Direct Voucher Parameter (?voucher=KODEVOUCHER)
+      if (voucherParam) {
+        console.log('[Checkout] Found direct voucher parameter:', voucherParam)
+        setVoucherCode(voucherParam.toUpperCase())
+        handleValidateVoucher(voucherParam.toUpperCase())
+        return // ABSOLUTE PRIORITY: Stop here, don't even check ref or global
+      }
+
+      // Priority 2: Referral Parameter (?ref=AFF123)
+      if (refCode) {
+        console.log('[Checkout] Found ref code, seeking affiliate voucher:', refCode)
+        try {
+          const response = await fetch(`/api/vouchers/affiliate-lookup?ref=${refCode}`)
+          const result = await response.json()
+          if (result.success && result.data?.voucherCode) {
+            console.log('[Checkout] Applying affiliate voucher from ref:', result.data.voucherCode)
+            setVoucherCode(result.data.voucherCode)
+            handleValidateVoucher(result.data.voucherCode)
+          } else {
+            console.log('[Checkout] Ref exists but no voucher found for this affiliate. Blocking fallback to global.')
+            // Clear if previously set by cookie
+            setVoucherCode("")
           }
+          return // BLOCK FALLBACK: If ref exists, we DON'T want global voucher even if affiliate has no voucher
+        } catch (error) {
+          console.error('Error fetching affiliate voucher:', error)
+          return // Stop here on error if ref exists
         }
       }
 
-      // Priority 2: Check affiliate voucher cookie
+      // Priority 3: Check affiliate voucher cookie (from previous visits)
       const affiliateVoucher = getCookie('affiliate_voucher')
       if (affiliateVoucher) {
         console.log('[Checkout] Applying affiliate voucher from cookie:', affiliateVoucher)
@@ -309,13 +320,13 @@ function CheckoutContent() {
         return // Block fallback if cookie exists
       }
 
-      // Priority 3: Check default voucher from payment settings
+      // Priority 4: Global Default Voucher (Last Resort)
       try {
-        console.log('[Checkout] No affiliate ref/cookie found. Checking global default voucher...')
+        console.log('[Checkout] No affiliate/voucher parameters found. Checking global default...')
         const response = await fetch('/api/payment-settings/public')
         const result = await response.json()
         if (result.success && result.data.defaultVoucherCode) {
-          // Auto-apply default voucher if user hasn't entered a code
+          // Only apply if user hasn't manually entered anything
           if (!voucherCode.trim()) {
             console.log('[Checkout] Applying global default voucher:', result.data.defaultVoucherCode)
             setVoucherCode(result.data.defaultVoucherCode)

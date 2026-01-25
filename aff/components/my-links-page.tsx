@@ -445,12 +445,12 @@ export function MyLinksPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Link</TableHead>
+                  <TableHead>Nama Campaign</TableHead>
+                  <TableHead className="w-[45%]">Link URL</TableHead>
                   <TableHead>Trend (7 Hari)</TableHead>
                   <TableHead>Clicks</TableHead>
                   <TableHead>Conversions</TableHead>
-                  <TableHead>Conversion Rate</TableHead>
+                  <TableHead>Rate</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -459,74 +459,71 @@ export function MyLinksPage() {
                 {links.map((link) => (
                   <TableRow key={link.id}>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${link.type === 'landing'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-green-100 text-green-700'
-                        }`}>
-                        {link.type === 'landing' ? 'Landing Page' : 'Checkout'}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-sm">
+                          {link.type === 'landing' ? 'Landing Page' : 'Direct Checkout'}
+                        </span>
+                        {link.url.includes('ref=') && (
+                          <span className="text-[10px] text-muted-foreground font-mono">
+                            Ref: {link.url.split('ref=')[1].split('&')[0]}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-2 py-1">
-                        {/* Landing Link */}
-                        <div className="flex items-center gap-2 group">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground/60 leading-none mb-1">Landing Page</span>
-                            <code className="text-xs bg-muted px-2 py-1 rounded max-w-[280px] truncate">
-                              {(() => {
-                                const formatted = formatUrl(link.url)
-                                return formatted.includes('checkout')
-                                  ? formatted.replace('/auth/checkout', '/')
-                                  : formatted
-                              })()}
-                            </code>
+                      <div className="space-y-4 py-2">
+                        {/* 1. Direct Link */}
+                        <div className="group">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground/60 leading-none">Halaman Tujuan</span>
+                            <Badge variant="outline" className="text-[9px] py-0 h-4 bg-muted/30">Direct Link</Badge>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 opacity-50 group-hover:opacity-100 transition-opacity self-end"
-                            onClick={() => {
-                              const formatted = formatUrl(link.url)
-                              const final = formatted.includes('checkout')
-                                ? formatted.replace('/auth/checkout', '/')
-                                : formatted
-                              copyToClipboard(final)
-                            }}
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <code className="text-[11px] bg-muted/50 px-2 py-1 rounded flex-1 truncate border border-transparent group-hover:border-muted-foreground/20 transition-colors">
+                              {formatUrl(link.url)}
+                            </code>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
+                              onClick={() => copyToClipboard(formatUrl(link.url))}
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
                         </div>
 
-                        {/* Checkout Link */}
-                        <div className="flex items-center gap-2 group border-t pt-2">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground/60 leading-none mb-1">Checkout Page</span>
-                            <code className="text-xs bg-muted px-2 py-1 rounded max-w-[280px] truncate">
-                              {(() => {
-                                const formatted = formatUrl(link.url)
-                                return formatted.includes('checkout')
-                                  ? formatted
-                                  : formatted.replace('https://adspilot.id/', 'https://adspilot.id/auth/checkout/')
-                                    .replace('//auth', '/auth') // Fix double slash if any
-                                    .replace('.id/auth', '.id/auth') // Ensure domain-relative
-                              })()}
-                            </code>
+                        {/* 2. Voucher Link (Si Raja) */}
+                        <div className="border-t border-dashed pt-3 group">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] uppercase font-bold text-primary/70 leading-none">Link Belanja</span>
+                              <Badge className="text-[9px] py-0 h-4 bg-primary text-primary-foreground border-none">Si Raja</Badge>
+                            </div>
+                            <span className="text-[9px] text-muted-foreground font-medium italic">Auto-Apply Voucher & Privacy</span>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 opacity-50 group-hover:opacity-100 transition-opacity self-end"
-                            onClick={() => {
-                              const formatted = formatUrl(link.url)
-                              const final = formatted.includes('checkout')
-                                ? formatted
-                                : formatted.replace('https://adspilot.id/', 'https://adspilot.id/auth/checkout/')
-                                  .replace('//auth', '/auth')
-                              copyToClipboard(final)
-                            }}
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            {voucher ? (
+                              <>
+                                <code className="text-[11px] bg-primary/5 text-primary/80 px-2 py-1 rounded flex-1 truncate border border-primary/20 group-hover:bg-primary/10 transition-colors font-medium">
+                                  {`https://adspilot.id/auth/checkout/?voucher=${voucher.voucher_code}`}
+                                </code>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-primary hover:bg-primary hover:text-white transition-all shadow-sm"
+                                  onClick={() => copyToClipboard(`https://adspilot.id/auth/checkout/?voucher=${voucher.voucher_code}`)}
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </Button>
+                              </>
+                            ) : (
+                              <div className="flex-1 flex items-center justify-between bg-muted/30 px-2 py-1 rounded border border-dashed border-muted-foreground/30">
+                                <span className="text-[10px] text-muted-foreground italic">Buat voucher di atas dahulu untuk mengaktifkan link sakti ini</span>
+                                <Ticket className="w-3 h-3 text-muted-foreground/40 animate-pulse" />
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
