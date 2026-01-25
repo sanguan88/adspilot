@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
 import {
   BarChart3,
   Users,
@@ -43,6 +44,7 @@ interface SidebarItem {
   label: string
   href: string
   description?: string
+  showSeparatorAbove?: boolean
 }
 
 interface SidebarGroup {
@@ -102,7 +104,8 @@ const sidebarGroups: SidebarGroup[] = [
     id: "system",
     isCollapsible: true,
     items: [
-      { icon: Settings, label: "Settings", href: "/settings", description: "System settings & payments" },
+      { icon: Settings, label: "Settings", href: "/settings", description: "System settings & configurations" },
+      { icon: CreditCard, label: "Payment Settings", href: "/payment-settings", description: "Manage methods & automation", showSeparatorAbove: true },
       { icon: Shield, label: "Audit Logs", href: "/audit-logs", description: "Track all admin actions" },
       { icon: Monitor, label: "App Health", href: "/health", description: "Application health monitoring" },
       { icon: Activity, label: "Usage & Monitoring", href: "/usage", description: "Usage analytics dan monitoring" },
@@ -284,24 +287,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                           className="overflow-hidden space-y-1"
                         >
                           {group.items.map((item) => (
-                            <Link key={item.label} href={item.href}>
-                              <Button
-                                variant="ghost"
-                                className={cn(
-                                  "w-full justify-start gap-4 px-6 h-11 text-sm font-medium text-primary hover:bg-primary/20 rounded-none transition-all",
-                                  isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary shadow-none",
-                                )}
-                              >
-                                <item.icon className="w-5 h-5 shrink-0" />
-                                <motion.span
-                                  initial={{ opacity: 0, x: -10 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  className="truncate"
+                            <React.Fragment key={item.label}>
+                              {item.showSeparatorAbove && <Separator className="my-1 bg-primary/20 opacity-50" />}
+                              <Link href={item.href}>
+                                <Button
+                                  variant="ghost"
+                                  className={cn(
+                                    "w-full justify-start gap-4 px-6 h-11 text-sm font-medium text-primary hover:bg-primary/20 rounded-none transition-all",
+                                    isItemActive(item.href) && "bg-primary text-primary-foreground border-l-4 border-primary shadow-none",
+                                  )}
                                 >
-                                  {item.label}
-                                </motion.span>
-                              </Button>
-                            </Link>
+                                  <item.icon className="w-5 h-5 shrink-0" />
+                                  <motion.span
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="truncate"
+                                  >
+                                    {item.label}
+                                  </motion.span>
+                                </Button>
+                              </Link>
+                            </React.Fragment>
                           ))}
                         </motion.div>
                       )}
