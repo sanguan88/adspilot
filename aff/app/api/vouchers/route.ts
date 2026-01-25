@@ -89,6 +89,32 @@ export async function POST(request: NextRequest) {
 
         connection = await getDatabaseConnection()
 
+        // Fetch dynamic discount rate from default voucher
+        let voucherDiscountRate = 50.00 // fallback
+        try {
+            const defaultVoucherResult = await connection.query(
+                `SELECT v.discount_value 
+                 FROM payment_settings ps
+                 JOIN vouchers v ON ps.default_voucher_id = v.id
+                 WHERE ps.default_voucher_enabled = true 
+                 ORDER BY ps.id DESC LIMIT 1`
+            )
+
+            if (defaultVoucherResult.rows.length > 0) {
+                voucherDiscountRate = parseFloat(defaultVoucherResult.rows[0].discount_value)
+            } else {
+                // Fallback to affiliate_settings if no default voucher is set
+                const settingsResult = await connection.query(
+                    `SELECT setting_value FROM affiliate_settings WHERE setting_key = 'voucher_discount_rate' LIMIT 1`
+                )
+                if (settingsResult.rows.length > 0) {
+                    voucherDiscountRate = parseFloat(settingsResult.rows[0].setting_value)
+                }
+            }
+        } catch (vError) {
+            console.error('Error fetching dynamic discount for voucher creation:', vError)
+        }
+
         // Check if voucher code already exists (globally unique)
         const existing = await connection.query(
             `SELECT id FROM affiliate_vouchers WHERE voucher_code = $1`,
@@ -115,13 +141,13 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Create voucher with fixed 50% discount
+        // Create voucher with dynamic discount
         const insertResult = await connection.query(
             `INSERT INTO affiliate_vouchers 
           (affiliate_id, voucher_code, discount_type, discount_value, is_active)
-        VALUES ($1, $2, 'percentage', 50.00, true)
+        VALUES ($1, $2, 'percentage', $3, true)
         RETURNING id, voucher_code, discount_type, discount_value, is_active, created_at`,
-            [affiliate.affiliateId, sanitizedCode]
+            [affiliate.affiliateId, sanitizedCode, voucherDiscountRate]
         )
 
         return NextResponse.json({

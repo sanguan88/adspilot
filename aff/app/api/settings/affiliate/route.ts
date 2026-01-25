@@ -16,18 +16,37 @@ export async function GET(request: NextRequest) {
         )
 
         // Convert rows to object
-        const settings: Record<string, string> = {}
+        const dbSettings: Record<string, string> = {}
         result.rows.forEach((row: any) => {
-            settings[row.setting_key] = row.setting_value
+            dbSettings[row.setting_key] = row.setting_value
         })
+
+        // Fetch default voucher discount if enabled
+        let voucherDiscountRate = parseFloat(dbSettings.voucher_discount_rate || '50')
+
+        try {
+            const defaultVoucherResult = await connection.query(
+                `SELECT v.discount_value 
+                 FROM payment_settings ps
+                 JOIN vouchers v ON ps.default_voucher_id = v.id
+                 WHERE ps.default_voucher_enabled = true 
+                 ORDER BY ps.id DESC LIMIT 1`
+            )
+
+            if (defaultVoucherResult.rows.length > 0) {
+                voucherDiscountRate = parseFloat(defaultVoucherResult.rows[0].discount_value)
+            }
+        } catch (vError) {
+            console.error('Error fetching default voucher for affiliate settings:', vError)
+        }
 
         return NextResponse.json({
             success: true,
             data: {
-                defaultCommissionRate: parseFloat(settings.default_commission_rate || '30'),
-                voucherDiscountRate: parseFloat(settings.voucher_discount_rate || '50'),
-                minWithdrawalAmount: parseFloat(settings.min_withdrawal_amount || '100000'),
-                cookieExpirationDays: parseInt(settings.cookie_expiration_days || '90')
+                defaultCommissionRate: parseFloat(dbSettings.default_commission_rate || '30'),
+                voucherDiscountRate: voucherDiscountRate,
+                minWithdrawalAmount: parseFloat(dbSettings.min_withdrawal_amount || '100000'),
+                cookieExpirationDays: parseInt(dbSettings.cookie_expiration_days || '90')
             }
         })
     } catch (error: any) {

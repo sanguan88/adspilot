@@ -72,8 +72,8 @@ export function MyLinksPage() {
   const [linkToDelete, setLinkToDelete] = useState<string | null>(null)
 
   const [settings, setSettings] = useState<AffiliateSettings>({
-    discountRate: 50,
-    commissionRate: 30
+    discountRate: 0,
+    commissionRate: 0
   })
 
   useEffect(() => {
