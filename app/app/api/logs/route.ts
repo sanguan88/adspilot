@@ -7,6 +7,7 @@ import { isDatabaseConnectionError, getGenericDatabaseErrorMessage, sanitizeErro
 import { getUserRole, checkPermission, checkCanAccessAll } from '@/lib/role-checker'
 
 export async function GET(request: NextRequest) {
+  console.log(`[DEBUG LOGS API] Request received at ${new Date().toISOString()} - ANTI-GRAVITY ACTIVE`)
   let connection: PoolClient | null = null
 
   try {

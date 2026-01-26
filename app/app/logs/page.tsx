@@ -370,7 +370,7 @@ export default function LogsPage() {
           <div className="bg-white border-b border-gray-200 px-8 py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Otomasi - V2</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Otomasi</h1>
                 <p className="text-sm text-gray-500 mt-1.5">Pantau semua eksekusi rule otomatis dan aktivitas sistem di akun Anda secara real-time</p>
               </div>
               <div className="flex items-center gap-3">

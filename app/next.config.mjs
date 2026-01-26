@@ -20,7 +20,6 @@ const nextConfig = {
         ignored: [
           '**/node_modules/**',
           '**/.git/**',
-          '**/C:/**', // Ignore C: drive root
         ],
       }
     }
