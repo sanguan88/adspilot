@@ -127,20 +127,21 @@ export function OrdersManagementPage() {
   const [actionNotes, setActionNotes] = useState("")
   const [processing, setProcessing] = useState(false)
   const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(20)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
 
   useEffect(() => {
     fetchOrders()
     fetchAnalytics()
-  }, [page, statusFilter, planFilter, startDate, endDate, orderBy, orderDir])
+  }, [page, limit, statusFilter, planFilter, startDate, endDate, orderBy, orderDir])
 
   const fetchOrders = async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams()
       params.append("page", page.toString())
-      params.append("limit", "20")
+      params.append("limit", limit.toString())
       if (statusFilter) params.append("status", statusFilter)
       if (planFilter) params.append("planId", planFilter)
       if (startDate) params.append("startDate", startDate)
@@ -717,8 +718,30 @@ export function OrdersManagementPage() {
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between mt-4">
-                    <div className={typography.muted}>
-                      Halaman {page} dari {totalPages}
+                    <div className="flex items-center gap-4">
+                      <div className={typography.muted}>
+                        Halaman {page} dari {totalPages}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">Rows per page:</span>
+                        <Select
+                          value={limit.toString()}
+                          onValueChange={(value) => {
+                            setLimit(parseInt(value))
+                            setPage(1)
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[70px]">
+                            <SelectValue placeholder={limit.toString()} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button
