@@ -293,6 +293,13 @@ function CheckoutContent() {
       // Case 2: Referral Parameter (?ref=AFF123)
       if (refCode) {
         console.log('[Checkout] Found ref code, seeking affiliate voucher:', refCode)
+
+        // Redundant save to cookie (Double Protection)
+        const expiryDate = new Date()
+        expiryDate.setDate(expiryDate.getDate() + 90) // 3 months
+        const cookieDomain = window.location.hostname.includes('adspilot.id') ? '; domain=.adspilot.id' : '';
+        document.cookie = `referral_code=${refCode}; expires=${expiryDate.toUTCString()}; path=/; samesite=strict${cookieDomain}`
+
         try {
           const response = await fetch(`/api/vouchers/affiliate-lookup?ref=${refCode}`)
           const result = await response.json()

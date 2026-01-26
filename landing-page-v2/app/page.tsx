@@ -145,7 +145,10 @@ export default function LandingPage() {
       if (!existingRef) {
         const expiryDate = new Date()
         expiryDate.setDate(expiryDate.getDate() + 90) // 3 months
-        document.cookie = `referral_code=${refCode}; expires=${expiryDate.toUTCString()}; path=/; samesite=strict`
+
+        // Use domain=.adspilot.id for cross-subdomain support
+        const cookieDomain = window.location.hostname.includes('adspilot.id') ? '; domain=.adspilot.id' : '';
+        document.cookie = `referral_code=${refCode}; expires=${expiryDate.toUTCString()}; path=/; samesite=strict${cookieDomain}`
 
         // Track first click date
         if (!localStorage.getItem('referral_first_click')) {
@@ -164,7 +167,9 @@ export default function LandingPage() {
             if (result.success && result.data?.voucherCode) {
               const expiryDate = new Date()
               expiryDate.setDate(expiryDate.getDate() + 90) // 3 months
-              document.cookie = `affiliate_voucher=${result.data.voucherCode}; expires=${expiryDate.toUTCString()}; path=/; samesite=strict`
+              // Use domain=.adspilot.id for cross-subdomain support
+              const cookieDomain = window.location.hostname.includes('adspilot.id') ? '; domain=.adspilot.id' : '';
+              document.cookie = `affiliate_voucher=${result.data.voucherCode}; expires=${expiryDate.toUTCString()}; path=/; samesite=strict${cookieDomain}`
               console.log('[Affiliate] Voucher auto-injected:', result.data.voucherCode)
             }
           })
@@ -262,7 +267,9 @@ export default function LandingPage() {
 
   // Helper function to generate checkout URL with plan parameter AND preserve ref
   const getCheckoutUrl = (planId: string) => {
-    let url = `${APP_URL}/auth/checkout?plan=${planId}`
+    // Determine the base checkout URL
+    const baseUrl = `${APP_URL}/auth/checkout?plan=${planId}`
+    let url = baseUrl
 
     // Preserve ref parameter if present in current URL
     if (typeof window !== 'undefined') {
@@ -1115,7 +1122,7 @@ export default function LandingPage() {
                       asChild
                       onClick={handleCTAClick}
                     >
-                      <Link href={`${APP_URL}/auth/checkout?plan=${plan.planId}`}>
+                      <Link href={getCheckoutUrl(plan.planId)}>
                         Langganan Sekarang
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
