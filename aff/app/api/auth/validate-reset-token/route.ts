@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
             `SELECT affiliate_id 
        FROM affiliates 
        WHERE reset_password_token = $1 
-       AND reset_password_expires > NOW() AT TIME ZONE 'UTC'`,
+       AND reset_password_expires > (NOW() AT TIME ZONE 'Asia/Jakarta') AT TIME ZONE 'UTC'`,
             [token]
         );
 
