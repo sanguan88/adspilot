@@ -400,7 +400,7 @@ export async function GET(request: NextRequest) {
         rule: log.rule_name || 'Unknown Rule',
         action: actionType,
         target: target,
-        status: log.status === 'success' ? 'Berhasil Trigger' : 'Gagal Trigger',
+        status: isSkipped ? 'Dilewati' : (log.status === 'success' ? 'Berhasil' : 'Gagal'),
         details: detailsSummary,
         account: account,
         // Additional data for filtering and UI

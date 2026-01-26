@@ -249,14 +249,13 @@ export default function LogsPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "success":
-      case "Berhasil Trigger":
+      case "Berhasil":
         return <CheckCircle className="w-4 h-4 text-emerald-600" />
       case "failed":
       case "Gagal":
         return <XCircle className="w-4 h-4 text-rose-600" />
-      case "pending":
-      case "Menunggu":
-        return <Clock className="w-4 h-4 text-amber-600" />
+      case "Dilewati":
+        return <AlertCircle className="w-4 h-4 text-amber-600" />
       default:
         return <AlertCircle className="w-4 h-4 text-slate-500" />
     }
@@ -265,11 +264,13 @@ export default function LogsPage() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "success":
+      case "Berhasil":
         return "Berhasil"
       case "failed":
+      case "Gagal":
         return "Gagal"
-      case "pending":
-        return "Menunggu"
+      case "Dilewati":
+        return "Dilewati"
       default:
         return status
     }
@@ -283,6 +284,9 @@ export default function LogsPage() {
       return "bg-rose-50 text-rose-700 border-rose-200"
     }
     if (status === "pending" || status === "Menunggu") {
+      return "bg-amber-50 text-amber-700 border-amber-200"
+    }
+    if (status === "Dilewati") {
       return "bg-amber-50 text-amber-700 border-amber-200"
     }
     return "bg-slate-50 text-slate-700 border-slate-200"
@@ -413,6 +417,7 @@ export default function LogsPage() {
                   <SelectItem value="all">Semua Status</SelectItem>
                   <SelectItem value="success">Berhasil</SelectItem>
                   <SelectItem value="failed">Gagal</SelectItem>
+                  <SelectItem value="Dilewati">Dilewati</SelectItem>
                   <SelectItem value="pending">Menunggu</SelectItem>
                 </SelectContent>
               </Select>
