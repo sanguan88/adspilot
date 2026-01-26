@@ -24,7 +24,7 @@ export interface UserPayload {
  * Generate JWT token untuk user
  */
 export function generateToken(payload: UserPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, JWT_SECRET!, {
     expiresIn: '7d', // Token berlaku 7 hari
   });
 }
@@ -34,7 +34,7 @@ export function generateToken(payload: UserPayload): string {
  */
 export function verifyToken(token: string): UserPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as UserPayload;
+    const decoded = jwt.verify(token, JWT_SECRET!) as UserPayload;
     return decoded;
   } catch (error) {
     return null;
@@ -127,8 +127,8 @@ export async function requireActiveStatus(request: NextRequest): Promise<UserPay
   let connection = null;
 
   try {
-    // Get connection with retry mechanism
-    connection = await getDatabaseConnection(3);
+    // Get connection
+    connection = await getDatabaseConnection();
 
     // Query status_user dari database (real-time check, tidak dari JWT)
     const result = await connection.query(

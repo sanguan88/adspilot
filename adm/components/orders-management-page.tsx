@@ -112,6 +112,7 @@ export function OrdersManagementPage() {
   const [analytics, setAnalytics] = useState<OrderAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [searchField, setSearchField] = useState("all")
   const [statusFilter, setStatusFilter] = useState("")
   const [planFilter, setPlanFilter] = useState("")
   const [startDate, setStartDate] = useState("")
@@ -134,7 +135,19 @@ export function OrdersManagementPage() {
   useEffect(() => {
     fetchOrders()
     fetchAnalytics()
-  }, [page, limit, statusFilter, planFilter, startDate, endDate, orderBy, orderDir])
+  }, [page, limit, statusFilter, planFilter, startDate, endDate, orderBy, orderDir, searchField])
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (page === 1) {
+        fetchOrders()
+      } else {
+        setPage(1)
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [search])
 
   const fetchOrders = async () => {
     try {
@@ -148,6 +161,8 @@ export function OrdersManagementPage() {
       if (endDate) params.append("endDate", endDate)
       if (orderBy) params.append("orderBy", orderBy)
       if (orderDir) params.append("orderDir", orderDir)
+      if (search) params.append("q", search)
+      if (searchField) params.append("f", searchField)
 
       const response = await authenticatedFetch(`/api/orders?${params.toString()}`)
       const data = await response.json()
@@ -313,17 +328,7 @@ export function OrdersManagementPage() {
     }
   }
 
-  const filteredOrders = orders.filter((order) => {
-    if (search) {
-      const searchLower = search.toLowerCase()
-      return (
-        order.orderNumber.toLowerCase().includes(searchLower) ||
-        order.username.toLowerCase().includes(searchLower) ||
-        order.email.toLowerCase().includes(searchLower)
-      )
-    }
-    return true
-  })
+  // Unused client-side filter removed as it's now server-side
 
   return (
     <div className={pageLayout.container}>
@@ -465,60 +470,80 @@ export function OrdersManagementPage() {
         {/* Filters */}
         <Card className={filterPanel.container}>
           <CardContent className={filterPanel.content}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
               {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Order ID / Username"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="lg:col-span-5 flex gap-0">
+                <Select value={searchField} onValueChange={setSearchField}>
+                  <SelectTrigger className="w-[130px] rounded-r-none border-r-0 focus:ring-0 h-9 transition-all">
+                    <SelectValue placeholder="Field" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Fields</SelectItem>
+                    <SelectItem value="transaction_id">ID Transaksi</SelectItem>
+                    <SelectItem value="username">Username</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="plan">Nama Paket</SelectItem>
+                    <SelectItem value="voucher">Voucher</SelectItem>
+                    <SelectItem value="referral">Referral</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
+                  <Input
+                    placeholder={`Cari ${searchField === 'all' ? 'semua kolom' : searchField}...`}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 rounded-l-none focus-visible:ring-1 h-9 text-sm"
+                  />
+                </div>
               </div>
 
               {/* Status Filter */}
-              <Select value={statusFilter || "all"} onValueChange={(value) => {
-                setStatusFilter(value === "all" ? "" : value)
-                setPage(1)
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Semua Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="waiting_confirmation">Menunggu Verifikasi</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="lg:col-span-2">
+                <Select value={statusFilter || "all"} onValueChange={(value) => {
+                  setStatusFilter(value === "all" ? "" : value)
+                  setPage(1)
+                }}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Semua Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="waiting_confirmation">Menunggu Verifikasi</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Plan Filter */}
-              <Select value={planFilter || "all"} onValueChange={(value) => {
-                setPlanFilter(value === "all" ? "" : value)
-                setPage(1)
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Semua Paket" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Paket</SelectItem>
-                  <SelectItem value="trial">Trial</SelectItem>
-                  <SelectItem value="basic">Basic (Monthly)</SelectItem>
-                  <SelectItem value="silver">Silver (Monthly)</SelectItem>
-                  <SelectItem value="gold">Gold (Monthly)</SelectItem>
-                  <SelectItem value="1-month">Paket 1 Bulan</SelectItem>
-                  <SelectItem value="3-month">Paket 3 Bulan</SelectItem>
-                  <SelectItem value="6-month">Paket 6 Bulan</SelectItem>
-                  <SelectItem value="12-month">Paket 12 Bulan</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="lg:col-span-2">
+                <Select value={planFilter || "all"} onValueChange={(value) => {
+                  setPlanFilter(value === "all" ? "" : value)
+                  setPage(1)
+                }}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Semua Paket" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Paket</SelectItem>
+                    <SelectItem value="trial">Trial</SelectItem>
+                    <SelectItem value="basic">Basic (Monthly)</SelectItem>
+                    <SelectItem value="silver">Silver (Monthly)</SelectItem>
+                    <SelectItem value="gold">Gold (Monthly)</SelectItem>
+                    <SelectItem value="1-month">Paket 1 Bulan</SelectItem>
+                    <SelectItem value="3-month">Paket 3 Bulan</SelectItem>
+                    <SelectItem value="6-month">Paket 6 Bulan</SelectItem>
+                    <SelectItem value="12-month">Paket 12 Bulan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Date Filters */}
-              <div className="flex gap-2">
+              <div className="lg:col-span-3 flex gap-2">
                 <div className="flex-1">
                   <Input
                     type="date"
@@ -527,7 +552,7 @@ export function OrdersManagementPage() {
                       setStartDate(e.target.value)
                       setPage(1)
                     }}
-                    className="text-xs"
+                    className="h-9 text-[11px] px-2"
                     title="Start Date"
                   />
                 </div>
@@ -539,7 +564,7 @@ export function OrdersManagementPage() {
                       setEndDate(e.target.value)
                       setPage(1)
                     }}
-                    className="text-xs"
+                    className="h-9 text-[11px] px-2"
                     title="End Date"
                   />
                 </div>
@@ -580,7 +605,7 @@ export function OrdersManagementPage() {
           <CardContent>
             {loading ? (
               <TableSkeleton rows={5} columns={9} />
-            ) : filteredOrders.length === 0 ? (
+            ) : orders.length === 0 ? (
               <EmptyState
                 icon={<ShoppingCart className="w-12 h-12" />}
                 title="Tidak ada order ditemukan"
@@ -618,7 +643,7 @@ export function OrdersManagementPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredOrders.map((order) => (
+                    {orders.map((order) => (
                       <TableRow key={order.id}>
                         <TableCell className="font-medium font-mono text-xs">
                           {order.transactionId || order.orderNumber}
@@ -630,7 +655,9 @@ export function OrdersManagementPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium">{order.planName}</div>
+                          <div className="font-medium">
+                            {order.planName === 'addon-extra_accounts-1-fixed' ? 'Addon Toko' : order.planName}
+                          </div>
                           {order.durationMonths && (
                             <div className="text-[10px] text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded w-fit mt-1">
                               {order.durationMonths} {order.billingCycle === 'monthly' ? 'Bulan' : order.billingCycle === 'annually' ? 'Tahun' : 'Bulan'}
@@ -789,7 +816,9 @@ export function OrdersManagementPage() {
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">Plan</label>
-                    <p className="text-sm">{selectedOrder.planName}</p>
+                    <p className="text-sm">
+                      {selectedOrder.planName === 'addon-extra_accounts-1-fixed' ? 'Addon Toko' : selectedOrder.planName}
+                    </p>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">Status</label>
@@ -984,7 +1013,9 @@ export function OrdersManagementPage() {
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Paket</Label>
-                    <p className="text-sm font-medium">{selectedOrder.planName}</p>
+                    <p className="text-sm font-medium">
+                      {selectedOrder.planName === 'addon-extra_accounts-1-fixed' ? 'Addon Toko' : selectedOrder.planName}
+                    </p>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Total Pembayaran</Label>

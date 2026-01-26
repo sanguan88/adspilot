@@ -1,14 +1,14 @@
 // Page Builder Types
 
 export type BlockType =
-    | 'hero-banner'
-    | 'feature-card'
-    | 'pricing-card'
-    | 'testimonial-card'
-    | 'cta-section'
-    | 'faq-item'
-    | 'stats-counter'
-    | 'logo-grid'
+    | 'hero'
+    | 'feature'
+    | 'pricing'
+    | 'testimonial'
+    | 'cta'
+    | 'faq'
+    | 'stats'
+    | 'logos'
     | 'promo-banner-ref';
 
 export type SectionType =
@@ -50,21 +50,18 @@ export interface PageBuilderData {
     updated_by: string | null;
 }
 
-// Block Type Definitions with default components
-export const BLOCK_DEFINITIONS: Record<
-    BlockType,
-    {
+export interface BlockDefinition {
+    label: string;
+    icon: string;
+    defaultComponents: BlockComponents;
+    fields: Array<{
+        key: string;
         label: string;
-        icon: string;
-        defaultComponents: BlockComponents;
-        fields: Array<{
-            key: string;
-            label: string;
-            type: 'text' | 'textarea' | 'richtext' | 'image' | 'url' | 'color' | 'select';
-            options?: string[];
-            placeholder?: string;
-        }>;
-    };
+        type: 'text' | 'textarea' | 'richtext' | 'image' | 'url' | 'color' | 'select';
+        options?: string[];
+        placeholder?: string;
+    }>;
+}
 
 // Block Type Definitions with default components
 export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {

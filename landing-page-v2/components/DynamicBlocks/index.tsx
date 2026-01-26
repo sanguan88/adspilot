@@ -1,4 +1,5 @@
 // Dynamic Block Components - Component mapping and exports
+import React from "react"
 
 export { HeroBlock } from "./HeroBlock"
 export { FeatureCard } from "./FeatureCard"

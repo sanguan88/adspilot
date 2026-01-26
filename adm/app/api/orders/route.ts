@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate') || ''
     const orderBy = searchParams.get('orderBy') || 'created_at'
     const orderDir = searchParams.get('orderDir') || 'DESC'
+    const query = searchParams.get('q') || ''
+    const field = searchParams.get('f') || 'all'
 
     // Validate orderBy and orderDir to prevent injection
     const allowedSortFields = ['created_at', 'total_amount', 'payment_status', 'plan_id', 'transaction_id']
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     const result = await withDatabaseConnection(async (connection) => {
       // Query transactions with user info
-      let query = `
+      let sqlQuery = `
         SELECT 
           t.id,
           t.transaction_id,
@@ -71,52 +73,85 @@ export async function GET(request: NextRequest) {
 
       if (paymentStatus) {
         paramCount++
-        query += ` AND t.payment_status = $${paramCount}`
+        sqlQuery += ` AND t.payment_status = $${paramCount}`
         params.push(paymentStatus)
       }
 
       if (userId) {
         paramCount++
-        query += ` AND t.user_id = $${paramCount}`
+        sqlQuery += ` AND t.user_id = $${paramCount}`
         params.push(userId)
       }
 
       if (planId) {
         paramCount++
-        query += ` AND t.plan_id = $${paramCount}`
+        sqlQuery += ` AND t.plan_id = $${paramCount}`
         params.push(planId)
       }
 
       if (startDate) {
         paramCount++
-        query += ` AND t.created_at >= $${paramCount}`
+        sqlQuery += ` AND t.created_at >= $${paramCount}`
         params.push(startDate)
       }
 
       if (endDate) {
         paramCount++
-        query += ` AND t.created_at <= $${paramCount}`
+        sqlQuery += ` AND t.created_at <= $${paramCount}`
         params.push(endDate)
       }
 
+      // Universal Search Logic
+      if (query) {
+        paramCount++
+        const searchVal = `%${query}%`
+        params.push(searchVal)
+
+        if (field === 'transaction_id') {
+          sqlQuery += ` AND t.transaction_id ILIKE $${paramCount}`
+        } else if (field === 'username') {
+          sqlQuery += ` AND u.username ILIKE $${paramCount}`
+        } else if (field === 'email') {
+          sqlQuery += ` AND u.email ILIKE $${paramCount}`
+        } else if (field === 'plan') {
+          sqlQuery += ` AND (sp.name ILIKE $${paramCount} OR t.plan_id ILIKE $${paramCount})`
+        } else if (field === 'voucher') {
+          sqlQuery += ` AND t.voucher_code ILIKE $${paramCount}`
+        } else if (field === 'referral') {
+          sqlQuery += ` AND (a.affiliate_code ILIKE $${paramCount} OR u.referred_by_affiliate ILIKE $${paramCount})`
+        } else {
+          // Field 'all' or default
+          sqlQuery += ` AND (
+            t.transaction_id ILIKE $${paramCount} OR 
+            u.username ILIKE $${paramCount} OR 
+            u.email ILIKE $${paramCount} OR 
+            sp.name ILIKE $${paramCount} OR 
+            t.plan_id ILIKE $${paramCount} OR 
+            t.voucher_code ILIKE $${paramCount} OR 
+            a.affiliate_code ILIKE $${paramCount} OR 
+            u.referred_by_affiliate ILIKE $${paramCount}
+          )`
+        }
+      }
+
       // Get total count
-      const countQuery = query.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM')
+      const countQuery = sqlQuery.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM')
       const countParams = [...params]
       const countResult = await connection.query(countQuery, countParams)
       const total = parseInt(countResult.rows[0]?.total || '0')
 
       // Add sorting and pagination
-      query += ` ORDER BY ${finalOrderBy} ${finalOrderDir}`
+      sqlQuery += ` ORDER BY ${finalOrderBy} ${finalOrderDir}`
 
       paramCount++
-      query += ` LIMIT $${paramCount}`
+      sqlQuery += ` LIMIT $${paramCount}`
       params.push(limit)
 
       paramCount++
-      query += ` OFFSET $${paramCount}`
+      sqlQuery += ` OFFSET $${paramCount}`
       params.push(offset)
 
-      const transactionsResult = await connection.query(query, params)
+      const transactionsResult = await connection.query(sqlQuery, params)
 
       // Map transactions to orders format
       const orders = transactionsResult.rows.map((row: any) => {

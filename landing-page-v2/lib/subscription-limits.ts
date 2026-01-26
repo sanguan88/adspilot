@@ -162,11 +162,13 @@ export async function getUserSubscriptionLimits(
 
     if (subscriptionResult.rows.length > 0) {
       planId = subscriptionResult.rows[0].plan_id
-      planFeatures = getPlanFeatures(planId)
-      const plan = SUBSCRIPTION_PLANS.find((p: Plan) => p.id === planId)
-      
-      if (plan) {
-        planName = plan.name
+      if (planId) {
+        planFeatures = getPlanFeatures(planId)
+        const plan = SUBSCRIPTION_PLANS.find((p: Plan) => p.id === planId)
+
+        if (plan) {
+          planName = plan.name
+        }
       }
     }
 
@@ -178,7 +180,7 @@ export async function getUserSubscriptionLimits(
     // Apply override if exists
     if (overrideResult.rows.length > 0) {
       const override = overrideResult.rows[0]
-      
+
       // Override logic: NULL in override = use plan default, non-NULL = use override value
       return {
         planId: planId || null,
@@ -351,8 +353,8 @@ export async function validateCampaignsLimitForSync(
 ): Promise<{ allowed: boolean; allowedCampaignIds: string[]; skippedCount: number; error?: string; usage?: number; limit?: number }> {
   // Skip validation for admin/superadmin - allow all campaigns
   if (userRole === 'admin' || userRole === 'superadmin') {
-    return { 
-      allowed: true, 
+    return {
+      allowed: true,
       allowedCampaignIds: campaignIds,
       skippedCount: 0
     }
@@ -381,7 +383,7 @@ export async function validateCampaignsLimitForSync(
     [userId, campaignIds]
   )
   const existingCampaignIds = existingCampaignsResult.rows.map((row: any) => row.campaign_id.toString())
-  
+
   // Filter out existing campaigns (these are updates, not new campaigns)
   const newCampaignIds = campaignIds.filter(id => !existingCampaignIds.includes(id.toString()))
   const newCampaignsCount = newCampaignIds.length
@@ -400,7 +402,7 @@ export async function validateCampaignsLimitForSync(
       allowed: allowedCampaignIds.length > 0, // At least some campaigns are allowed
       allowedCampaignIds,
       skippedCount,
-      error: skippedCount > 0 
+      error: skippedCount > 0
         ? `Sync akan melewati ${skippedCount} campaign baru karena melebihi batas limit. Limit: ${limit}, Usage: ${currentUsage}, New: ${newCampaignsCount}. Upgrade plan untuk sync semua campaign.`
         : undefined,
       usage: currentUsage,
