@@ -142,7 +142,7 @@ export async function getScheduledRules(): Promise<ScheduledRule[]> {
         rule_id, name, user_id, campaign_assignments, conditions, actions,
         telegram_notification, selected_interval, selected_times, selected_days,
         selected_dates, date_time_map,
-        execution_mode, update_at as last_executed_at
+        execution_mode, last_executed_at
       FROM data_rules
       WHERE status = 'active'
         AND execution_mode IN ('continuous', 'specific', 'interval', 'auto')

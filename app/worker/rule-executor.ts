@@ -74,15 +74,25 @@ async function getTelegramChatId(userId: string): Promise<string | null> {
 }
 
 /**
- * Update rule statistics
+ * Update rule statistics and last execution time
  */
 async function updateRuleStatistics(
   ruleId: string,
-  success: boolean
+  success: boolean,
+  isExecuting: boolean = false
 ): Promise<void> {
   const connection = await getDatabaseConnection()
 
   try {
+    if (isExecuting) {
+      // Update only last_executed_at when starting
+      await connection.query(
+        `UPDATE data_rules SET last_executed_at = NOW() WHERE rule_id = $1`,
+        [ruleId]
+      )
+      return
+    }
+
     if (success) {
       // Increment triggers and success_count
       await connection.query(
@@ -475,6 +485,9 @@ export async function executeRule(rule: ScheduledRule): Promise<boolean> {
     `Tokos: ${Object.keys(rule.campaign_assignments).length}, ` +
     `Total campaigns: ${Object.values(rule.campaign_assignments).flat().length}`
   )
+
+  // Update last_executed_at immediately when starting
+  await updateRuleStatistics(rule.rule_id, true, true)
 
   let totalExecuted = 0
   let totalErrors = 0

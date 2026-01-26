@@ -52,27 +52,48 @@ async function executeScheduledRules(): Promise<void> {
 
     if (rules.length === 0) {
       logger.info('No rules to execute')
+      isRunning = false // Release lock if no rules
       return
     }
 
-    // Execute rules in parallel to allow multiple users/rules to start at the same time.
-    // Each rule may have its own staggered delay (20-40s per campaign).
-    // Using Promise.all allows the worker to initiate all rules concurrently.
-    const rulePromises = rules.map(async (rule) => {
-      try {
-        await executeRule(rule)
-      } catch (error) {
-        logger.error(`Error executing rule ${rule.rule_id}`, error)
+    // In-memory tracking to prevent the same rule from running multiple times concurrently
+    // even if the cycle repeats every minute.
+    if (!(global as any).activeExecutions) {
+      (global as any).activeExecutions = new Set<string>()
+    }
+    const activeExecutions = (global as any).activeExecutions as Set<string>
+
+    // Decoupled Execution (Fire and Forget)
+    // We don't await Promise.all(rulePromises) because long-running tasks (delay anti-spam)
+    // shouldn't block the next check cycle (1 minute interval).
+    rules.forEach((rule) => {
+      // Check if this specific rule is already running
+      if (activeExecutions.has(rule.rule_id)) {
+        logger.warn(`Rule ${rule.rule_id} (${rule.name}) is still running from previous cycle, skipping`)
+        return
       }
+
+      // Start execution in background (Decoupled)
+      activeExecutions.add(rule.rule_id)
+
+      executeRule(rule)
+        .catch((error) => {
+          logger.error(`Error executing rule ${rule.rule_id}`, error)
+        })
+        .finally(() => {
+          // Rule finished, remove from active set
+          activeExecutions.delete(rule.rule_id)
+          logger.info(`Rule ${rule.rule_id} (${rule.name}) background execution finished`)
+        })
     })
 
-    await Promise.all(rulePromises)
-
     const duration = Date.now() - startTime
-    logger.info(`Rule execution cycle completed in ${duration}ms`)
+    logger.info(`Rule execution start-trigger cycle completed in ${duration}ms. Active rules decoupled.`)
   } catch (error) {
     logger.error('Error in rule execution cycle', error)
   } finally {
+    // isRunning lock is only for the "Scheduler/Trigger" logic
+    // which completes instantly after firing rules into background.
     isRunning = false
   }
 }
