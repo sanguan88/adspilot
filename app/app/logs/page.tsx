@@ -27,6 +27,7 @@ interface Log {
   category?: string
   rule_id?: string
   campaign_id?: string
+  campaign_name?: string
   toko_id?: string
   isSkipped?: boolean
   errorMessage?: string
@@ -535,7 +536,20 @@ export default function LogsPage() {
                               <div className="text-sm text-gray-500">{getActionLabel(log.action)}</div>
                             </td>
                             <td className="px-6 py-5">
-                              <div className="text-sm text-gray-900 font-medium">{log.target}</div>
+                              <div className="flex flex-col max-w-[250px]">
+                                <div className="text-sm text-gray-900 font-semibold">{log.target}</div>
+                                {log.campaign_name && (
+                                  <div
+                                    className="text-xs text-gray-500 truncate mt-0.5"
+                                    title={log.campaign_name}
+                                  >
+                                    {log.campaign_name.length > 30
+                                      ? log.campaign_name.substring(0, 27) + "..."
+                                      : log.campaign_name
+                                    }
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-2">

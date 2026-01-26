@@ -360,8 +360,8 @@ export async function GET(request: NextRequest) {
       // Get account (toko) name
       const account = tokoNameMap.get(log.toko_id) || log.toko_id || 'No account assigned'
 
-      // Target is the campaign name if available, otherwise ID
-      const target = log.campaign_name ? `Iklan: ${log.campaign_name}` : `Iklan: ${log.campaign_id}`
+      // Target is primarily the ID for label, Name is sent separately for second line
+      const target = `Iklan: ${log.campaign_id}`
 
       // Build details summary
       let detailsSummary = ''
@@ -408,6 +408,7 @@ export async function GET(request: NextRequest) {
         category: log.category,
         rule_id: log.rule_id,
         campaign_id: log.campaign_id,
+        campaign_name: log.campaign_name,
         toko_id: log.toko_id,
         isSkipped: isSkipped, // Flag to indicate if this is a skipped execution
         errorMessage: log.error_message // Store error message for display
