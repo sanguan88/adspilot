@@ -48,13 +48,17 @@ export async function GET(request: NextRequest) {
           t.created_at,
           t.updated_at,
           t.expires_at,
+          t.voucher_code,
           t.voucher_affiliate_id,
           u.username,
           u.email,
           u.nama_lengkap,
-          u.status_user
+          u.status_user,
+          u.referred_by_affiliate as user_referral_code,
+          a.affiliate_code as voucher_affiliate_code
         FROM transactions t
         INNER JOIN data_user u ON t.user_id = u.user_id
+        LEFT JOIN affiliates a ON t.voucher_affiliate_id = a.affiliate_id::text OR (t.voucher_affiliate_id IS NULL AND u.referred_by_affiliate = a.affiliate_code)
         WHERE 1=1
       `
       const params: any[] = []
@@ -128,6 +132,8 @@ export async function GET(request: NextRequest) {
           paymentMethod: row.payment_method,
           paymentProofUrl: row.payment_proof_url || null,
           source: 'direct',
+          voucherCode: row.voucher_code || null,
+          referralCode: row.voucher_affiliate_code || row.user_referral_code || null,
           affiliateId: row.voucher_affiliate_id || null,
           userStatus: row.status_user,
           paymentConfirmedAt: row.payment_confirmed_at,

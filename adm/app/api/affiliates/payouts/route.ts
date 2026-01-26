@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         queryParams.push(status)
       }
 
-      query += ` ORDER BY created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`
+      query += ` ORDER BY p.created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`
       queryParams.push(limit, offset)
 
       const payoutsRes = await connection.query(query, queryParams)

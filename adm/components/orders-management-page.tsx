@@ -72,6 +72,8 @@ interface Order {
   paymentMethod: string
   paymentProofUrl?: string | null
   source: string
+  voucherCode?: string | null
+  referralCode?: string | null
   affiliateId?: string | null
   userStatus?: string
   paymentConfirmedAt?: string | null
@@ -500,8 +502,9 @@ export function OrdersManagementPage() {
                       <TableHead>User</TableHead>
                       <TableHead>Plan</TableHead>
                       <TableHead>Total</TableHead>
-                      <TableHead>Kode Unik</TableHead>
-                      <TableHead>Payment Status</TableHead>
+                      <TableHead>Kupon</TableHead>
+                      <TableHead>Referral</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Bukti</TableHead>
                       <TableHead>Created At</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -524,8 +527,24 @@ export function OrdersManagementPage() {
                           {formatPrice(order.totalAmount || order.amount)}
                         </TableCell>
                         <TableCell>
-                          {order.uniqueCode ? (
-                            <Badge variant="outline">{order.uniqueCode}</Badge>
+                          {order.voucherCode ? (
+                            <Badge variant="secondary" className="font-mono text-[10px]">
+                              {order.voucherCode}
+                            </Badge>
+                          ) : (
+                            <span className={typography.muted}>-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {order.referralCode ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-blue-600 text-xs">{order.referralCode}</span>
+                              {order.voucherCode && (
+                                <Badge variant="outline" className="text-[9px] h-4 px-1 bg-blue-50 text-blue-700 border-blue-100">
+                                  Voucher
+                                </Badge>
+                              )}
+                            </div>
                           ) : (
                             <span className={typography.muted}>-</span>
                           )}
