@@ -573,12 +573,12 @@ export function UsersManagementPage() {
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.namaLengkap}</TableCell>
                         <TableCell>
-                          <Badge className={getRoleBadgeColor(user.role)}>
+                          <Badge className={getRoleBadgeVariant(user.role)}>
                             {user.role}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge className={getStatusBadgeColor(user.status)}>
+                          <Badge className={getStatusBadgeVariant(user.status)}>
                             {user.status}
                           </Badge>
                         </TableCell>

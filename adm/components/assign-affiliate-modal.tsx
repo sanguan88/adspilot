@@ -32,6 +32,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { Badge } from "@/components/ui/badge"
 import { Check, ChevronsUpDown, Loader2, Search, Link2, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { authenticatedFetch } from "@/lib/api-client"
