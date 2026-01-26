@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       `SELECT user_id, username, email 
        FROM data_user 
        WHERE reset_password_token = $1 
-       AND reset_password_expires > NOW()`,
+       AND reset_password_expires > NOW() AT TIME ZONE 'UTC'`,
       [token]
     );
 
