@@ -17,6 +17,13 @@ export async function GET(request: NextRequest) {
     const planId = searchParams.get('planId') || ''
     const startDate = searchParams.get('startDate') || ''
     const endDate = searchParams.get('endDate') || ''
+    const orderBy = searchParams.get('orderBy') || 'created_at'
+    const orderDir = searchParams.get('orderDir') || 'DESC'
+
+    // Validate orderBy and orderDir to prevent injection
+    const allowedSortFields = ['created_at', 'total_amount', 'payment_status', 'plan_id', 'transaction_id']
+    const finalOrderBy = allowedSortFields.includes(orderBy) ? `t.${orderBy}` : 't.created_at'
+    const finalOrderDir = orderDir.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
     const offset = (page - 1) * limit
 
@@ -49,7 +56,10 @@ export async function GET(request: NextRequest) {
           u.status_user,
           u.referred_by_affiliate as user_referral_code,
           a.affiliate_code as voucher_affiliate_code,
-          sp.name as database_plan_name
+          a.name as affiliate_name,
+          sp.name as database_plan_name,
+          sp.duration_months,
+          sp.billing_cycle
         FROM transactions t
         INNER JOIN data_user u ON t.user_id = u.user_id
         LEFT JOIN affiliates a ON t.voucher_affiliate_id = a.affiliate_id::text OR (t.voucher_affiliate_id IS NULL AND u.referred_by_affiliate = a.affiliate_code)
@@ -95,9 +105,11 @@ export async function GET(request: NextRequest) {
       const countResult = await connection.query(countQuery, countParams)
       const total = parseInt(countResult.rows[0]?.total || '0')
 
-      // Add pagination
+      // Add sorting and pagination
+      query += ` ORDER BY ${finalOrderBy} ${finalOrderDir}`
+
       paramCount++
-      query += ` ORDER BY t.created_at DESC LIMIT $${paramCount}`
+      query += ` LIMIT $${paramCount}`
       params.push(limit)
 
       paramCount++
@@ -118,6 +130,8 @@ export async function GET(request: NextRequest) {
           namaLengkap: row.nama_lengkap,
           planId: row.plan_id,
           planName: row.database_plan_name || row.plan_id,
+          durationMonths: row.duration_months,
+          billingCycle: row.billing_cycle,
           baseAmount: parseFloat(row.base_amount),
           ppnAmount: parseFloat(row.ppn_amount),
           uniqueCode: row.unique_code,
@@ -129,6 +143,7 @@ export async function GET(request: NextRequest) {
           source: 'direct',
           voucherCode: row.voucher_code || null,
           referralCode: row.voucher_affiliate_code || row.user_referral_code || null,
+          affiliateName: row.affiliate_name || null,
           affiliateId: row.voucher_affiliate_id || null,
           userStatus: row.status_user,
           paymentConfirmedAt: row.payment_confirmed_at,

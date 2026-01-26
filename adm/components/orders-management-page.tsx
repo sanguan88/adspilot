@@ -62,6 +62,8 @@ interface Order {
   namaLengkap?: string
   planId: string
   planName: string
+  durationMonths?: number
+  billingCycle?: string
   amount: number
   baseAmount?: number
   ppnAmount?: number
@@ -74,6 +76,7 @@ interface Order {
   source: string
   voucherCode?: string | null
   referralCode?: string | null
+  affiliateName?: string | null
   affiliateId?: string | null
   userStatus?: string
   paymentConfirmedAt?: string | null
@@ -110,6 +113,11 @@ export function OrdersManagementPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
+  const [planFilter, setPlanFilter] = useState("")
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+  const [orderBy, setOrderBy] = useState("created_at")
+  const [orderDir, setOrderDir] = useState<"ASC" | "DESC">("DESC")
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false)
@@ -125,7 +133,7 @@ export function OrdersManagementPage() {
   useEffect(() => {
     fetchOrders()
     fetchAnalytics()
-  }, [page, statusFilter])
+  }, [page, statusFilter, planFilter, startDate, endDate, orderBy, orderDir])
 
   const fetchOrders = async () => {
     try {
@@ -134,6 +142,11 @@ export function OrdersManagementPage() {
       params.append("page", page.toString())
       params.append("limit", "20")
       if (statusFilter) params.append("status", statusFilter)
+      if (planFilter) params.append("planId", planFilter)
+      if (startDate) params.append("startDate", startDate)
+      if (endDate) params.append("endDate", endDate)
+      if (orderBy) params.append("orderBy", orderBy)
+      if (orderDir) params.append("orderDir", orderDir)
 
       const response = await authenticatedFetch(`/api/orders?${params.toString()}`)
       const data = await response.json()
@@ -151,6 +164,16 @@ export function OrdersManagementPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSort = (field: string) => {
+    if (orderBy === field) {
+      setOrderDir(orderDir === "ASC" ? "DESC" : "ASC")
+    } else {
+      setOrderBy(field)
+      setOrderDir("DESC")
+    }
+    setPage(1)
   }
 
   const fetchAnalytics = async () => {
@@ -441,22 +464,25 @@ export function OrdersManagementPage() {
         {/* Filters */}
         <Card className={filterPanel.container}>
           <CardContent className={filterPanel.content}>
-            <div className={filterPanel.grid}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Cari order number, user..."
+                  placeholder="Order ID / Username"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10"
                 />
               </div>
+
+              {/* Status Filter */}
               <Select value={statusFilter || "all"} onValueChange={(value) => {
                 setStatusFilter(value === "all" ? "" : value)
                 setPage(1)
               }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filter Status" />
+                  <SelectValue placeholder="Semua Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Status</SelectItem>
@@ -468,9 +494,79 @@ export function OrdersManagementPage() {
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Plan Filter */}
+              <Select value={planFilter || "all"} onValueChange={(value) => {
+                setPlanFilter(value === "all" ? "" : value)
+                setPage(1)
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Paket" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Paket</SelectItem>
+                  <SelectItem value="trial">Trial</SelectItem>
+                  <SelectItem value="basic">Basic (Monthly)</SelectItem>
+                  <SelectItem value="silver">Silver (Monthly)</SelectItem>
+                  <SelectItem value="gold">Gold (Monthly)</SelectItem>
+                  <SelectItem value="1-month">Paket 1 Bulan</SelectItem>
+                  <SelectItem value="3-month">Paket 3 Bulan</SelectItem>
+                  <SelectItem value="6-month">Paket 6 Bulan</SelectItem>
+                  <SelectItem value="12-month">Paket 12 Bulan</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Date Filters */}
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value)
+                      setPage(1)
+                    }}
+                    className="text-xs"
+                    title="Start Date"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value)
+                      setPage(1)
+                    }}
+                    className="text-xs"
+                    title="End Date"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
               <div className={typography.muted}>
                 Total: <span className="font-semibold text-foreground ml-1">{total}</span> orders
               </div>
+
+              {(search || statusFilter || planFilter || startDate || endDate) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearch("")
+                    setStatusFilter("")
+                    setPlanFilter("")
+                    setStartDate("")
+                    setEndDate("")
+                    setPage(1)
+                  }}
+                  className="text-xs h-8"
+                >
+                  Reset Filter
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -498,15 +594,25 @@ export function OrdersManagementPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Transaction ID</TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('transaction_id')}>
+                        Transaction ID {orderBy === 'transaction_id' && (orderDir === 'ASC' ? '↑' : '↓')}
+                      </TableHead>
                       <TableHead>User</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Total</TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('plan_id')}>
+                        Plan {orderBy === 'plan_id' && (orderDir === 'ASC' ? '↑' : '↓')}
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('total_amount')}>
+                        Total {orderBy === 'total_amount' && (orderDir === 'ASC' ? '↑' : '↓')}
+                      </TableHead>
                       <TableHead>Kupon</TableHead>
                       <TableHead>Referral</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('payment_status')}>
+                        Status {orderBy === 'payment_status' && (orderDir === 'ASC' ? '↑' : '↓')}
+                      </TableHead>
                       <TableHead>Bukti</TableHead>
-                      <TableHead>Created At</TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('created_at')}>
+                        Created At {orderBy === 'created_at' && (orderDir === 'ASC' ? '↑' : '↓')}
+                      </TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -522,7 +628,14 @@ export function OrdersManagementPage() {
                             <div className={typography.muted}>{order.email}</div>
                           </div>
                         </TableCell>
-                        <TableCell>{order.planName}</TableCell>
+                        <TableCell>
+                          <div className="font-medium">{order.planName}</div>
+                          {order.durationMonths && (
+                            <div className="text-[10px] text-muted-foreground bg-slate-100 px-1.5 py-0.5 rounded w-fit mt-1">
+                              {order.durationMonths} {order.billingCycle === 'monthly' ? 'Bulan' : order.billingCycle === 'annually' ? 'Tahun' : 'Bulan'}
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell>
                           {formatPrice(order.totalAmount || order.amount)}
                         </TableCell>
@@ -537,12 +650,14 @@ export function OrdersManagementPage() {
                         </TableCell>
                         <TableCell>
                           {order.referralCode ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-blue-600 text-xs">{order.referralCode}</span>
-                              {order.voucherCode && (
-                                <Badge variant="outline" className="text-[9px] h-4 px-1 bg-blue-50 text-blue-700 border-blue-100">
-                                  Voucher
-                                </Badge>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium text-blue-600 text-xs">{order.referralCode}</span>
+                              </div>
+                              {order.affiliateName && (
+                                <div className="text-[10px] text-muted-foreground font-medium">
+                                  {order.affiliateName}
+                                </div>
                               )}
                             </div>
                           ) : (
