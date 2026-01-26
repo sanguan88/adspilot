@@ -12,8 +12,18 @@ export const dynamic = 'force-dynamic'
 // Function to call Shopee API get_ads_data for saldo iklan
 async function callShopeeGetAdsData(cookies: string) {
   try {
-    // Clean cookies
-    const cleanedCookies = cookies.replace(/\s+/g, ' ').replace(/[\r\n\t]/g, ' ').trim()
+    // Clean cookies - preserve semicolon structure, only remove newlines and tabs
+    let cleanedCookies = cookies
+      .replace(/[\r\n\t]+/g, ' ')  // Replace newlines, carriage returns, tabs with space
+      .replace(/\s+/g, ' ')         // Replace multiple spaces with single space
+      .trim()
+
+    // Ensure proper semicolon separation (no spaces before semicolon, one space after)
+    cleanedCookies = cleanedCookies
+      .split(';')
+      .map(c => c.trim())
+      .filter(c => c.length > 0)
+      .join('; ')
 
     const apiUrl = 'https://seller.shopee.co.id/api/pas/v1/meta/get_ads_data/'
     const headers = {
@@ -77,12 +87,6 @@ async function getAccountsWithCookies(connection: PoolClient, user: any, tokoIds
 
     let paramIndex = 1
 
-    // User isolation: Filter by user_id (unless admin/superadmin)
-    let userFilter = ''
-    if (user.role !== 'superadmin' && user.role !== 'admin') {
-      userFilter = ` AND dt.user_id = $${paramIndex++}`
-    }
-
     // First, check what data exists for these tokoIds (for debugging)
     // Use separate parameter index for debug query
     let debugParamIndex = 1
@@ -119,9 +123,17 @@ async function getAccountsWithCookies(connection: PoolClient, user: any, tokoIds
       }))
     })
 
-    // Now build the actual query with correct parameter index
-    // IMPORTANT: user_id must be first ($1) if userFilter exists, then tokoIds
-    const placeholders = tokoIds.map(() => `$${paramIndex++}`).join(',')
+    // Build params array and placeholders
+    const params: any[] = [...tokoIds]
+    const placeholders = tokoIds.map((_, idx) => `$${paramIndex++}`).join(',')
+
+    // User isolation: Filter by user_id (unless admin/superadmin)
+    let userFilter = ''
+    if (user.role !== 'superadmin' && user.role !== 'admin') {
+      userFilter = ` AND dt.user_id = $${paramIndex++}`
+      params.push(user.userId)
+    }
+
     const query = `
       SELECT dt.id_toko, dt.id_toko as username, dt.cookies as cookie_account, dt.nama_toko, dt.status_cookies
       FROM data_toko dt
@@ -131,13 +143,6 @@ async function getAccountsWithCookies(connection: PoolClient, user: any, tokoIds
       AND dt.status_toko = 'active'
       ${userFilter}
     `
-
-    // Build params array in the correct order: user_id first (if needed), then tokoIds
-    const params: any[] = []
-    if (user.role !== 'superadmin' && user.role !== 'admin') {
-      params.push(user.userId) // $1 = user_id
-    }
-    params.push(...tokoIds) // $2, $3, $4, etc. = tokoIds
 
     console.log(`[${debugTimestamp}] [Overview] getAccountsWithCookies - Query:`, query)
     console.log(`[${debugTimestamp}] [Overview] getAccountsWithCookies - Params:`, params)
@@ -681,8 +686,13 @@ export async function GET(request: NextRequest) {
     // 4. Get saldo iklan from Shopee API (not from database daily_budget)
     let totalSaldoIklan = 0
     try {
-      console.log(`[${timestamp}] [Overview] Getting accounts with cookies for ${tokoIds.length} toko(s)`)
-      const accountsWithCookies = await getAccountsWithCookies(connection, user, tokoIds)
+      // Use relevant tokoIds only: if specific account selected, only fetch that one
+      const relevantTokoIds = (selectedAccount && selectedAccount !== 'all')
+        ? [selectedAccount]
+        : tokoIds;
+
+      console.log(`[${timestamp}] [Overview] Getting accounts with cookies for ${relevantTokoIds.length} relevant toko(s)`)
+      const accountsWithCookies = await getAccountsWithCookies(connection, user, relevantTokoIds)
       console.log(`[${timestamp}] [Overview] Found ${accountsWithCookies.length} account(s) with cookies`)
 
       if (accountsWithCookies.length === 0) {

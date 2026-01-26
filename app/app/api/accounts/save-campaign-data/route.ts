@@ -23,20 +23,20 @@ async function saveCampaignDataPerDate(
   endDate: string
 ) {
   const cleanCookies = cookies.trim().replace(/\s+/g, ' ').replace(/[\r\n\t]/g, '')
-  
+
   // Generate array tanggal dari startDate sampai endDate
   const dates: string[] = []
   const start = new Date(startDate)
   const end = new Date(endDate)
-  
+
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const dateStr = d.toISOString().split('T')[0]
     dates.push(dateStr)
   }
-  
+
   let savedCount = 0
   let errorCount = 0
-  
+
   // Loop untuk setiap tanggal
   console.log(`[Save Campaign Data] Processing ${dates.length} dates for toko ${idToko}`)
   for (const dateStr of dates) {
@@ -44,9 +44,9 @@ async function saveCampaignDataPerDate(
       // Convert tanggal ke timestamp (1 hari penuh)
       const startTimestamp = convertDateToTimestamp(dateStr, true)
       const endTimestamp = convertDateToTimestamp(dateStr, false)
-      
+
       console.log(`[Save Campaign Data] Fetching data for date ${dateStr} (${startTimestamp} - ${endTimestamp})`)
-      
+
       // Request ke homepage/query
       const apiUrl = 'https://seller.shopee.co.id/api/pas/v1/homepage/query/'
       const headers = {
@@ -68,23 +68,23 @@ async function saveCampaignDataPerDate(
         offset: 0,
         limit: 1000
       }
-      
-      
+
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(payload)
       })
-      
+
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unable to read error response')
         console.error(`[Homepage Query Error] Status ${response.status}:`, errorText.substring(0, 500))
         errorCount++
         continue
       }
-      
+
       const responseData = await response.json()
-      
+
       if (!responseData || !responseData.data || !responseData.data.entry_list) {
         console.error(`[Homepage Query Error] Invalid response structure:`, {
           has_responseData: !!responseData,
@@ -94,28 +94,28 @@ async function saveCampaignDataPerDate(
         errorCount++
         continue
       }
-      
+
       const entryList = responseData.data.entry_list
-      
+
       if (!entryList || entryList.length === 0) {
         console.log(`[Save Campaign Data] No campaigns found for date ${dateStr}`)
         continue
       }
-      
+
       console.log(`[Save Campaign Data] Found ${entryList.length} campaigns for date ${dateStr}`)
-      
+
       // Simpan setiap campaign dari entry_list
       for (const campaign of entryList) {
         const campaignId = campaign.campaign_id?.toString() || ''
         if (!campaignId) continue
-        
+
         // Extract data dari campaign
         const title = campaign.title || ''
         const status = campaign.status || ''
         const objective = campaign.objective || ''
         const dailyBudget = campaign.daily_budget ? parseFloat(campaign.daily_budget.toString()) / 100000 : null
         const estimationRoi = campaign.estimation_roi ? parseFloat(campaign.estimation_roi.toString()) : null
-        
+
         // Extract report data
         const report = campaign.report || {}
         const reportCost = report.cost ? parseFloat(report.cost.toString()) / 100000 : null
@@ -129,7 +129,7 @@ async function saveCampaignDataPerDate(
         const reportCtr = report.ctr ? parseFloat(report.ctr.toString()) : null
         const reportCpc = report.cpc ? parseFloat(report.cpc.toString()) : null
         const reportCpm = report.cpm ? parseFloat(report.cpm.toString()) : null
-        
+
         // Insert atau update data ke data_produk
         await connection.query(
           `INSERT INTO data_produk (
@@ -140,6 +140,7 @@ async function saveCampaignDataPerDate(
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, NOW(), NOW(), NOW())
           ON CONFLICT (id_toko, campaign_id, report_date)
           DO UPDATE SET
+            user_id = EXCLUDED.user_id,
             title = EXCLUDED.title,
             status = EXCLUDED.status,
             objective = EXCLUDED.objective,
@@ -181,7 +182,7 @@ async function saveCampaignDataPerDate(
             dateStr
           ]
         )
-        
+
         savedCount++
       }
     } catch (error) {
@@ -189,7 +190,7 @@ async function saveCampaignDataPerDate(
       console.error(`Error saving data for date ${dateStr}:`, error)
     }
   }
-  
+
   return { savedCount, errorCount, totalDates: dates.length }
 }
 
@@ -198,39 +199,39 @@ export async function POST(request: NextRequest) {
     const user = await requireActiveStatus(request)
     const body = await request.json()
     const { id_toko, start_date, end_date } = body
-    
+
     if (!id_toko || !start_date || !end_date) {
       return NextResponse.json(
         { success: false, error: 'id_toko, start_date, dan end_date diperlukan' },
         { status: 400 }
       )
     }
-    
+
     const connection = await getDatabaseConnection()
-    
+
     try {
       // Get toko data dengan cookies
       const tokoResult = await connection.query(
         `SELECT id_toko, cookies, user_id FROM data_toko WHERE id_toko = $1`,
         [id_toko]
       )
-      
+
       if (tokoResult.rows.length === 0) {
         return NextResponse.json(
           { success: false, error: 'Toko tidak ditemukan' },
           { status: 404 }
         )
       }
-      
+
       const toko = tokoResult.rows[0]
-      
+
       if (!toko.cookies) {
         return NextResponse.json(
           { success: false, error: 'Cookies tidak tersedia untuk toko ini' },
           { status: 400 }
         )
       }
-      
+
       // Simpan data per tanggal
       console.log(`[Save Campaign Data] Starting save for toko ${id_toko}, date range: ${start_date} to ${end_date}`)
       const result = await saveCampaignDataPerDate(
@@ -241,9 +242,9 @@ export async function POST(request: NextRequest) {
         start_date,
         end_date
       )
-      
+
       console.log(`[Save Campaign Data] Completed: ${result.savedCount} campaigns saved, ${result.errorCount} errors, ${result.totalDates} dates processed`)
-      
+
       return NextResponse.json({
         success: true,
         message: `Data berhasil disimpan: ${result.savedCount} campaign dari ${result.totalDates} tanggal`,

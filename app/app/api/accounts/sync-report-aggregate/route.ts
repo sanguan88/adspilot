@@ -144,6 +144,7 @@ async function saveReportAggregate(
       )
       ON CONFLICT (user_id, id_toko, tanggal)
       DO UPDATE SET
+        user_id = EXCLUDED.user_id,
         broad_cir = EXCLUDED.broad_cir,
         broad_gmv = EXCLUDED.broad_gmv,
         broad_order = EXCLUDED.broad_order,

@@ -553,7 +553,7 @@ export function GeneralOverviewPage() {
                       <p className="text-2xl lg:text-3xl font-bold text-gray-900 truncate w-full" title={`Rp${Math.round(totalMetrics.budget || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 })}`}>
                         Rp{Math.round(totalMetrics.budget || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 })}
                       </p>
-                      <p className="text-xs text-gray-700 mt-1">Total Budget Tersedia</p>
+                      <p className="text-xs text-gray-700 mt-1">Saldo Iklan (Wallet)</p>
                     </div>
                   </div>
                 </CardContent>
