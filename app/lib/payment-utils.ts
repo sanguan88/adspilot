@@ -77,20 +77,8 @@ export async function processSuccessfulPayment(transactionId: string, connection
         months = parseInt(planResult.rows[0].duration_months) || 1;
         billingCycle = planResult.rows[0].billing_cycle || 'monthly';
     } else {
-        // Fallback mapping for legacy plan IDs if not found in dynamic plans
-        const legacyPlanDuration: { [key: string]: number } = {
-            '1-month': 1,
-            '3-month': 3,
-            '6-month': 6,
-        };
-        const legacyBillingCycleMap: { [key: string]: string } = {
-            '1-month': 'monthly',
-            '3-month': 'quarterly',
-            '6-month': 'semi-annual',
-        };
-        months = legacyPlanDuration[transaction.plan_id] || 1;
-        billingCycle = legacyBillingCycleMap[transaction.plan_id] || 'monthly';
-        console.warn(`[Payment] Plan ID ${transaction.plan_id} not found in subscription_plans. Using legacy fallback.`);
+        console.error(`[Payment] CRITICAL ERROR: Plan ID ${transaction.plan_id} not found in subscription_plans. Payment processing aborted.`);
+        throw new Error(`Plan configuration not found for ID: ${transaction.plan_id}`);
     }
 
     const startDate = new Date();
