@@ -77,95 +77,94 @@ export async function GET(request: NextRequest) {
 
     // Filter by status
     if (status && status !== 'all') {
-      if (status === 'success') {
-        // For success, include both actual success and skipped (which is saved as success with skipped flag)
-        logWhereConditions.push(`rel.status = 'success'`)
-      } else if (status === 'failed') {
-        logWhereConditions.push(`rel.status = 'failed'`)
-      } else if (status === 'pending') {
-        // Pending status doesn't exist in rule_execution_logs, skip this filter
-        return NextResponse.json({
-          success: true,
-          data: [],
-          total: 0
-        })
+      // List of shops for filter UI
+      let availableShops: { id: string, name: string }[] = []
+      try {
+        let shopsQuery = `SELECT DISTINCT rel.toko_id, dt.nama_toko 
+                        FROM rule_execution_logs rel 
+                        LEFT JOIN data_toko dt ON rel.toko_id = dt.id_toko`
+        const shopsParams: any[] = []
+
+        if (!canViewAll && allowedUsernames.length > 0) {
+          const placeholders = allowedUsernames.map((_, i) => `$${i + 1}`).join(',')
+          shopsQuery += ` WHERE rel.toko_id IN (${placeholders})`
+          shopsParams.push(...allowedUsernames)
+        }
+
+        const shopsResult = await connection.query(shopsQuery, shopsParams)
+        availableShops = shopsResult.rows.map((r: any) => ({
+          id: r.toko_id,
+          name: r.nama_toko || r.toko_id
+        })).sort((a: any, b: any) => a.name.localeCompare(b.name))
+      } catch (e) {
+        console.error('Error fetching available shops:', e)
       }
-    }
 
-    // Filter by rule (from data_rules)
-    if (ruleFilter && ruleFilter !== 'all-rules') {
-      const categoryMap: { [key: string]: string } = {
-        'budget': 'Budget',
-        'performance': 'Performance',
-        'notification': 'Notification',
-        'General': 'General',
-        'Budget Management': 'Budget Management',
-        'Performance': 'Performance',
-        'Scaling': 'Scaling',
-        'Scheduling': 'Scheduling',
-        'Awareness (Top Funnel)': 'Awareness (Top Funnel)',
-        'Consideration (Middle Funnel)': 'Consideration (Middle Funnel)',
-        'Conversion (Bottom Funnel)': 'Conversion (Bottom Funnel)',
+      if (status && status !== 'all') {
+        if (status === 'success') {
+          logWhereConditions.push(`rel.status = 'success'`)
+        } else if (status === 'failed') {
+          logWhereConditions.push(`rel.status = 'failed'`)
+        } else if (status === 'pending') {
+          logWhereConditions.push(`rel.status = 'pending'`)
+        }
       }
-      const category = categoryMap[ruleFilter] || ruleFilter
-      logWhereConditions.push(`dr.category = $${logParams.length + 1}`)
-      logParams.push(category)
-    }
 
-    // Search filter (on rule name)
-    if (search) {
-      logWhereConditions.push(`(dr.name LIKE $${logParams.length + 1} OR dr.deskripsi LIKE $${logParams.length + 2})`)
-      logParams.push(`%${search}%`, `%${search}%`)
-    }
-
-    // Date range filter
-    if (dateFrom) {
-      logWhereConditions.push(`rel.executed_at >= $${logParams.length + 1}`)
-      logParams.push(dateFrom)
-    }
-    if (dateTo) {
-      const endDate = new Date(dateTo)
-      endDate.setDate(endDate.getDate() + 1)
-      logWhereConditions.push(`rel.executed_at < $${logParams.length + 1}`)
-      logParams.push(endDate.toISOString().split('T')[0])
-    }
-
-    // Filter by campaign ID
-    if (campaignFilter && campaignFilter !== 'all-campaigns') {
-      logWhereConditions.push(`rel.campaign_id = $${logParams.length + 1}`)
-      logParams.push(campaignFilter)
-    }
-
-    // Filter by toko ID
-    if (tokoFilter && tokoFilter !== 'all-tokos') {
-      logWhereConditions.push(`rel.toko_id = $${logParams.length + 1}`)
-      logParams.push(tokoFilter)
-    }
-
-    // Filter rules based on allowed toko IDs
-    // If user does not have 'view all' permission, strictly filter by their allowed stores
-    if (!canViewAll) {
-      if (allowedUsernames.length > 0) {
-        const placeholders = allowedUsernames.map((_, i) => `$${logParams.length + i + 1}`).join(',')
-        logWhereConditions.push(`rel.toko_id IN (${placeholders})`)
-        logParams.push(...allowedUsernames)
-      } else {
-        // If user cannot view all and has no assignments, return empty
-        return NextResponse.json({
-          success: true,
-          data: [],
-          total: 0
-        })
+      // Search filter (on rule name, campaign name, or toko id)
+      if (search) {
+        logWhereConditions.push(`(dr.name ILIKE $${logParams.length + 1} OR dp.title ILIKE $${logParams.length + 1} OR rel.toko_id ILIKE $${logParams.length + 1})`)
+        logParams.push(`%${search}%`)
       }
-    }
 
-    const logWhereClause = logWhereConditions.length > 0
-      ? 'WHERE ' + logWhereConditions.join(' AND ')
-      : ''
+      // Date range filter
+      if (dateFrom) {
+        logWhereConditions.push(`rel.executed_at >= $${logParams.length + 1}`)
+        logParams.push(dateFrom)
+      }
+      if (dateTo) {
+        const endDate = new Date(dateTo)
+        endDate.setDate(endDate.getDate() + 1)
+        logWhereConditions.push(`rel.executed_at < $${logParams.length + 1}`)
+        logParams.push(endDate.toISOString().split('T')[0])
+      }
 
-    // Check if rule_execution_logs table exists, if not return empty result
-    try {
-      const tableCheck = await connection.query(`
+      // Filter by campaign ID
+      if (campaignFilter && campaignFilter !== 'all-campaigns') {
+        logWhereConditions.push(`rel.campaign_id = $${logParams.length + 1}`)
+        logParams.push(campaignFilter)
+      }
+
+      // Filter by toko ID (from UI parameter 'tokoFilter')
+      const tokoFilterFromUI = searchParams.get('tokoFilter')
+      if (tokoFilterFromUI && tokoFilterFromUI !== 'all-tokos') {
+        logWhereConditions.push(`rel.toko_id = $${logParams.length + 1}`)
+        logParams.push(tokoFilterFromUI)
+      }
+
+      // Filter rules based on allowed toko IDs
+      // If user does not have 'view all' permission, strictly filter by their allowed stores
+      if (!canViewAll) {
+        if (allowedUsernames.length > 0) {
+          const placeholders = allowedUsernames.map((_, i) => `$${logParams.length + i + 1}`).join(',')
+          logWhereConditions.push(`rel.toko_id IN (${placeholders})`)
+          logParams.push(...allowedUsernames)
+        } else {
+          // If user cannot view all and has no assignments, return empty
+          return NextResponse.json({
+            success: true,
+            data: [],
+            total: 0
+          })
+        }
+      }
+
+      const logWhereClause = logWhereConditions.length > 0
+        ? 'WHERE ' + logWhereConditions.join(' AND ')
+        : ''
+
+      // Check if rule_execution_logs table exists, if not return empty result
+      try {
+        const tableCheck = await connection.query(`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_schema = 'public' 
@@ -173,57 +172,61 @@ export async function GET(request: NextRequest) {
         )
       `)
 
-      if (!tableCheck.rows[0]?.exists) {
-        // Table doesn't exist yet, return empty result
+        if (!tableCheck.rows[0]?.exists) {
+          // Table doesn't exist yet, return empty result
+          return NextResponse.json({
+            success: true,
+            data: [],
+            total: 0
+          })
+        }
+      } catch (tableCheckError) {
+        console.error('Error checking table existence:', tableCheckError)
+        // Continue anyway
+      }
+
+      // Get total count for pagination
+      // Use separate params array for count query to avoid parameter conflicts
+      const countParams = [...logParams]
+      const countQuery = `
+      SELECT COUNT(*) as total 
+      FROM rule_execution_logs rel
+      INNER JOIN data_rules dr ON rel.rule_id = dr.rule_id
+      LEFT JOIN (
+        SELECT DISTINCT ON (campaign_id, id_toko) campaign_id, id_toko, title
+        FROM data_produk
+        ORDER BY campaign_id, id_toko, no DESC
+      ) dp ON rel.campaign_id::text = dp.campaign_id::text AND rel.toko_id::text = dp.id_toko::text
+      ${logWhereClause}
+    `
+
+      let total = 0
+      try {
+        const countResult = await connection.query(countQuery, countParams)
+        total = parseInt(countResult.rows[0]?.total || '0', 10)
+      } catch (countError) {
+        console.error('Error counting logs:', countError)
         return NextResponse.json({
           success: true,
           data: [],
           total: 0
         })
       }
-    } catch (tableCheckError) {
-      console.error('Error checking table existence:', tableCheckError)
-      // Continue anyway
-    }
 
-    // Get total count for pagination
-    // Use separate params array for count query to avoid parameter conflicts
-    const countParams = [...logParams]
-    const countQuery = `
-      SELECT COUNT(*) as total 
-      FROM rule_execution_logs rel
-      INNER JOIN data_rules dr ON rel.rule_id = dr.rule_id
-      ${logWhereClause}
-    `
+      // Build ORDER BY clause
+      let orderBy = 'rel.executed_at DESC'
+      if (sortField === 'timestamp') {
+        orderBy = sortOrder === 'asc'
+          ? 'rel.executed_at ASC'
+          : 'rel.executed_at DESC'
+      } else if (sortField === 'rule') {
+        orderBy = sortOrder === 'asc' ? 'dr.name ASC' : 'dr.name DESC'
+      } else if (sortField === 'status') {
+        orderBy = sortOrder === 'asc' ? 'rel.status ASC' : 'rel.status DESC'
+      }
 
-    let total = 0
-    try {
-      const countResult = await connection.query(countQuery, countParams)
-      total = parseInt(countResult.rows[0]?.total || '0', 10)
-    } catch (countError) {
-      console.error('Error counting logs:', countError)
-      // If count fails, return empty result
-      return NextResponse.json({
-        success: true,
-        data: [],
-        total: 0
-      })
-    }
-
-    // Build ORDER BY clause
-    let orderBy = 'rel.executed_at DESC'
-    if (sortField === 'timestamp') {
-      orderBy = sortOrder === 'asc'
-        ? 'rel.executed_at ASC'
-        : 'rel.executed_at DESC'
-    } else if (sortField === 'rule') {
-      orderBy = sortOrder === 'asc' ? 'dr.name ASC' : 'dr.name DESC'
-    } else if (sortField === 'status') {
-      orderBy = sortOrder === 'asc' ? 'rel.status ASC' : 'rel.status DESC'
-    }
-
-    // Query rule_execution_logs with rule information
-    const query = `
+      // Query rule_execution_logs with rule information
+      const query = `
       SELECT 
         rel.id as log_id,
         rel.rule_id,
@@ -250,25 +253,25 @@ export async function GET(request: NextRequest) {
       ORDER BY ${orderBy}
       LIMIT $${logParams.length + 1} OFFSET $${logParams.length + 2}
     `
-    // Create separate params array for the main query (includes limit and offset)
-    const queryParams = [...logParams, limit, offset]
+      // Create separate params array for the main query (includes limit and offset)
+      const queryParams = [...logParams, limit, offset]
 
-    let logRows: any[] = []
-    try {
-      const logResult = await connection.query(query, queryParams)
-      logRows = logResult.rows || []
-    } catch (queryError: any) {
-      console.error('Error querying logs:', queryError)
-      // Log the actual query for debugging
-      console.error('Query:', query.replace(/\s+/g, ' ').trim())
-      console.error('Params count:', queryParams.length)
-      console.error('Where clause:', logWhereClause)
+      let logRows: any[] = []
+      try {
+        const logResult = await connection.query(query, queryParams)
+        logRows = logResult.rows || []
+      } catch (queryError: any) {
+        console.error('Error querying logs:', queryError)
+        // Log the actual query for debugging
+        console.error('Query:', query.replace(/\s+/g, ' ').trim())
+        console.error('Params count:', queryParams.length)
+        console.error('Where clause:', logWhereClause)
 
-      // If it's a column error (like campaign_name missing or type mismatch), 
-      // try fallback query without the join
-      if (queryError?.code === '42703' || queryError?.message?.includes('column') || queryError?.message?.includes('type')) {
-        console.error('Query error detected, trying fallback without campaign titles')
-        const fallbackQuery = `
+        // If it's a column error (like campaign_name missing or type mismatch), 
+        // try fallback query without the join
+        if (queryError?.code === '42703' || queryError?.message?.includes('column') || queryError?.message?.includes('type')) {
+          console.error('Query error detected, trying fallback without campaign titles')
+          const fallbackQuery = `
           SELECT 
             rel.id as log_id, rel.rule_id, rel.campaign_id, rel.toko_id, rel.action_type,
             rel.status, rel.error_message, rel.execution_data, rel.executed_at,
@@ -279,217 +282,190 @@ export async function GET(request: NextRequest) {
           ORDER BY ${orderBy}
           LIMIT $${logParams.length + 1} OFFSET $${logParams.length + 2}
         `
-        const fallbackResult = await connection.query(fallbackQuery, queryParams)
-        logRows = fallbackResult.rows || []
-      } else {
-        throw queryError
-      }
-    }
-
-    if (!logRows || logRows.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: [],
-        total: 0
-      })
-    }
-
-    // Get unique toko IDs for lookup
-    const allTokoIds = Array.from(new Set(logRows.map((row: any) => row.toko_id).filter(Boolean)))
-
-    // Query nama_toko sekali saja
-    const tokoNameMap = new Map<string, string>()
-    if (allTokoIds.length > 0) {
-      try {
-        const tokoResult = await connection.query(
-          'SELECT id_toko, nama_toko FROM data_toko WHERE id_toko = ANY($1::text[])',
-          [allTokoIds]
-        )
-        for (const row of tokoResult.rows) {
-          if (row.id_toko && row.nama_toko) {
-            tokoNameMap.set(row.id_toko, row.nama_toko)
-          }
+          const fallbackResult = await connection.query(fallbackQuery, queryParams)
+          logRows = fallbackResult.rows || []
+        } else {
+          throw queryError
         }
-      } catch {
-        // jika query gagal, fallback ke id_toko saat transform
-      }
-    }
-
-    // Transform data ke format logs
-    const logs = logRows.map((log: any) => {
-      // Parse execution_data to check if it was skipped
-      let executionData: any = null
-      let isSkipped = false
-      try {
-        if (log.execution_data) {
-          executionData = typeof log.execution_data === 'string'
-            ? JSON.parse(log.execution_data)
-            : log.execution_data
-          isSkipped = executionData?.skipped === true
-        }
-      } catch (e) {
-        // Ignore parse error
       }
 
-      // Determine log status
-      // If status is 'success' but execution_data indicates skipped, it's still 'success' but will show as skipped in UI
-      let logStatus = log.status || 'pending'
+      if (!logRows || logRows.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          total: 0
+        })
+      }
 
-      // Get action type from log or parse from rule actions
-      let actionType = log.action_type || 'Unknown'
-      try {
-        if (!actionType || actionType === 'Unknown') {
-          const actions = typeof log.actions === 'string' ? JSON.parse(log.actions) : log.actions
-          if (Array.isArray(actions) && actions.length > 0) {
-            const firstAction = actions[0]
-            if (firstAction.type) {
-              actionType = firstAction.type
-            } else if (firstAction.action) {
-              actionType = firstAction.action
+      // Get unique toko IDs for lookup
+      const allTokoIds = Array.from(new Set(logRows.map((row: any) => row.toko_id).filter(Boolean)))
+
+      // Query nama_toko sekali saja
+      const tokoNameMap = new Map<string, string>()
+      if (allTokoIds.length > 0) {
+        try {
+          const tokoResult = await connection.query(
+            'SELECT id_toko, nama_toko FROM data_toko WHERE id_toko = ANY($1::text[])',
+            [allTokoIds]
+          )
+          for (const row of tokoResult.rows) {
+            if (row.id_toko && row.nama_toko) {
+              tokoNameMap.set(row.id_toko, row.nama_toko)
             }
           }
+        } catch {
+          // jika query gagal, fallback ke id_toko saat transform
         }
-      } catch (e) {
-        // Ignore parse error
       }
 
-      // Get timestamp
-      const timestamp = log.executed_at
+      // Transform data ke format logs
+      const logs = logRows.map((log: any) => {
+        // Parse execution_data to check if it was skipped
+        let executionData: any = null
+        let isSkipped = false
+        try {
+          if (log.execution_data) {
+            executionData = typeof log.execution_data === 'string'
+              ? JSON.parse(log.execution_data)
+              : log.execution_data
+            isSkipped = executionData?.skipped === true
+          }
+        } catch (e) {
+          // Ignore parse error
+        }
 
-      // Get account (toko) name
-      const account = tokoNameMap.get(log.toko_id) || log.toko_id || 'No account assigned'
+        // Determine log status
+        // If status is 'success' but execution_data indicates skipped, it's still 'success' but will show as skipped in UI
+        let logStatus = log.status || 'pending'
 
-      // Target is primarily the ID for label, Name is sent separately for second line
-      const target = `Iklan: ${log.campaign_id}`
+        // Get action type from log or parse from rule actions
+        let actionType = log.action_type || 'Unknown'
+        try {
+          if (!actionType || actionType === 'Unknown') {
+            const actions = typeof log.actions === 'string' ? JSON.parse(log.actions) : log.actions
+            if (Array.isArray(actions) && actions.length > 0) {
+              const firstAction = actions[0]
+              if (firstAction.type) {
+                actionType = firstAction.type
+              } else if (firstAction.action) {
+                actionType = firstAction.action
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore parse error
+        }
 
-      // Build details summary
-      let detailsSummary = ''
-      let passedCount = 0
-      let failedCount = 0
-      const totalConditions = executionData?.evaluations?.length || 0
+        // Get timestamp
+        const timestamp = log.executed_at
 
-      if (executionData?.evaluations && Array.isArray(executionData.evaluations)) {
-        passedCount = executionData.evaluations.filter((e: any) => e.met).length
-        failedCount = totalConditions - passedCount
-      }
+        // Get account (toko) name
+        const account = tokoNameMap.get(log.toko_id) || log.toko_id || 'No account assigned'
 
-      if (isSkipped) {
-        // Skipped: condition not met
-        detailsSummary = `Dilewati - (${totalConditions} Kondisi: Terpenuhi ${passedCount}, Gagal ${failedCount})`
-      } else if (log.status === 'failed') {
-        // Failed: execution error
-        const errorMsg = log.error_message || 'Aksi gagal dieksekusi'
-        detailsSummary = `Gagal Eksekusi - ${errorMsg}`
-      } else if (log.status === 'success') {
-        // Success: action executed successfully
-        detailsSummary = `Berhasil - (${totalConditions} Kondisi: Terpenuhi ${passedCount}, Gagal ${failedCount})`
-      } else {
-        detailsSummary = 'Status tidak diketahui'
-      }
+        // Target is primarily the ID for label, Name is sent separately for second line
+        const target = `Iklan: ${log.campaign_id}`
 
-      return {
-        id: log.log_id || `${log.rule_id}_${log.campaign_id}_${log.executed_at}`,
-        timestamp: timestamp ? new Date(timestamp).toLocaleString('id-ID', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        }) : 'N/A',
-        rule: log.rule_name || 'Unknown Rule',
-        action: actionType,
-        target: target,
-        status: log.status === 'success' ? 'Berhasil' : 'Gagal',
-        details: detailsSummary,
-        account: account,
-        // Additional data for filtering and UI
-        category: log.category,
-        rule_id: log.rule_id,
-        campaign_id: log.campaign_id,
-        campaign_name: log.campaign_name,
-        toko_id: log.toko_id,
-        isSkipped: isSkipped, // Flag to indicate if this is a skipped execution
-        errorMessage: log.error_message // Store error message for display
-      }
-    })
+        // Build details summary
+        let detailsSummary = ''
+        let passedCount = 0
+        let failedCount = 0
+        const totalConditions = executionData?.evaluations?.length || 0
 
-    // Filter by status setelah transformasi
-    let filteredLogs = logs
-    if (status && status !== 'all') {
-      filteredLogs = logs.filter(log => log.status === status)
-    }
+        if (executionData?.evaluations && Array.isArray(executionData.evaluations)) {
+          passedCount = executionData.evaluations.filter((e: any) => e.met).length
+          failedCount = totalConditions - passedCount
+        }
 
-    // Apply sorting if needed (for status and action which are computed)
-    if (sortField === 'status') {
-      filteredLogs.sort((a, b) => {
-        const statusOrder = { success: 1, pending: 2, failed: 3 }
-        const aOrder = statusOrder[a.status as keyof typeof statusOrder] || 0
-        const bOrder = statusOrder[b.status as keyof typeof statusOrder] || 0
-        return sortOrder === 'asc' ? aOrder - bOrder : bOrder - aOrder
+        if (isSkipped) {
+          // Skipped: condition not met
+          detailsSummary = `Dilewati - (${totalConditions} Kondisi: Terpenuhi ${passedCount}, Gagal ${failedCount})`
+        } else if (log.status === 'failed') {
+          // Failed: execution error
+          const errorMsg = log.error_message || 'Aksi gagal dieksekusi'
+          detailsSummary = `Gagal Eksekusi - ${errorMsg}`
+        } else if (log.status === 'success') {
+          // Success: action executed successfully
+          detailsSummary = `Berhasil - (${totalConditions} Kondisi: Terpenuhi ${passedCount}, Gagal ${failedCount})`
+        } else {
+          detailsSummary = 'Status tidak diketahui'
+        }
+
+        return {
+          id: log.log_id || `${log.rule_id}_${log.campaign_id}_${log.executed_at}`,
+          timestamp: timestamp ? new Date(timestamp).toLocaleString('id-ID', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          }) : 'N/A',
+          rule: log.rule_name || 'Unknown Rule',
+          action: actionType,
+          target: target,
+          status: log.status === 'success' ? 'Berhasil' : 'Gagal',
+          details: detailsSummary,
+          account: account,
+          // Additional data for filtering and UI
+          category: log.category,
+          rule_id: log.rule_id,
+          campaign_id: log.campaign_id,
+          campaign_name: log.campaign_name,
+          toko_id: log.toko_id,
+          isSkipped: isSkipped, // Flag to indicate if this is a skipped execution
+          errorMessage: log.error_message // Store error message for display
+        }
       })
-    } else if (sortField === 'action') {
-      filteredLogs.sort((a, b) => {
-        return sortOrder === 'asc'
-          ? a.action.localeCompare(b.action)
-          : b.action.localeCompare(a.action)
-      })
-    } else if (sortField === 'target') {
-      filteredLogs.sort((a, b) => {
-        return sortOrder === 'asc'
-          ? a.target.localeCompare(b.target)
-          : b.target.localeCompare(a.target)
-      })
-    }
 
-    return NextResponse.json({
-      success: true,
-      data: filteredLogs,
-      total: total
-    })
+      return NextResponse.json({
+        success: true,
+        data: logs,
+        total: total,
+        availableShops: availableShops
+      })
 
-  } catch (error) {
-    // Check if database connection error
-    if (isDatabaseConnectionError(error)) {
+    } catch (error) {
+      // Check if database connection error
+      if (isDatabaseConnectionError(error)) {
+        const sanitized = sanitizeErrorForLogging(error)
+        const timestamp = new Date().toISOString()
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        console.error(`[${timestamp}] Database connection error: ${sanitized.type}${sanitized.code ? ` (${sanitized.code})` : ''}`)
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`[DEBUG] Full error message: ${errorMsg}`)
+        }
+
+        return NextResponse.json(
+          {
+            success: true, // Return success true even on DB error but with empty data to prevent UI crash
+            data: [],
+            total: 0,
+            error: getGenericDatabaseErrorMessage(),
+            debug: process.env.NODE_ENV === 'development' ? errorMsg : undefined
+          },
+          { status: 200 } // Changed to 200 with empty data and error info to be more resilient
+        )
+      }
+
       const sanitized = sanitizeErrorForLogging(error)
       const timestamp = new Date().toISOString()
       const errorMsg = error instanceof Error ? error.message : String(error)
-      console.error(`[${timestamp}] Database connection error: ${sanitized.type}${sanitized.code ? ` (${sanitized.code})` : ''}`)
+      console.error(`[${timestamp}] Error fetching logs: ${sanitized.type}${sanitized.code ? ` (${sanitized.code})` : ''}`)
       if (process.env.NODE_ENV === 'development') {
         console.error(`[DEBUG] Full error message: ${errorMsg}`)
       }
 
       return NextResponse.json(
         {
-          success: true, // Return success true even on DB error but with empty data to prevent UI crash
-          data: [],
-          total: 0,
-          error: getGenericDatabaseErrorMessage(),
-          debug: process.env.NODE_ENV === 'development' ? errorMsg : undefined
+          success: false,
+          error: 'Failed to fetch logs'
         },
-        { status: 200 } // Changed to 200 with empty data and error info to be more resilient
+        { status: 500 }
       )
-    }
-
-    const sanitized = sanitizeErrorForLogging(error)
-    const timestamp = new Date().toISOString()
-    const errorMsg = error instanceof Error ? error.message : String(error)
-    console.error(`[${timestamp}] Error fetching logs: ${sanitized.type}${sanitized.code ? ` (${sanitized.code})` : ''}`)
-    if (process.env.NODE_ENV === 'development') {
-      console.error(`[DEBUG] Full error message: ${errorMsg}`)
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch logs'
-      },
-      { status: 500 }
-    )
-  } finally {
-    // Release connection back to pool
-    if (connection) {
-      connection.release()
+    } finally {
+      // Release connection back to pool
+      if (connection) {
+        connection.release()
+      }
     }
   }
-}

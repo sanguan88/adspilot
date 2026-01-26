@@ -54,6 +54,7 @@ export default function LogsPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [tokoOptions, setTokoOptions] = useState<{ id: string, name: string }[]>([])
   const pageSize = 50
 
   // Fetch logs from API
@@ -104,6 +105,10 @@ export default function LogsPage() {
       if (result.success) {
         const newLogs = result.data || []
         const total = result.total || 0
+
+        if (result.availableShops) {
+          setTokoOptions(result.availableShops)
+        }
 
         if (resetPage) {
           setLogs(newLogs)
@@ -175,21 +180,6 @@ export default function LogsPage() {
     setSelectedLogId(logId)
     setIsDetailModalOpen(true)
   };
-
-  const tokoMap = new Map<string, string>()
-  logs.forEach(log => {
-    if (log.toko_id) {
-      const name = log.account || log.toko_id
-      const existingName = tokoMap.get(log.toko_id)
-      if (!existingName || name.length > existingName.length) {
-        tokoMap.set(log.toko_id, name)
-      }
-    }
-  })
-
-  const tokoOptions = Array.from(tokoMap.entries())
-    .map(([id, name]) => ({ id, name }))
-    .sort((a, b) => a.name.localeCompare(b.name))
 
   // Handle sort
   const handleSort = (field: SortField) => {
