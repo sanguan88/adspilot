@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (user) {
       // Generate secure token
       const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
+      const expiresAt = new Date(Date.now() + 86400000); // 24 hours from now
 
       // Save token to DB
       await connection.query(
