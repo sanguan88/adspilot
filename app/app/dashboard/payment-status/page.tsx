@@ -19,7 +19,8 @@ import {
   Building2,
   Upload,
   X,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Send
 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -144,13 +145,14 @@ export default function PaymentStatusPage() {
         setContactCooldown(data.remainingSeconds || 300)
         toast.error(data.error || 'Silakan tunggu beberapa menit lagi')
       } else if (data.success) {
-        // Success - start 5 minute cooldown and open mailto
+        // Success - start 5 minute cooldown
         setContactCooldown(300)
-        toast.success('Notifikasi berhasil dikirim ke admin!')
-        // Open mailto link
-        window.location.href = `mailto:${paymentSettings?.confirmationEmail || 'payment@adspilot.id'}`
+        toast.success('Notifikasi terkirim! Membuka Telegram Support...')
+        // Open Telegram link
+        window.open('https://t.me/AdsPilotSupport', '_blank')
       } else {
-        toast.error(data.error || 'Gagal mengirim notifikasi')
+        // Even if notification fails, let's allow opening Telegram
+        window.open('https://t.me/AdsPilotSupport', '_blank')
       }
     } catch (error) {
       console.error('Failed to send notification to admin:', error);
@@ -674,8 +676,8 @@ export default function PaymentStatusPage() {
                         </>
                       ) : (
                         <>
-                          <Mail className="mr-2 h-3 w-3" />
-                          Hubungi Admin
+                          <Send className="mr-2 h-3 w-3" />
+                          Hubungi Admin (Telegram)
                         </>
                       )}
                     </Button>

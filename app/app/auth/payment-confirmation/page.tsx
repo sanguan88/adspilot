@@ -18,7 +18,8 @@ import {
   Package,
   ArrowRight,
   Mail,
-  Loader2
+  Loader2,
+  Send
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -170,13 +171,14 @@ function PaymentConfirmationContent() {
         setContactCooldown(data.remainingSeconds || 300)
         toast.error(data.error || 'Silakan tunggu beberapa menit lagi')
       } else if (data.success) {
-        // Success - start 5 minute cooldown and open mailto
+        // Success - start 5 minute cooldown
         setContactCooldown(300)
-        toast.success('Notifikasi berhasil dikirim ke admin!')
-        // Open mailto link
-        window.location.href = `mailto:${paymentSettings?.confirmationEmail || 'payment@adspilot.id'}`
+        toast.success('Notifikasi terkirim! Membuka Telegram Support...')
+        // Open Telegram link
+        window.open('https://t.me/AdsPilotSupport', '_blank')
       } else {
-        toast.error(data.error || 'Gagal mengirim notifikasi')
+        // Even if notification fails, let's allow opening Telegram
+        window.open('https://t.me/AdsPilotSupport', '_blank')
       }
     } catch (error) {
       console.error('Failed to send notification to admin:', error);
@@ -673,8 +675,8 @@ function PaymentConfirmationContent() {
                       </>
                     ) : (
                       <>
-                        <Mail className="mr-2 h-4 w-4" />
-                        Hubungi Admin
+                        <Send className="mr-2 h-4 w-4" />
+                        Hubungi Admin (Telegram)
                       </>
                     )}
                   </Button>
