@@ -242,7 +242,11 @@ export async function GET(request: NextRequest) {
         dp.title as campaign_name
       FROM rule_execution_logs rel
       INNER JOIN data_rules dr ON rel.rule_id = dr.rule_id
-      LEFT JOIN data_produk dp ON rel.campaign_id::text = dp.campaign_id::text AND rel.toko_id = dp.id_toko
+      LEFT JOIN (
+        SELECT DISTINCT ON (campaign_id, id_toko) campaign_id, id_toko, title
+        FROM data_produk
+        ORDER BY campaign_id, id_toko, id DESC -- Use latest entry if duplicates exist
+      ) dp ON rel.campaign_id::text = dp.campaign_id::text AND rel.toko_id = dp.id_toko
       ${logWhereClause}
       ORDER BY ${orderBy}
       LIMIT $${logParams.length + 1} OFFSET $${logParams.length + 2}
