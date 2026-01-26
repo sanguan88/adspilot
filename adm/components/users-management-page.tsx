@@ -78,6 +78,7 @@ export function UsersManagementPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
+  const [limit, setLimit] = useState(10)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -126,7 +127,7 @@ export function UsersManagementPage() {
       setLoading(true)
       const params = new URLSearchParams()
       params.append("page", page.toString())
-      params.append("limit", "20")
+      params.append("limit", limit.toString())
       if (search) params.append("search", search)
       if (roleFilter) params.append("role", roleFilter)
       if (statusFilter) params.append("status", statusFilter)
@@ -151,7 +152,7 @@ export function UsersManagementPage() {
 
   useEffect(() => {
     fetchUsers()
-  }, [page, search, roleFilter, statusFilter])
+  }, [page, limit, search, roleFilter, statusFilter])
 
   const handleCreate = () => {
     setEditingUser(null)
@@ -643,9 +644,31 @@ export function UsersManagementPage() {
                 </Table>
 
                 {/* Pagination */}
-                <div className="mt-8 flex items-center justify-between border-t pt-4">
-                  <div className="text-sm text-muted-foreground">
-                    Menampilkan <span className="font-medium text-foreground">{users.length}</span> dari <span className="font-medium text-foreground">{total}</span> users
+                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between border-t pt-4 gap-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="text-sm text-muted-foreground whitespace-nowrap">
+                      Menampilkan <span className="font-medium text-foreground">{users.length}</span> dari <span className="font-medium text-foreground">{total}</span> users
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">Baris per halaman:</span>
+                      <Select
+                        value={limit.toString()}
+                        onValueChange={(val) => {
+                          setLimit(parseInt(val))
+                          setPage(1)
+                        }}
+                      >
+                        <SelectTrigger className="h-8 w-[70px]">
+                          <SelectValue placeholder={limit.toString()} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <Pagination
                     currentPage={page}
