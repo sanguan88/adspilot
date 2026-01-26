@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
       let query = `
         SELECT 
           no, user_id, username, email, nama_lengkap, role, 
-          status_user, photo_profile, created_at, update_at, last_login
+          status_user, photo_profile, created_at, update_at, last_login,
+          referred_by_affiliate
         FROM data_user
         WHERE 1=1
       `
@@ -79,6 +80,7 @@ export async function GET(request: NextRequest) {
           createdAt: row.created_at,
           updatedAt: row.update_at,
           lastLogin: row.last_login,
+          affiliateCode: row.referred_by_affiliate,
         })),
         total,
         page,

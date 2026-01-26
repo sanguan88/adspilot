@@ -56,6 +56,7 @@ interface User {
   createdAt: string
   updatedAt?: string
   lastLogin?: string
+  affiliateCode?: string | null
 }
 
 interface UserFormData {
@@ -562,6 +563,7 @@ export function UsersManagementPage() {
                       <TableHead>Nama Lengkap</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Affiliate</TableHead>
                       <TableHead>Last Login</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -581,6 +583,15 @@ export function UsersManagementPage() {
                           <Badge className={getStatusBadgeVariant(user.status)}>
                             {user.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {user.affiliateCode ? (
+                            <Badge variant="outline" className="font-mono text-[10px] bg-primary/5 text-primary border-primary/20">
+                              {user.affiliateCode}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
                         </TableCell>
                         <TableCell className={typography.bodySmall}>
                           {user.lastLogin
