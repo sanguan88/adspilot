@@ -7,7 +7,6 @@ import { isDatabaseConnectionError, getGenericDatabaseErrorMessage, sanitizeErro
 import { getUserRole, checkPermission, checkCanAccessAll } from '@/lib/role-checker'
 
 export async function GET(request: NextRequest) {
-  console.log(`[DEBUG LOGS API] Request received at ${new Date().toISOString()} - ANTI-GRAVITY ACTIVE`)
   let connection: PoolClient | null = null
 
   try {
@@ -246,7 +245,7 @@ export async function GET(request: NextRequest) {
       LEFT JOIN (
         SELECT DISTINCT ON (campaign_id, id_toko) campaign_id, id_toko, title
         FROM data_produk
-        ORDER BY campaign_id, id_toko, id DESC -- Use latest entry if duplicates exist
+        ORDER BY campaign_id, id_toko, no DESC -- Use latest entry if duplicates exist
       ) dp ON rel.campaign_id::text = dp.campaign_id::text AND rel.toko_id::text = dp.id_toko::text
       ${logWhereClause}
       ORDER BY ${orderBy}
