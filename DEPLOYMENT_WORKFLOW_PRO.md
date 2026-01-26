@@ -110,7 +110,10 @@ pm2 restart all
 ```
 
 ---
+## DB postgress port
+DB postgress port 3306 (custom)
 
+---
 ## 🛡️ SAFETY TIPS
 *   **Selalu pull dulu sebelum push:** Jika ada developer lain (atau Boss edit di tempat lain), biasakan `git pull` di laptop sebelum mulai coding biar codingan Boss update.
 *   **Cek ssh server:** `pm2 logs` adalah teman terbaik untuk melihat error di server.

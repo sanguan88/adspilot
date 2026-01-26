@@ -246,7 +246,7 @@ export async function GET(request: NextRequest) {
         SELECT DISTINCT ON (campaign_id, id_toko) campaign_id, id_toko, title
         FROM data_produk
         ORDER BY campaign_id, id_toko, id DESC -- Use latest entry if duplicates exist
-      ) dp ON rel.campaign_id::text = dp.campaign_id::text AND rel.toko_id = dp.id_toko
+      ) dp ON rel.campaign_id::text = dp.campaign_id::text AND rel.toko_id::text = dp.id_toko::text
       ${logWhereClause}
       ORDER BY ${orderBy}
       LIMIT $${logParams.length + 1} OFFSET $${logParams.length + 2}
