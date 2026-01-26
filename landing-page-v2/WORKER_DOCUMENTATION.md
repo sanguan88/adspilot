@@ -51,4 +51,24 @@ Karena eksekusi bisa memakan waktu lama (misal 10 menit untuk 20 iklan), berikut
 3. **Memory**: Untuk 100-500 user aktif bersamaan, RAM minimal 2GB sudah sangat mencukupi.
 
 ---
-*Terakhir diperbarui: 10 Januari 2026*
+
+## 6. Reporting & Logging System (Enterprise Grade)
+
+Sistem pelaporan dirancang untuk memberikan transparansi penuh atas setiap aksi yang dilakukan oleh Worker.
+
+### Deskripsi Status & Pelabelan:
+- **Status (Execution State)**: Menunjukkan apakah proses worker berhasil memanggil API Shopee atau gagal karena kendala teknis/jaringan.
+    - **Berhasil**: Worker sukses menjalankan tugas.
+    - **Gagal**: Terjadi error sistem (misal: Cookies Expired).
+- **Details (Condition State)**: Menjelaskan hasil dari pengecekan kondisi rule.
+    - **Berhasil**: Kondisi terpenuhi dan aksi dilakukan.
+    - **Dilewati (Skipped)**: Kondisi tidak terpenuhi sehingga aksi tidak dijalankan. Ditampilkan dengan warna **Orange/Amber** agar mudah dibedakan.
+
+### Optimasi Filter & Paginasi:
+Untuk menangani data log skala besar (100.000+ data), sistem menggunakan **SQL-Level Filtering**:
+1. **Server-Side Pagination**: Limit dan Offset dilakukan di database, menjamin data yang tampil selalu sinkron dengan filter yang dipilih.
+2. **Global Shop Filter**: Dropdown filter toko mengambil data langsung dari seluruh database toko yang aktif, bukan sekadar dari data yang tampil di layar.
+3. **Multi-Column Search**: Pencarian mendukung kata kunci berdasarkan Nama Rule, Nama Kampanye, maupun ID Toko.
+
+---
+*Terakhir diperbarui: 26 Januari 2026*

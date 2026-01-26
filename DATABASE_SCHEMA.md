@@ -209,3 +209,38 @@ Header konten tutorial.
 Tabel denormalisasi/cache untuk menyimpan data performa iklan harian yang diambil dari API Shopee. Digunakan untuk mempercepat loading dashboard tanpa perlu request berulang ke Shopee API.
 - Kolom mencakup metrik iklan: `gmv`, `cost`, `impression`, `click`, `ctr`, `roas`, dll.
 - Di-update secara berkala atau on-demand saat user mengakses dashboard.
+
+---
+
+## 7. Automation & Rules System
+Sistem inti yang menangani logika automasi iklan dan pencatatan riwayat eksekusi.
+
+### `data_rules`
+Menyimpan konfigurasi rule automasi yang dibuat oleh user.
+| Kolom | Tipe Data | Deskripsi |
+|-------|-----------|-----------|
+| `rule_id` | SERIAL (PK) | ID unik rule |
+| `user_id` | VARCHAR | ID User pemilik rule |
+| `name` | VARCHAR | Nama rule |
+| `category` | VARCHAR | Kategori (Budget, Performance, dll) |
+| `conditions` | JSONB | Array kondisi (metrik, operator, nilai) |
+| `actions` | JSONB | Array aksi (tipe aksi, nilai) |
+| `status` | BOOLEAN | Status ON/OFF |
+| `created_at` | TIMESTAMP | Waktu pembuatan |
+
+### `rule_execution_logs`
+Mencatat setiap upaya eksekusi rule pada setiap kampanye/iklan.
+| Kolom | Tipe Data | Deskripsi |
+|-------|-----------|-----------|
+| `id` | SERIAL (PK) | ID unik log |
+| `rule_id` | INTEGER | FK ke `data_rules` |
+| `campaign_id` | VARCHAR | ID Kampanye Shopee |
+| `toko_id` | VARCHAR | ID Toko (FK ke `data_toko`) |
+| `action_type` | VARCHAR | Tipe aksi (increase_budget, dll) |
+| `status` | VARCHAR | Status eksekusi worker (success/failed) |
+| `execution_data` | JSONB | Data teknis (termasuk flag `skipped`) |
+| `error_message` | TEXT | Detail error jika status failed |
+| `executed_at` | TIMESTAMP | Waktu eksekusi |
+
+---
+*Terakhir diperbarui: 26 Januari 2026*
