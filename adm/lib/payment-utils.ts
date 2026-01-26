@@ -2,6 +2,10 @@ import { PoolClient } from 'pg';
 
 /**
  * Centrally process a successful payment
+ * 
+ * Works for both:
+ * 1. Admin manual confirmation
+ * 2. Moota / Payment Gateway automatic callback
  */
 export async function processSuccessfulPayment(transactionId: string, connection: PoolClient) {
     console.log(`[Payment] Processing successful payment for Transaction ID: ${transactionId}`);
@@ -28,7 +32,11 @@ export async function processSuccessfulPayment(transactionId: string, connection
         return { success: true, message: 'Already processed' };
     }
 
-    // 2. Update Transaction status to 'paid'
+    // 2. Start Atomic Transaction
+    // NOTE: The caller should ideally handle the BEGIN/COMMIT if they want broader atomicity,
+    // but we'll manage the internal logic here.
+
+    // 3. Update Transaction status to 'paid'
     await connection.query(
         `UPDATE transactions 
          SET payment_status = 'paid', 
@@ -37,7 +45,7 @@ export async function processSuccessfulPayment(transactionId: string, connection
         [transaction.id]
     );
 
-    // 3. Activate User Account
+    // 4. Activate User Account
     await connection.query(
         `UPDATE data_user 
          SET status_user = 'aktif', 
@@ -46,7 +54,7 @@ export async function processSuccessfulPayment(transactionId: string, connection
         [transaction.user_id]
     );
 
-    // 4. Expire existing active subscription (if any)
+    // 5. Expire existing active subscription (if any)
     await connection.query(
         `UPDATE subscriptions 
          SET status = 'expired',
@@ -55,7 +63,8 @@ export async function processSuccessfulPayment(transactionId: string, connection
         [transaction.user_id]
     );
 
-    // 5. Create Record in subscriptions table
+    // 6. Create Record in subscriptions table
+    // Plan mapping (should ideally be from database, but using hardcoded mapping for consistency with existing code)
     const planDuration: { [key: string]: number } = {
         '1-month': 1,
         '3-month': 3,
@@ -99,14 +108,16 @@ export async function processSuccessfulPayment(transactionId: string, connection
         ]
     );
 
-    // 6. Affiliate Commission Processing
+    // 7. Affiliate Commission Processing
     try {
         let affiliateId: string | null = null;
         let affiliateCode: string | null = null;
 
+        // Priority 1: Check if transaction used an affiliate voucher
         if (transaction.voucher_affiliate_id) {
             affiliateId = transaction.voucher_affiliate_id;
         } else {
+            // Priority 2: Check if user was referred by an affiliate (cookie-based referral in data_user)
             const userResult = await connection.query(
                 'SELECT referred_by_affiliate FROM data_user WHERE user_id = $1',
                 [transaction.user_id]
@@ -133,6 +144,7 @@ export async function processSuccessfulPayment(transactionId: string, connection
                 const affiliate = affiliateResult.rows[0];
                 const finalAffiliateId = affiliate.affiliate_id;
 
+                // Commission Rate
                 let commissionRate = parseFloat(affiliate.commission_rate);
                 if (isNaN(commissionRate) || commissionRate === 0) {
                     const settingsResult = await connection.query(
@@ -141,6 +153,7 @@ export async function processSuccessfulPayment(transactionId: string, connection
                     commissionRate = parseFloat(settingsResult.rows[0]?.setting_value || '10');
                 }
 
+                // Commission Type
                 const previousCommissions = await connection.query(
                     'SELECT commission_id FROM affiliate_commissions WHERE user_id = $1 AND status = $2',
                     [transaction.user_id, 'paid']
