@@ -42,6 +42,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StoresTab } from "./stores-tab"
 import { AssignAffiliateModal } from "./assign-affiliate-modal"
+import { Pagination } from "@/components/ui/pagination"
 import { useConfirm } from "@/components/providers/confirmation-provider"
 
 interface User {
@@ -642,31 +643,16 @@ export function UsersManagementPage() {
                 </Table>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4">
-                    <div className={typography.muted}>
-                      Halaman {page} dari {totalPages}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                      >
-                        Previous
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={page === totalPages}
-                      >
-                        Next
-                      </Button>
-                    </div>
+                <div className="mt-8 flex items-center justify-between border-t pt-4">
+                  <div className="text-sm text-muted-foreground">
+                    Menampilkan <span className="font-medium text-foreground">{users.length}</span> dari <span className="font-medium text-foreground">{total}</span> users
                   </div>
-                )}
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={(newPage) => setPage(newPage)}
+                  />
+                </div>
               </>
             )}
           </CardContent>
