@@ -64,24 +64,38 @@ export async function processSuccessfulPayment(transactionId: string, connection
     );
 
     // 6. Create Record in subscriptions table
-    // Plan mapping (should ideally be from database, but using hardcoded mapping for consistency with existing code)
-    const planDuration: { [key: string]: number } = {
-        '1-month': 1,
-        '3-month': 3,
-        '6-month': 6,
-    };
-    const months = planDuration[transaction.plan_id] || 1;
+    // Fetch plan details from database for dynamic duration and billing cycle
+    const planResult = await connection.query(
+        `SELECT duration_months, billing_cycle FROM subscription_plans WHERE plan_id = $1`,
+        [transaction.plan_id]
+    );
+
+    let months = 1;
+    let billingCycle = 'monthly';
+
+    if (planResult.rows.length > 0) {
+        months = parseInt(planResult.rows[0].duration_months) || 1;
+        billingCycle = planResult.rows[0].billing_cycle || 'monthly';
+    } else {
+        // Fallback mapping for legacy plan IDs if not found in dynamic plans
+        const legacyPlanDuration: { [key: string]: number } = {
+            '1-month': 1,
+            '3-month': 3,
+            '6-month': 6,
+        };
+        const legacyBillingCycleMap: { [key: string]: string } = {
+            '1-month': 'monthly',
+            '3-month': 'quarterly',
+            '6-month': 'semi-annual',
+        };
+        months = legacyPlanDuration[transaction.plan_id] || 1;
+        billingCycle = legacyBillingCycleMap[transaction.plan_id] || 'monthly';
+        console.warn(`[Payment] Plan ID ${transaction.plan_id} not found in subscription_plans. Using legacy fallback.`);
+    }
 
     const startDate = new Date();
     const endDate = new Date(startDate);
     endDate.setMonth(endDate.getMonth() + months);
-
-    const billingCycleMap: { [key: string]: string } = {
-        '1-month': 'monthly',
-        '3-month': 'quarterly',
-        '6-month': 'semi-annual',
-    };
-    const billingCycle = billingCycleMap[transaction.plan_id] || 'monthly';
 
     const startDateStr = startDate.toISOString().split('T')[0];
     const endDateStr = endDate.toISOString().split('T')[0];

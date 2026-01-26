@@ -4,21 +4,14 @@ import { getDatabaseConnection } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-// Map plan_id to plan name
-const planNameMap: { [key: string]: string } = {
-  '1-month': 'Paket 1 Bulan',
-  '3-month': 'Paket 3 Bulan',
-  '6-month': 'Paket 6 Bulan',
-}
-
 // GET - detail & riwayat subscription user
 export async function GET(request: NextRequest) {
   let connection = null
   try {
     const user = requireAuth(request)
-    
+
     connection = await getDatabaseConnection()
-    
+
     // Get current active subscription
     const currentSubResult = await connection.query(
       `SELECT 
@@ -27,15 +20,17 @@ export async function GET(request: NextRequest) {
         s.base_amount, s.ppn_amount, s.total_amount,
         s.auto_renew, s.created_at, s.updated_at,
         s.cancelled_at, s.cancelled_by, s.cancellation_reason,
-        t.payment_confirmed_at, t.payment_proof_url
+        t.payment_confirmed_at, t.payment_proof_url,
+        sp.name as database_plan_name
       FROM subscriptions s
       LEFT JOIN transactions t ON s.transaction_id = t.transaction_id
+      LEFT JOIN subscription_plans sp ON s.plan_id = sp.plan_id
       WHERE s.user_id = $1 AND s.status = 'active'
       ORDER BY s.created_at DESC
       LIMIT 1`,
       [user.userId]
     )
-    
+
     // Get subscription history (all subscriptions)
     const historyResult = await connection.query(
       `SELECT 
@@ -44,28 +39,32 @@ export async function GET(request: NextRequest) {
         s.base_amount, s.ppn_amount, s.total_amount,
         s.auto_renew, s.created_at, s.updated_at,
         s.cancelled_at, s.cancelled_by, s.cancellation_reason,
-        t.payment_confirmed_at, t.payment_proof_url
+        t.payment_confirmed_at, t.payment_proof_url,
+        sp.name as database_plan_name
       FROM subscriptions s
       LEFT JOIN transactions t ON s.transaction_id = t.transaction_id
+      LEFT JOIN subscription_plans sp ON s.plan_id = sp.plan_id
       WHERE s.user_id = $1
       ORDER BY s.created_at DESC`,
       [user.userId]
     )
-    
+
     // Get transactions for invoice/receipt
     const transactionsResult = await connection.query(
       `SELECT 
         transaction_id, plan_id, payment_status,
         base_amount, ppn_amount, total_amount, unique_code,
-        payment_confirmed_at, payment_proof_url, created_at
-      FROM transactions
+        payment_confirmed_at, payment_proof_url, created_at,
+        sp.name as database_plan_name
+      FROM transactions t
+      LEFT JOIN subscription_plans sp ON t.plan_id = sp.plan_id
       WHERE user_id = $1
       ORDER BY created_at DESC`,
       [user.userId]
     )
-    
+
     connection.release()
-    
+
     // Format current subscription
     let currentSubscription = null
     if (currentSubResult.rows.length > 0) {
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest) {
       currentSubscription = {
         id: row.id,
         planId: row.plan_id,
-        planName: planNameMap[row.plan_id] || row.plan_id,
+        planName: row.database_plan_name || row.plan_id,
         transactionId: row.transaction_id,
         status: row.status,
         startDate: row.start_date,
@@ -92,12 +91,12 @@ export async function GET(request: NextRequest) {
         updatedAt: row.updated_at,
       }
     }
-    
+
     // Format history
     const history = historyResult.rows.map((row: any) => ({
       id: row.id,
       planId: row.plan_id,
-      planName: planNameMap[row.plan_id] || row.plan_id,
+      planName: row.database_plan_name || row.plan_id,
       transactionId: row.transaction_id,
       status: row.status,
       startDate: row.start_date,
@@ -115,12 +114,12 @@ export async function GET(request: NextRequest) {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }))
-    
+
     // Format transactions/invoices
     const invoices = transactionsResult.rows.map((row: any) => ({
       transactionId: row.transaction_id,
       planId: row.plan_id,
-      planName: planNameMap[row.plan_id] || row.plan_id,
+      planName: row.database_plan_name || row.plan_id,
       paymentStatus: row.payment_status,
       baseAmount: parseFloat(row.base_amount || 0),
       ppnAmount: parseFloat(row.ppn_amount || 0),
@@ -130,7 +129,7 @@ export async function GET(request: NextRequest) {
       paymentProofUrl: row.payment_proof_url,
       createdAt: row.created_at,
     }))
-    
+
     return NextResponse.json({
       success: true,
       data: {
@@ -147,9 +146,9 @@ export async function GET(request: NextRequest) {
         // Ignore release error
       }
     }
-    
+
     console.error('Get user subscription error:', error)
-    
+
     return NextResponse.json(
       {
         success: false,

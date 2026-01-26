@@ -3,13 +3,6 @@ import { withDatabaseConnection } from '@/lib/db'
 import { randomUUID } from 'crypto'
 import { requirePermission } from '@/lib/auth-helper'
 
-// Plan name mapping
-const PLAN_NAMES: Record<string, string> = {
-  '1-month': 'Paket 1 Bulan',
-  '3-month': 'Paket 3 Bulan',
-  '6-month': 'Paket 6 Bulan',
-}
-
 // GET - List all transactions (orders)
 export async function GET(request: NextRequest) {
   try {
@@ -55,10 +48,12 @@ export async function GET(request: NextRequest) {
           u.nama_lengkap,
           u.status_user,
           u.referred_by_affiliate as user_referral_code,
-          a.affiliate_code as voucher_affiliate_code
+          a.affiliate_code as voucher_affiliate_code,
+          sp.name as database_plan_name
         FROM transactions t
         INNER JOIN data_user u ON t.user_id = u.user_id
         LEFT JOIN affiliates a ON t.voucher_affiliate_id = a.affiliate_id::text OR (t.voucher_affiliate_id IS NULL AND u.referred_by_affiliate = a.affiliate_code)
+        LEFT JOIN subscription_plans sp ON t.plan_id = sp.plan_id
         WHERE 1=1
       `
       const params: any[] = []
@@ -122,7 +117,7 @@ export async function GET(request: NextRequest) {
           email: row.email,
           namaLengkap: row.nama_lengkap,
           planId: row.plan_id,
-          planName: PLAN_NAMES[row.plan_id] || row.plan_id,
+          planName: row.database_plan_name || row.plan_id,
           baseAmount: parseFloat(row.base_amount),
           ppnAmount: parseFloat(row.ppn_amount),
           uniqueCode: row.unique_code,
