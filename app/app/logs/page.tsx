@@ -254,8 +254,6 @@ export default function LogsPage() {
       case "failed":
       case "Gagal":
         return <XCircle className="w-4 h-4 text-rose-600" />
-      case "Dilewati":
-        return <AlertCircle className="w-4 h-4 text-amber-600" />
       default:
         return <AlertCircle className="w-4 h-4 text-slate-500" />
     }
@@ -269,8 +267,6 @@ export default function LogsPage() {
       case "failed":
       case "Gagal":
         return "Gagal"
-      case "Dilewati":
-        return "Dilewati"
       default:
         return status
     }
@@ -284,9 +280,6 @@ export default function LogsPage() {
       return "bg-rose-50 text-rose-700 border-rose-200"
     }
     if (status === "pending" || status === "Menunggu") {
-      return "bg-amber-50 text-amber-700 border-amber-200"
-    }
-    if (status === "Dilewati") {
       return "bg-amber-50 text-amber-700 border-amber-200"
     }
     return "bg-slate-50 text-slate-700 border-slate-200"
@@ -417,7 +410,6 @@ export default function LogsPage() {
                   <SelectItem value="all">Semua Status</SelectItem>
                   <SelectItem value="success">Berhasil</SelectItem>
                   <SelectItem value="failed">Gagal</SelectItem>
-                  <SelectItem value="Dilewati">Dilewati</SelectItem>
                   <SelectItem value="pending">Menunggu</SelectItem>
                 </SelectContent>
               </Select>
@@ -563,7 +555,14 @@ export default function LogsPage() {
                               <div className="max-w-xs">
                                 {log.details ? (
                                   <div className="text-sm text-gray-600 line-clamp-2">
-                                    {log.details}
+                                    {log.details.includes("Dilewati") ? (
+                                      <>
+                                        <span className="text-amber-600 font-medium">Dilewati</span>
+                                        {log.details.replace("Dilewati", "")}
+                                      </>
+                                    ) : (
+                                      log.details
+                                    )}
                                   </div>
                                 ) : (
                                   <span className="text-gray-400 italic">Tidak ada detail</span>
