@@ -252,7 +252,7 @@ export default function LogsPage() {
       case "Berhasil Trigger":
         return <CheckCircle className="w-4 h-4 text-emerald-600" />
       case "failed":
-      case "Gagal Trigger":
+      case "Gagal":
         return <XCircle className="w-4 h-4 text-rose-600" />
       case "pending":
       case "Menunggu":
@@ -263,14 +263,11 @@ export default function LogsPage() {
   }
 
   const getStatusLabel = (status: string) => {
-    if (status === "Berhasil Trigger") return "Berhasil Trigger"
-    if (status === "Gagal Trigger") return "Gagal Trigger"
-
     switch (status) {
       case "success":
-        return "Berhasil Trigger"
+        return "Berhasil"
       case "failed":
-        return "Gagal Trigger"
+        return "Gagal"
       case "pending":
         return "Menunggu"
       default:
@@ -279,10 +276,10 @@ export default function LogsPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    if (status === "Berhasil Trigger" || status === "success") {
+    if (status === "Berhasil" || status === "success") {
       return "bg-emerald-50 text-emerald-700 border-emerald-200"
     }
-    if (status === "Gagal Trigger" || status === "failed") {
+    if (status === "Gagal" || status === "failed") {
       return "bg-rose-50 text-rose-700 border-rose-200"
     }
     if (status === "pending" || status === "Menunggu") {
@@ -559,41 +556,13 @@ export default function LogsPage() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="max-w-xs">
-                                {(() => {
-                                  const formatted = formatDetails(log)
-                                  const details = log.details || ''
-
-                                  if (!details) {
-                                    return <span className="text-gray-400 italic">Tidak ada detail</span>
-                                  }
-
-                                  if (formatted && (formatted.isSuccess || formatted.isFailed || formatted.isSkipped)) {
-                                    const statusText = formatted.isSuccess ? 'Berhasil' : formatted.isFailed ? 'Gagal' : 'Dilewati'
-                                    const statusColor = formatted.isSuccess ? 'text-emerald-600' : formatted.isFailed ? 'text-rose-600' : 'text-amber-600'
-
-                                    return (
-                                      <div className="text-sm leading-relaxed">
-                                        <span className={`font-semibold ${statusColor}`}>
-                                          {statusText}
-                                        </span>
-                                        {formatted.passedCount !== undefined && formatted.failedCount !== undefined ? (
-                                          <span className="text-gray-500 ml-1.5">
-                                            ({formatted.conditionCount} Kondisi: Terpenuhi {formatted.passedCount}, Gagal {formatted.failedCount})
-                                          </span>
-                                        ) : formatted.description && (
-                                          <span className="text-gray-500 ml-1.5">{formatted.description}</span>
-                                        )}
-                                      </div>
-                                    )
-                                  }
-
-                                  // Fallback for other detail formats or if formatDetails didn't apply
-                                  return (
-                                    <div className="text-sm text-gray-600 line-clamp-2">
-                                      {details}
-                                    </div>
-                                  )
-                                })()}
+                                {log.details ? (
+                                  <div className="text-sm text-gray-600 line-clamp-2">
+                                    {log.details}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400 italic">Tidak ada detail</span>
+                                )}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">

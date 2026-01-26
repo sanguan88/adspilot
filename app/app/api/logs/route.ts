@@ -8,7 +8,6 @@ import { getUserRole, checkPermission, checkCanAccessAll } from '@/lib/role-chec
 
 export async function GET(request: NextRequest) {
   let connection: PoolClient | null = null
-
   try {
     // Authenticate user and check active status
     const user = await requireActiveStatus(request);
