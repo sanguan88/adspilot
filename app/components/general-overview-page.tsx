@@ -82,7 +82,6 @@ export function GeneralOverviewPage() {
   const [avgPesanan, setAvgPesanan] = useState(0)
   const [avgROAS, setAvgROAS] = useState(0)
   const [avgActiveCampaigns, setAvgActiveCampaigns] = useState(0)
-  const [totalSpendWithPPN, setTotalSpendWithPPN] = useState(0)
   const [recentActivities, setRecentActivities] = useState<any[]>([])
   const [trends, setTrends] = useState<TrendData>({})
 
@@ -226,7 +225,6 @@ export function GeneralOverviewPage() {
           setAvgPesanan(averages?.pesanan || 0)
           setAvgROAS(averages?.roas || 0)
           setAvgActiveCampaigns(averages?.activeCampaigns || 0)
-          setTotalSpendWithPPN(totals?.spendWithPPN || 0)
           setRecentActivities(fetchedActivities || [])
           setTrends(fetchedTrends || {})
         } else {
@@ -457,11 +455,11 @@ export function GeneralOverviewPage() {
                   <DollarSign className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex flex-col items-start gap-2">
-                  <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Total Spend (+PPN 11%)</p>
-                  <p className="text-2xl lg:text-3xl font-bold text-gray-900 truncate w-full" title={`Rp${Math.round(totalSpendWithPPN).toLocaleString('id-ID')}`}>
-                    Rp{Math.round(totalSpendWithPPN).toLocaleString('id-ID')}
+                  <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Total Spend</p>
+                  <p className="text-2xl lg:text-3xl font-bold text-gray-900 truncate w-full" title={`Rp${Math.round(totalMetrics.spend).toLocaleString('id-ID')}`}>
+                    Rp{Math.round(totalMetrics.spend).toLocaleString('id-ID')}
                   </p>
-                  {renderTrend(totalSpendWithPPN, trends.spend)}
+                  {renderTrend(totalMetrics.spend, trends.spend)}
                 </div>
               </div>
 

@@ -812,7 +812,7 @@ export async function GET(request: NextRequest) {
         const yesterdayOrders = Number(yesterdayRow.total_orders) || 0
 
         // Only include trends if yesterday data exists
-        if (yesterdaySpend > 0) trends.spend = yesterdaySpend + (yesterdaySpend * 0.11) // With PPN
+        if (yesterdaySpend > 0) trends.spend = yesterdaySpend
         if (yesterdayImpressions > 0) trends.impressions = yesterdayImpressions
         if (yesterdayClicks > 0) trends.clicks = yesterdayClicks
         if (yesterdayOrders > 0) trends.conversions = yesterdayOrders // Conversions = jumlah order
@@ -863,8 +863,6 @@ export async function GET(request: NextRequest) {
     const ruleRows = ruleResult.rows
     const totalActiveRules = Number(ruleRows[0]?.rule_count) || 0
 
-    // 7. Calculate Total Spend with PPN 11%
-    const totalSpendWithPPN = totalMetrics.spend + (totalMetrics.spend * 0.11)
 
     // 8. Fetch Recent Automation Activity - filter by user_id if not admin/superadmin
     let activityQuery = `SELECT 
@@ -971,7 +969,7 @@ export async function GET(request: NextRequest) {
         reportDate: reportDateStr, // Include the date being used for the data
         totals: {
           spend: totalMetrics.spend,
-          spendWithPPN: totalSpendWithPPN,
+          spendWithPPN: totalMetrics.spend,
           budget: totalMetrics.budget,
           impressions: totalMetrics.impressions,
           clicks: totalMetrics.clicks,
