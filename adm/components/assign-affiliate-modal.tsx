@@ -201,7 +201,7 @@ export function AssignAffiliateModal({
                     {/* Affiliate Selection */}
                     <div className="space-y-2">
                         <label className={typography.label}>Pilih Affiliate</label>
-                        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen} modal={false}>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="outline"
