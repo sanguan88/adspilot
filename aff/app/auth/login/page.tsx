@@ -161,6 +161,9 @@ function LoginForm() {
                   <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-400 group-focus-within:text-teal-600 transition-colors">
                     Password
                   </Label>
+                  <Link href="/auth/forgot-password" className="text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors">
+                    Lupa Password?
+                  </Link>
                 </div>
                 <div className="relative">
                   <Input
