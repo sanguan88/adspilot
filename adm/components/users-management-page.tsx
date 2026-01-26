@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Users, UserPlus, Search, Edit, Trash2, X, Settings, Store, Loader2 } from "lucide-react"
+import { Users, UserPlus, Search, Edit, Trash2, X, Settings, Store, Loader2, Link2 } from "lucide-react"
 import { authenticatedFetch } from "@/lib/api-client"
 import { toast } from "sonner"
 import { format } from "date-fns"
@@ -41,6 +41,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StoresTab } from "./stores-tab"
+import { AssignAffiliateModal } from "./assign-affiliate-modal"
 import { useConfirm } from "@/components/providers/confirmation-provider"
 
 interface User {
@@ -91,6 +92,8 @@ export function UsersManagementPage() {
     maxCampaigns: "",
   })
   const [limitsLoading, setLimitsLoading] = useState(false)
+  const [isAssignAffiliateDialogOpen, setIsAssignAffiliateDialogOpen] = useState(false)
+  const [selectedUserForAffiliate, setSelectedUserForAffiliate] = useState<User | null>(null)
 
   // Stores management state
   const [activeTab, setActiveTab] = useState("limits")
@@ -589,6 +592,17 @@ export function UsersManagementPage() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => {
+                                setSelectedUserForAffiliate(user)
+                                setIsAssignAffiliateDialogOpen(true)
+                              }}
+                              title="Assign Affiliate"
+                            >
+                              <Link2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleEditLimits(user)}
                               title="Edit Limits"
                             >
@@ -999,6 +1013,18 @@ export function UsersManagementPage() {
             </DialogContent>
           </Dialog>
         )}
+
+        <AssignAffiliateModal
+          isOpen={isAssignAffiliateDialogOpen}
+          onClose={() => {
+            setIsAssignAffiliateDialogOpen(false)
+            setSelectedUserForAffiliate(null)
+          }}
+          onSuccess={() => {
+            fetchUsers()
+          }}
+          user={selectedUserForAffiliate}
+        />
       </div>
     </div >
   )

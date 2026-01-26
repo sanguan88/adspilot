@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
     const status = searchParams.get('status') || ''
+    const search = searchParams.get('search') || ''
 
     const offset = (page - 1) * limit
 
@@ -36,6 +37,11 @@ export async function GET(request: NextRequest) {
       if (status) {
         query += ` AND status = $${queryParams.length + 1}`
         queryParams.push(status)
+      }
+
+      if (search) {
+        query += ` AND (a.name ILIKE $${queryParams.length + 1} OR a.email ILIKE $${queryParams.length + 1} OR a.affiliate_code ILIKE $${queryParams.length + 1})`
+        queryParams.push(`%${search}%`)
       }
 
       query += ` ORDER BY a.created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`
