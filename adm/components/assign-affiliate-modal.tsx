@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useRef, useState, useEffect } from "react"
 import {
     Dialog,
     DialogContent,
@@ -68,6 +68,17 @@ interface AssignAffiliateModalProps {
     } | null
 }
 
+const formatIDR = (val: string | number) => {
+    if (val === undefined || val === null || val === "") return ""
+    const numeric = typeof val === 'string' ? val.replace(/\D/g, '') : Math.floor(val).toString()
+    if (!numeric) return ""
+    return new Intl.NumberFormat('id-ID').format(parseInt(numeric))
+}
+
+const parseIDR = (val: string) => {
+    return val.replace(/\D/g, '')
+}
+
 export function AssignAffiliateModal({
     isOpen,
     onClose,
@@ -83,6 +94,38 @@ export function AssignAffiliateModal({
     const [affiliateSearch, setAffiliateSearch] = useState("")
     const [isPopoverOpen, setIsPopoverOpen] = useState(false)
     const [commissionOverrides, setCommissionOverrides] = useState<Record<string, string>>({})
+    const inputRef = useRef<HTMLInputElement>(null)
+    // Force focus when popover opens
+    useEffect(() => {
+        if (isPopoverOpen) {
+            const timer = setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus()
+                }
+            }, 100)
+            return () => clearTimeout(timer)
+        }
+    }, [isPopoverOpen])
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const container = document.getElementById('affiliate-selection-container')
+            if (container && !container.contains(event.target as Node)) {
+                setIsPopoverOpen(false)
+            }
+        }
+
+        if (isPopoverOpen) {
+            document.addEventListener('mousedown', handleClickOutside)
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [isPopoverOpen])
 
     // Fetch user's paid transactions
     useEffect(() => {
@@ -189,7 +232,7 @@ export function AssignAffiliateModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !submitting && !open && onClose()}>
-            <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+            <DialogContent className="max-w-3xl min-h-[600px] max-h-[90vh] flex flex-col p-0 overflow-visible">
                 <DialogHeader className="px-6 pt-6 pb-2">
                     <DialogTitle>Assign Affiliate Manual</DialogTitle>
                     <DialogDescription>
@@ -197,124 +240,146 @@ export function AssignAffiliateModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-                    {/* Affiliate Selection */}
-                    <div className="space-y-2">
+                <div className="flex-1 px-6 py-4 flex flex-col space-y-6 overflow-visible">
+                    {/* Affiliate Selection - ALWAYS VISIBLE OVERFLOW */}
+                    <div className="space-y-2 relative z-[70]" id="affiliate-selection-container">
                         <label className={typography.label}>Pilih Affiliate</label>
-                        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen} modal={false}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={isPopoverOpen}
-                                    className="w-full justify-between"
+                        <div className="relative">
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                onClick={() => setIsPopoverOpen(!isPopoverOpen)}
+                                className="w-full justify-between"
+                            >
+                                {selectedAffiliate
+                                    ? `${selectedAffiliate.username} (${selectedAffiliate.referralCode})`
+                                    : "Cari affiliate..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+
+                            {isPopoverOpen && (
+                                <div
+                                    className="absolute top-full left-0 mt-1 w-full z-[100] bg-popover border rounded-md shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+                                    onMouseDown={(e) => e.stopPropagation()}
                                 >
-                                    {selectedAffiliate
-                                        ? `${selectedAffiliate.username} (${selectedAffiliate.referralCode})`
-                                        : "Cari affiliate..."}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[400px] p-0" align="start">
-                                <Command shouldFilter={false}>
-                                    <CommandInput
-                                        placeholder="Ketik nama atau kode affiliate..."
-                                        onValueChange={setAffiliateSearch}
-                                    />
-                                    <CommandList>
-                                        {loadingAffiliates ? (
-                                            <div className="flex items-center justify-center py-6">
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                            </div>
-                                        ) : affiliates.length === 0 ? (
-                                            <CommandEmpty>Affiliate tidak ditemukan.</CommandEmpty>
-                                        ) : (
-                                            <CommandGroup>
-                                                {affiliates.map((aff) => (
-                                                    <CommandItem
-                                                        key={aff.id}
-                                                        onSelect={() => {
-                                                            setSelectedAffiliate(aff)
-                                                            setIsPopoverOpen(false)
-                                                        }}
-                                                    >
-                                                        <Check
+                                    <div className="flex flex-col w-full">
+                                        <div className="flex items-center border-b px-3 bg-muted/20">
+                                            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                                            <Input
+                                                ref={inputRef}
+                                                placeholder="Ketik nama atau kode affiliate..."
+                                                className="flex h-11 w-full border-0 bg-transparent py-3 text-sm outline-none focus-visible:ring-0"
+                                                value={affiliateSearch}
+                                                onChange={(e) => setAffiliateSearch(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="max-h-[250px] overflow-y-auto p-1 bg-background">
+                                            {loadingAffiliates ? (
+                                                <div className="flex items-center justify-center py-6">
+                                                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                                </div>
+                                            ) : affiliates.length === 0 ? (
+                                                <div className="py-6 text-center text-sm text-muted-foreground italic">
+                                                    Affiliate tidak ditemukan.
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-0.5">
+                                                    {affiliates.map((aff) => (
+                                                        <div
+                                                            key={aff.id}
                                                             className={cn(
-                                                                "mr-2 h-4 w-4",
-                                                                selectedAffiliate?.id === aff.id ? "opacity-100" : "opacity-0"
+                                                                "relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none transition-colors",
+                                                                "hover:bg-primary/10 hover:text-primary",
+                                                                selectedAffiliate?.id === aff.id && "bg-primary/20 text-primary font-medium"
                                                             )}
-                                                        />
-                                                        <div className="flex flex-col">
-                                                            <span>{aff.username}</span>
-                                                            <span className="text-xs text-muted-foreground">{aff.email} | {aff.referralCode}</span>
+                                                            onMouseDown={(e) => {
+                                                                e.preventDefault();
+                                                                setSelectedAffiliate(aff)
+                                                                setIsPopoverOpen(false)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    selectedAffiliate?.id === aff.id ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                            <div className="flex flex-col">
+                                                                <span className="leading-none">{aff.username}</span>
+                                                                <span className="text-[10px] text-muted-foreground mt-1">
+                                                                    {aff.email} | {aff.referralCode}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        )}
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Transactions Selection */}
-                    <div className="space-y-3">
+                    {/* Transactions Selection - SCROLLABLE IF LONG */}
+                    <div className="flex-1 flex flex-col min-h-0 space-y-3 pt-2">
                         <div className="flex items-center justify-between">
                             <label className={typography.label}>Transaksi Manual (Retroaktif)</label>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                 {transactions.length} Transaksi Ditemukan
                             </Badge>
                         </div>
 
-                        {loadingTransactions ? (
-                            <div className="flex items-center justify-center py-12 border rounded-md bg-muted/20">
-                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                            </div>
-                        ) : transactions.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-10 border rounded-md bg-yellow-50/30 border-yellow-100 text-center">
-                                <AlertCircle className="h-8 w-8 text-yellow-500 mb-2" />
-                                <p className="text-sm font-medium text-yellow-800">Tidak ada transaksi yang bisa ditautkan</p>
-                                <p className="text-xs text-yellow-600">User belum memiliki transaksi atau semua transaksi sudah tertaut.</p>
-                            </div>
-                        ) : (
-                            <div className="border rounded-md overflow-hidden">
+                        <div className="flex-1 overflow-y-auto border rounded-md">
+                            {loadingTransactions ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : transactions.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-10 text-center">
+                                    <AlertCircle className="h-8 w-8 text-yellow-500 mb-2 opacity-50" />
+                                    <p className="text-xs font-medium text-yellow-800/70">Tidak ada transaksi yang bisa ditautkan</p>
+                                </div>
+                            ) : (
                                 <Table>
-                                    <TableHeader className="bg-muted/50">
+                                    <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                                         <TableRow>
-                                            <TableHead className="w-[180px]">Paket & Tanggal</TableHead>
-                                            <TableHead>Total Bayar</TableHead>
-                                            <TableHead className="w-[150px]">Komisi (IDR)</TableHead>
+                                            <TableHead className="w-[180px] text-[11px] h-8">Paket & Tanggal</TableHead>
+                                            <TableHead className="text-[11px] h-8">Total Bayar</TableHead>
+                                            <TableHead className="w-[150px] text-[11px] h-8">Komisi (IDR)</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {transactions.map((t) => (
                                             <TableRow key={t.transactionId}>
-                                                <TableCell>
+                                                <TableCell className="py-2">
                                                     <div className="flex flex-col">
-                                                        <span className="font-medium text-xs">{t.planName}</span>
-                                                        <span className="text-[10px] text-muted-foreground">
+                                                        <span className="font-medium text-[11px]">{t.planName}</span>
+                                                        <span className="text-[9px] text-muted-foreground">
                                                             {format(new Date(t.createdAt), "dd MMM yyyy")}
                                                         </span>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-xs">
-                                                    Rp {t.totalAmount.toLocaleString()}
+                                                <TableCell className="text-[11px] py-2">
+                                                    Rp {t.totalAmount.toLocaleString('id-ID')}
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="py-2">
                                                     <div className="relative">
                                                         <Input
-                                                            type="number"
-                                                            className="h-8 text-xs pr-4"
-                                                            value={commissionOverrides[t.transactionId] || "0"}
-                                                            onChange={(e) => setCommissionOverrides({
-                                                                ...commissionOverrides,
-                                                                [t.transactionId]: e.target.value
-                                                            })}
+                                                            type="text"
+                                                            className="h-7 text-[11px] pr-4 px-2"
+                                                            value={formatIDR(commissionOverrides[t.transactionId])}
+                                                            onChange={(e) => {
+                                                                const parsed = parseIDR(e.target.value)
+                                                                setCommissionOverrides({
+                                                                    ...commissionOverrides,
+                                                                    [t.transactionId]: parsed
+                                                                })
+                                                            }}
                                                             disabled={!selectedAffiliate}
                                                         />
                                                         {selectedAffiliate && (
-                                                            <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground opacity-50">
+                                                            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground opacity-50">
                                                                 {selectedAffiliate.commissionRate}%
                                                             </div>
                                                         )}
@@ -324,12 +389,12 @@ export function AssignAffiliateModal({
                                         ))}
                                     </TableBody>
                                 </Table>
-                            </div>
-                        )}
+                            )}
+                        </div>
                         {selectedAffiliate && (
-                            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                                <AlertCircle className="w-3 h-3" />
-                                Komisi di atas dihitung otomatis ({selectedAffiliate.commissionRate}%), silakan edit manual jika perlu.
+                            <p className="text-[10px] text-muted-foreground flex items-center gap-1 opacity-80">
+                                <AlertCircle className="w-2.5 h-2.5" />
+                                Komisi dihitung otomatis ({selectedAffiliate.commissionRate}%), silakan edit manual jika perlu.
                             </p>
                         )}
                     </div>
