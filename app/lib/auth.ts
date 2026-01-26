@@ -27,7 +27,7 @@ export interface UserPayload {
  * Generate JWT token untuk user
  */
 export function generateToken(payload: UserPayload): string {
-  return jwt.sign(payload, SECRET_KEY, {
+  return jwt.sign(payload, SECRET_KEY!, {
     expiresIn: '7d', // Token berlaku 7 hari
   });
 }
@@ -37,7 +37,7 @@ export function generateToken(payload: UserPayload): string {
  */
 export function verifyToken(token: string): UserPayload | null {
   try {
-    const decoded = jwt.verify(token, SECRET_KEY) as UserPayload;
+    const decoded = jwt.verify(token, SECRET_KEY!) as UserPayload;
     return decoded;
   } catch {
     return null;

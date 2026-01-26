@@ -52,14 +52,14 @@ export async function GET(request: NextRequest) {
     // Get transactions for invoice/receipt
     const transactionsResult = await connection.query(
       `SELECT 
-        transaction_id, plan_id, payment_status,
-        base_amount, ppn_amount, total_amount, unique_code,
-        payment_confirmed_at, payment_proof_url, created_at,
+        t.transaction_id, t.plan_id, t.payment_status,
+        t.base_amount, t.ppn_amount, t.total_amount, t.unique_code,
+        t.payment_confirmed_at, t.payment_proof_url, t.created_at,
         sp.name as database_plan_name
       FROM transactions t
       LEFT JOIN subscription_plans sp ON t.plan_id = sp.plan_id
-      WHERE user_id = $1
-      ORDER BY created_at DESC`,
+      WHERE t.user_id = $1
+      ORDER BY t.created_at DESC`,
       [user.userId]
     )
 
