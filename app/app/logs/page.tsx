@@ -48,6 +48,7 @@ export default function LogsPage() {
   })
   const [sortField, setSortField] = useState<SortField>("timestamp")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
+  const [showSkipped, setShowSkipped] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [totalCount, setTotalCount] = useState(0)
@@ -80,8 +81,8 @@ export default function LogsPage() {
       if (tokoFilter !== "all-tokos") {
         params.append("tokoFilter", tokoFilter)
       }
-      params.append("sortField", sortField)
       params.append("sortOrder", sortOrder)
+      params.append("include_skipped", showSkipped.toString())
       params.append("page", currentPage.toString())
       params.append("limit", pageSize.toString())
 
@@ -135,7 +136,7 @@ export default function LogsPage() {
     setHasMore(true)
     fetchLogs(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, ruleFilter, tokoFilter, dateRange, sortField, sortOrder])
+  }, [statusFilter, ruleFilter, tokoFilter, dateRange, sortField, sortOrder, showSkipped])
 
   // Debounce search query
   useEffect(() => {
@@ -444,6 +445,18 @@ export default function LogsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-md px-3 py-2 h-10 shadow-sm hover:border-gray-300 transition-colors cursor-pointer select-none" onClick={() => setShowSkipped(!showSkipped)}>
+                <input
+                  type="checkbox"
+                  id="show-skipped"
+                  checked={showSkipped}
+                  onChange={() => { }} // Handled by div onClick for better hit area
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                />
+                <label htmlFor="show-skipped" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  Tampilkan Dilewati (Info)
+                </label>
+              </div>
               <div className="flex items-center gap-2">
                 <DateRangePicker
                   dateRange={dateRange}
@@ -641,7 +654,7 @@ export default function LogsPage() {
           }}
           logId={selectedLogId}
         />
-      </DashboardLayout>
-    </ProtectedRoute>
+      </DashboardLayout >
+    </ProtectedRoute >
   )
 }

@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc'
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const includeSkipped = searchParams.get('include_skipped') === 'true'
     const offset = (page - 1) * limit
 
     // Get database connection
@@ -75,6 +76,11 @@ export async function GET(request: NextRequest) {
     let logParams: any[] = []
 
     // Note: JOIN condition is in FROM clause, not WHERE clause
+
+    // Filter by type (Default: Hide skipped logs)
+    if (!includeSkipped) {
+      logWhereConditions.push(`(rel.execution_data->>'skipped' IS NULL OR rel.execution_data->>'skipped' != 'true')`)
+    }
 
     // Filter by status
     if (status && status !== 'all') {
@@ -361,7 +367,14 @@ export async function GET(request: NextRequest) {
       const account = tokoNameMap.get(log.toko_id) || log.toko_id || 'No account assigned'
 
       // Target is the campaign name if available, otherwise ID
-      const target = log.campaign_name ? `Iklan: ${log.campaign_name}` : `Iklan: ${log.campaign_id}`
+      let campaignName = log.campaign_name || log.campaign_id
+
+      // Truncate name if too long (max 40 chars)
+      if (campaignName && campaignName.length > 40) {
+        campaignName = campaignName.substring(0, 37) + '...'
+      }
+
+      const target = `Iklan: ${campaignName}`
 
       // Build details summary
       let detailsSummary = ''
